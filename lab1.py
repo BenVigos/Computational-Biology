@@ -22,7 +22,7 @@ def lactase_activity(t, S, Vmax, Km):
 lactose_in_milk_mM =  milk_lactose_concentration / Mlactose * 1000
 safe_limit_mM = safe_limit_concentration / Mlactose * 1000
 
-def lactose_safe(t, S, Vmax, Km):
+def lactose_safe(t, S, *args):
     return S[0] - safe_limit_mM
 
 lactose_safe.terminal = True
@@ -43,11 +43,26 @@ plt.axhline(y=safe_limit_mM, linestyle="dotted", alpha=0.5, color="k")
 plt.show()
 
 
-def lactase_activity_inhibited(t, y, Vmax, Km, Ki):
-    S, I = y[0]
+def lactase_activity_inhibited(t, y, Vmax, Km, Ki, S_initial):
+    S = y[0]
+
+    I = S_initial - S
+
     return -(Vmax*S)/(Km*(1+I/Ki)+S)
 
 
 
 ### With inhibition
 print("With inhibition:")
+
+t_span = (0, 500)
+t_eval = np.linspace(t_span[0], t_span[1], 1000)
+
+sol = solve_ivp(lactase_activity_inhibited, t_span, [lactose_in_milk_mM], args=(Vmax, Km, Ki, lactose_in_milk_mM), events=lactose_safe, t_eval=t_eval)
+
+print(f"It took {sol.t_events[0][0]} minutes to reach a concentration below 1 g/L")
+plt.plot(sol.t, sol.y[0])
+plt.ylabel("Lactose concentration [mol]")
+plt.xlabel("Time [min]")
+plt.axhline(y=safe_limit_mM, linestyle="dotted", alpha=0.5, color="k")
+plt.show()

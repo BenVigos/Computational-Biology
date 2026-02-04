@@ -33,6 +33,10 @@ safe_limit_concentration = 1 # g L-1
 def lactase_activity(t, S, Vmax, Km):
     return -(Vmax * S)/(Km + S)
 
+def inhibited_lactase_activity(t, y, Vmax, Km, Ki):
+    S,I = y[0], y[1]
+    return -(Vmax * S)/(Km * (1 + S/Ki) + S)
+
 lactose_in_milk_M =  milk_lactose_concentration / Mlactose
 safe_limit_M = safe_limit_concentration / Mlactose
 
@@ -41,6 +45,9 @@ def lactose_safe(t, S, Vmax, Km):
 
 lactose_safe.terminal = True
 lactose_safe.direction = -1
+
+### Without inhibition
+print("Without inhibition:")
 
 print(lactose_in_milk_M, safe_limit_M)
 sol = solve_ivp(lactase_activity, (0, 100), [lactose_in_milk_M], args=(Vmax, Km), events=lactose_safe)
@@ -54,3 +61,7 @@ plt.plot(sol.t, sol.y[0])
 plt.ylabel("Lactose concentration [mol]")
 plt.xlabel("Time [min]")
 plt.show()
+
+
+### With inhibition
+print("With inhibition:")

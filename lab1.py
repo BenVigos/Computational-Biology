@@ -1,5 +1,6 @@
 from scipy.integrate import solve_ivp 
 from functools import partial
+import matplotlib.pyplot as plt
 
 # Vmax = 5.5 # mmol L-1 min-1
 # Km = 50 # mM
@@ -32,18 +33,24 @@ safe_limit_concentration = 1 # g L-1
 def lactase_activity(t, S, Vmax, Km):
     return -(Vmax * S)/(Km + S)
 
-lactose_in_milk_mol = volume_milk * milk_lactose_concentration / Mlactose
-safe_limit_mol = volume_milk * safe_limit_concentration / Mlactose
+lactose_in_milk_M =  milk_lactose_concentration / Mlactose
+safe_limit_M = safe_limit_concentration / Mlactose
 
 def lactose_safe(t, S, Vmax, Km):
-    return S[0] - safe_limit_mol
+    return S[0] - safe_limit_M
 
 lactose_safe.terminal = True
 lactose_safe.direction = -1
 
-print(lactose_in_milk_mol, safe_limit_mol)
-sol = solve_ivp(lactase_activity, (0, 1000), [lactose_in_milk_mol], args=(Vmax, Km), events=lactose_safe)
+print(lactose_in_milk_M, safe_limit_M)
+sol = solve_ivp(lactase_activity, (0, 100), [lactose_in_milk_M], args=(Vmax, Km), events=lactose_safe)
 
 print(sol.y)
 print(sol.y_events)
 print(sol)
+
+print(f"It took {sol.t_events[0][0]} minutes to reach a concentration below 1 g/L")
+plt.plot(sol.t, sol.y[0])
+plt.ylabel("Lactose concentration [mol]")
+plt.xlabel("Time [min]")
+plt.show()

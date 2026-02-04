@@ -30,14 +30,17 @@ dS/dt = v = (vmax * S)/(Km + s)
 safe_limit_concentration = 1 # g L-1
 
 def lactase_activity(t, S, Vmax, Km):
-    return (Vmax * S)/(Km + S)
+    return -(Vmax * S)/(Km + S)
 
 lactose_in_milk_mol = volume_milk * milk_lactose_concentration * Mlactose
 safe_limit_mol = volume_milk * safe_limit_concentration * Mlactose
 
-def lactose_safe(t, S, limit=safe_limit_mol):
-    return S - limit 
+def lactose_safe(t, S, Vmax, Km):
+    return S[0] - safe_limit_mol
+
+lactose_safe.terminal = True
+lactose_safe.direction = -1
 
 print(lactose_in_milk_mol, safe_limit_mol)
-sol = solve_ivp(lactase_activity, [0, 100], [lactose_in_milk_mol], args=(Vmax, Km), events=lactose_safe)
-print(sol)
+sol = solve_ivp(lactase_activity, [0, 10000], [lactose_in_milk_mol], args=(Vmax, Km), events=lactose_safe)
+print(sol.y)

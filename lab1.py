@@ -40,7 +40,6 @@ plt.plot(sol.t, sol.y[0])
 plt.ylabel("Lactose concentration [mol]")
 plt.xlabel("Time [min]")
 plt.axhline(y=safe_limit_mM, linestyle="dotted", alpha=0.5, color="k")
-plt.show()
 
 
 def lactase_activity_inhibited(t, y, Vmax, Km, Ki, S_initial):
@@ -62,7 +61,9 @@ sol = solve_ivp(lactase_activity_inhibited, t_span, [lactose_in_milk_mM], args=(
 
 print(f"It took {sol.t_events[0][0]} minutes to reach a concentration below 1 g/L")
 plt.plot(sol.t, sol.y[0])
-plt.ylabel("Lactose concentration [mol]")
+plt.ylabel("Lactose concentration [mmol]")
 plt.xlabel("Time [min]")
+plt.title("Lactose concentration in milk over time")
 plt.axhline(y=safe_limit_mM, linestyle="dotted", alpha=0.5, color="k")
+plt.legend(["Without inhibition", "Threshold", "With inhibition"])
 plt.show()

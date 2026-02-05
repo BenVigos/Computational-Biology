@@ -47,7 +47,7 @@ for value in kinetics["S2"].unique():
 plt.ylabel(r"$1/v$ (mM/s)")
 plt.xlabel(r"$1/S_1$ (mM)")
 plt.legend(title=r"$S_2$")
-plt.title("Two substrate kinetics - Type 2 - Ping-pong mechanism")
+plt.title("Lineweaver-Burk plot")
 plt.savefig("pingpong.jpg")
 # plt.show()
 plt.clf()

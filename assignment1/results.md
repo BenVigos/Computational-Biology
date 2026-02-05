@@ -13,6 +13,6 @@
 |1.0|0.1000|1.1000|-11.0000|1.0000|0.9091|0.0909|
 |10000.0|0.1000|1.0000|-10.0001|1.0000|1.0000|0.1000|
 
-![Two substrate kinetics - Type 2 - Ping-pong mechanism](pingpong.jpg)
+![Lineweaver-Burk plot](pingpong.jpg)
 
 ![Concentration of $S_1$ over time](Concentration.jpg)

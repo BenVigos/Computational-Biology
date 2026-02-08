@@ -44,12 +44,12 @@ for value in kinetics["S2"].unique():
     y_plot = a * x_plot + b
     plt.plot(x_plot, y_plot)
 
-plt.ylabel(r"$1/v$ (mM/s)")
-plt.xlabel(r"$1/S_1$ (mM)")
-plt.legend(title=r"$S_2$")
+plt.ylabel(r"$1/v$ (s/mM)")
+plt.xlabel(r"$1/S_1$ (1/mM)")
+plt.legend(title=r"$S_2 (mM) =$")
 plt.title("Lineweaver-Burk plot")
 plt.savefig("pingpong.jpg")
-# plt.show()
+plt.show()
 plt.clf()
 
 print("\nFind Km2")
@@ -122,5 +122,5 @@ plt.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
 plt.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k")
 
 plt.savefig("Concentration.jpg")
-# plt.show()
+plt.show()
 plt.clf()

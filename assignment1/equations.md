@@ -1,4 +1,8 @@
-<!--- pandoc equations.md -o equations.pdf -V geometry:margin=1in --->
+---
+geometry:
+- margin=1in
+---
+
 # Assignment 1: Equations
 ##  Question 1: The "Living" Ice
 ### Derivation of $K_{m2}$

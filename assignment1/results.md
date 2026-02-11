@@ -1,8 +1,13 @@
-<!--- pandoc results.md -o results.pdf -V geometry:margin=1in --->
+---
+geometry:
+- margin=1in
+---
 
 # Assignment 1: Results
 
 ## Question 1: The "Living" Ice
+
+Table: Computed values
 
 |$S_2$|$K_m/V_\text{max}$|$1/V\text{max}$|$-1/K_{m1}$|$R^2$|$V\text{max}$|$K_{m1}$|
 |-----|-------------------|----------------|-----------|-----|--------------|-----|

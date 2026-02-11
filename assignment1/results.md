@@ -20,4 +20,8 @@ Table: Computed values
 
 ![Lineweaver-Burk plot](pingpong.jpg)
 
+$$K_{m2}=0.1000 +- 1.122\times10^{-11}$$
+
 ![Concentration of $S_1$ over time](Concentration.jpg)
+
+It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.

@@ -102,6 +102,7 @@ sol = solve_ivp(
     [S1_initial_mM],
     args=(Vmax, Km1),
     events=[safe_limit],
+    max_step=0.001,
 )
 
 

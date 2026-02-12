@@ -21,4 +21,4 @@ Lineweaver-Burke plot: since all lines are parrelel this is a ping pong mechanis
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 
-Linear line, expected exponential decay. Could be that due to high saturation of S2 we have always v of vmax which means the decay is linear with a rate vmax. This is likely also influenced by the design choice to keep S2 constant.
+Linear line, expected exponential decay. Could be that due to high saturation of S2 we have always v of vmax which means the decay is linear with a rate vmax. This is likely also influenced by the design choice to keep S2 constant. We had to manually set max_step to 0.001 to prevent solve_ivp from going to negative concentrations.

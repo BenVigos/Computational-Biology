@@ -86,22 +86,15 @@ def safe_limit(t, S, *args):
 safe_limit.terminal = False
 safe_limit.direction = -1
 
-def zero(t, S, *args):
-    return S[0]
-
-zero.terminal = True
-zero.direction = -1
-
 def reaction_ODE(t, S, Vmax, Km):
     """
     dS/dt = v = -(Vmax * S*S2) / (Km1*S2 + Km2*S+S*S2)
     """
 
-    return -(Vmax * S*S2) / (Km1*S2 + Km2*S+S*S2)
+    return -(Vmax * S * S2) / (Km1*S2 + Km2*S + S*S2)
 
 
-t_span = (0, 900)
-t_eval = np.linspace(t_span[0], t_span[1], t_span[1]*10000)
+t_span = (0, 800)
 
 sol = solve_ivp(
     reaction_ODE,
@@ -109,7 +102,7 @@ sol = solve_ivp(
     [S1_initial_mM],
     args=(Vmax, Km1),
     events=[safe_limit],
-    t_eval=t_eval,
+    max_step=0.1,
 )
 
 
@@ -118,12 +111,43 @@ plt.title(r"Concentration of $S_1$ over time")
 plt.plot(sol.t, sol.y[0])
 plt.ylabel(r"$S_1$ (mM)")
 plt.xlabel("Time (s)")
-# plt.yscale("log")
 plt.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
 plt.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k")
+
 plt.savefig("Concentration.jpg")
 plt.show()
 plt.clf()
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+ax.plot(sol.t, sol.y[0], label="Main Data")
+ax.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
+
+if sol.t_events and len(sol.t_events[0]) > 0:
+    ax.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k", markersize=10)
+
+ax.set_title(r"Concentration of $S_1$ over time")
+ax.set_ylabel(r"$S_1$ (mM)")
+ax.set_xlabel("Time (s)")
+
+axins = ax.inset_axes([0.5, 0.5, 0.4, 0.4])
+
+axins.plot(sol.t, sol.y[0])
+axins.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
+
+x1, x2 = 665, 670
+axins.set_xlim(x1, x2)
+
+y_data_slice = sol.y[0][(sol.t >= x1) & (sol.t <= x2)]
+if len(y_data_slice) > 0:
+    y_min, y_max = y_data_slice.min(), y_data_slice.max()
+    y_margin = (y_max - y_min) * 0.1
+    axins.set_ylim(y_min - y_margin, y_max + y_margin)
+
+axins.tick_params(labelsize=8)
+# mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
+
+plt.savefig("Concentration_with_Zoom.jpg", dpi=300)
 
 
 print("")
@@ -179,3 +203,5 @@ ax.set_ylim(0, Vmax+1)
 plt.savefig('question2_plot.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()
+
+

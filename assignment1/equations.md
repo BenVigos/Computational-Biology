@@ -2,7 +2,7 @@
 geometry:
 - margin=1in
 ---
-
+# Assignment 1: Model development and equations 
 ##  Question 1: The "Living" Ice
 ### Derivation of $K_{m2}$
 $$\begin{align}
@@ -12,6 +12,12 @@ K_{m1}S_2+K_{m2}S_1+S_1S_2 &= \frac{V_{max}S_1S_2}{v} \\
 K_{m2}S_1 &= \frac{V_{max}S_1S_2}{v} - K_{m1}S_2 - S_1S_2 \\
 K_{m2} &= \frac{V_{max}S_2}{v} - \frac{K_{m1}S_2}{S_1} - S_2
 \end{align}$$
+
+### Molrekenen
+
+$$[S_{1,initial}]_{mM}=\frac{[S_{1,initial}]_{g/L}}{MW_{g/mol}}\times1000$$
+
+$$[S_{1,limit}]_{mM}=\frac{[S_{1,limit}]_{g/L}}{MW_{g/mol}}\times1000$$
 
 ## Question 2: The Case of the possible Biomass
 $$N=\begin{matrix}
@@ -25,6 +31,8 @@ MAL \\
 OAA \\
 X \\
 
+
+#todo: add v1 v2 etc above it.
 
 $$Nv=0$$
 

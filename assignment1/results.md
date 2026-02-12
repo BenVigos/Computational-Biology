@@ -3,7 +3,7 @@ geometry:
 - margin=1in
 ---
 
-# Assignment 1: Results
+# Assignment 1: Figures and tables
 
 ## Question 1: The "Living" Ice
 
@@ -22,6 +22,8 @@ Table: Computed values
 
 $$K_{m2}=0.1000 +- 1.122\times10^{-11}$$
 
-![Concentration of $S_1$ over time](Concentration.jpg)
+<!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
+
+![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.

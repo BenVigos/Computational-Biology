@@ -94,7 +94,7 @@ def reaction_ODE(t, S, Vmax, Km):
     return -(Vmax * S * S2) / (Km1*S2 + Km2*S + S*S2)
 
 
-t_span = (0, 700)
+t_span = (0, 800)
 
 sol = solve_ivp(
     reaction_ODE,
@@ -102,7 +102,7 @@ sol = solve_ivp(
     [S1_initial_mM],
     args=(Vmax, Km1),
     events=[safe_limit],
-    max_step=0.001,
+    max_step=0.1,
 )
 
 
@@ -117,3 +117,37 @@ plt.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k")
 plt.savefig("Concentration.jpg")
 # plt.show()
 plt.clf()
+
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+ax.plot(sol.t, sol.y[0], label="Main Data")
+ax.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
+
+if sol.t_events and len(sol.t_events[0]) > 0:
+    ax.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k", markersize=10)
+
+ax.set_title(r"Concentration of $S_1$ over time")
+ax.set_ylabel(r"$S_1$ (mM)")
+ax.set_xlabel("Time (s)")
+
+axins = ax.inset_axes([0.5, 0.5, 0.4, 0.4]) 
+
+axins.plot(sol.t, sol.y[0])
+axins.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
+
+x1, x2 = 665, 670
+axins.set_xlim(x1, x2)
+
+y_data_slice = sol.y[0][(sol.t >= x1) & (sol.t <= x2)]
+if len(y_data_slice) > 0:
+    y_min, y_max = y_data_slice.min(), y_data_slice.max()
+    y_margin = (y_max - y_min) * 0.1
+    axins.set_ylim(y_min - y_margin, y_max + y_margin)
+
+axins.tick_params(labelsize=8)
+mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
+
+plt.savefig("Concentration_with_Zoom.jpg", dpi=300)

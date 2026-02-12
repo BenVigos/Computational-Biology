@@ -70,7 +70,7 @@ print()
 # exit()
 print("To synthesize the bio-polymer, an industrial batch reactor will be loaded with the co-factor (S2) in excess and an initial concentration of 100 g/L of the mineral substrate (S1). Calculate how much time (in seconds or minutes) is required to deplete the substrate S1 to below 1 g/L. Assume the Molecular Weight of substrate S1 is 150 g/mol.")
 
-Vmax, Km1 = 1.0000, 0.1000 # use values for [S2] = 10000.0 since S2 is in excess
+Vmax, Km1 = 1.0000, 0.100 # use values for [S2] = 10000.0 since S2 is in excess
 S2 = 10000.0
 Km2 = 0.1000
 S1_MW = 150 # g/mol
@@ -86,12 +86,6 @@ def safe_limit(t, S, *args):
 safe_limit.terminal = False
 safe_limit.direction = -1
 
-def zero(t, S, *args):
-    return S[0]
-
-zero.terminal = True
-zero.direction = -1
-
 def reaction_ODE(t, S, Vmax, Km):
     """
     dS/dt = v = -(Vmax * S)/(Km + S)
@@ -100,16 +94,14 @@ def reaction_ODE(t, S, Vmax, Km):
     return -(Vmax * S * S2) / (Km1*S2 + Km2*S + S*S2)
 
 
-t_span = (0, 1000)
-t_eval = np.linspace(t_span[0], t_span[1], t_span[1]*10)
+t_span = (0, 700)
 
 sol = solve_ivp(
     reaction_ODE,
     t_span,
     [S1_initial_mM],
     args=(Vmax, Km1),
-    events=[safe_limit, zero],
-    t_eval=t_eval,
+    events=[safe_limit],
 )
 
 

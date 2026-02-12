@@ -118,9 +118,6 @@ plt.savefig("Concentration.jpg")
 # plt.show()
 plt.clf()
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-
 fig, ax = plt.subplots(figsize=(10, 6))
 
 ax.plot(sol.t, sol.y[0], label="Main Data")
@@ -148,6 +145,6 @@ if len(y_data_slice) > 0:
     axins.set_ylim(y_min - y_margin, y_max + y_margin)
 
 axins.tick_params(labelsize=8)
-mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
+# mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
 
 plt.savefig("Concentration_with_Zoom.jpg", dpi=300)

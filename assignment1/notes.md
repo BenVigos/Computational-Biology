@@ -5,6 +5,13 @@ Covers: Derivation of $K_{m2}$ for Question 1, the use of the Lineweaver-Burke p
 
 Stoichiometric matrix N, steady state equillibrium.
 
+Discus solver used (RK54), set max_step to 0.1. 
+
+Key assumptions:
+
+- Constant S2 in excess, because of that we use Km1 and Vmax values from S2=10000.
+- Stoichiometric matrix describes reactants behaviour under different reactions v.
+
 ## Results and Figures
 
 Lineweaver-Burke plot, table with Vmax and Km1 we read from that.

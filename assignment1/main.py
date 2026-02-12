@@ -94,21 +94,21 @@ zero.direction = -1
 
 def reaction_ODE(t, S, Vmax, Km):
     """
-    dS/dt = v = -(Vmax * S)/(Km + S)
+    dS/dt = v = -(Vmax * S*S2) / (Km1*S2 + Km2*S+S*S2)
     """
 
     return -(Vmax * S*S2) / (Km1*S2 + Km2*S+S*S2)
 
 
 t_span = (0, 900)
-t_eval = np.linspace(t_span[0], t_span[1], t_span[1]*10)
+t_eval = np.linspace(t_span[0], t_span[1], t_span[1]*10000)
 
 sol = solve_ivp(
     reaction_ODE,
     t_span,
     [S1_initial_mM],
     args=(Vmax, Km1),
-    events=[safe_limit, zero],
+    events=[safe_limit],
     t_eval=t_eval,
 )
 
@@ -118,9 +118,64 @@ plt.title(r"Concentration of $S_1$ over time")
 plt.plot(sol.t, sol.y[0])
 plt.ylabel(r"$S_1$ (mM)")
 plt.xlabel("Time (s)")
+# plt.yscale("log")
 plt.axhline(y=S1_safe_mM, linestyle="dotted", alpha=0.5, color="k")
 plt.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k")
-
 plt.savefig("Concentration.jpg")
+plt.show()
+plt.clf()
+
+
+print("")
+print("Question 2: The 'Living' Ice")
+
+Vmax = 7.0000 # dummy value for plotting
+D = 2 # dummy value for plotting
+
+# Create plot for Question 2
+fig, ax = plt.subplots(figsize=(8, 8))
+
+# Define box boundaries
+x_min, x_max = 0, Vmax - D
+y_min, y_max = D, Vmax
+
+# Draw the box
+box_x = [x_min, x_max, x_max, x_min, x_min]
+box_y = [y_min, y_min, y_max, y_max, y_min]
+ax.plot(box_x, box_y, 'k-', linewidth=2, label='Box boundary')
+
+# Plot the line y=x
+x_line = np.linspace(x_min, x_max+1, 10)
+y_line = x_line
+ax.plot(x_line, y_line, 'b-', linewidth=2, label='y=x')
+
+# Shade the region above y=x within the box
+x_fill = np.linspace(x_min, x_max, 100)
+y_upper = np.full_like(x_fill, y_max)
+y_lower = np.maximum(x_fill, y_min)  # y=x line, but clipped at y_min
+ax.fill_between(x_fill, y_lower, y_upper, alpha=0.3, color='cyan', label='Shaded region')
+
+# Plot point (D, 2D)
+ax.plot(D, 2*D, 'ro', markersize=10, label=f'Point (D, 2D)')
+
+# Set labels and title
+ax.set_xlabel('x', fontsize=12)
+ax.set_ylabel('y', fontsize=12)
+ax.set_title('Question 2: Box and Region Plot', fontsize=14)
+ax.set_xlim(x_min - 1, x_max + 1)
+ax.set_ylim(y_min - 1, y_max + 1)
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_aspect('equal')
+
+# Set custom ticks to show only 0 and D
+ax.set_xticks([0, D, Vmax - D])
+ax.set_xticklabels(['0', 'D', r'$V_{max}-D$'])
+ax.set_yticks([D, 2*D, Vmax])
+ax.set_yticklabels(['D', r'$2 \cdot D$', r'$V_{max}$'])
+ax.set_xlim(0, Vmax-D+1)
+ax.set_ylim(0, Vmax+1)
+
+plt.savefig('question2_plot.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()

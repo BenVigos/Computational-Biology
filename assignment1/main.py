@@ -97,10 +97,10 @@ def reaction_ODE(t, S, Vmax, Km):
     dS/dt = v = -(Vmax * S)/(Km + S)
     """
 
-    return -(Vmax * S*S2) / (Km1*S2 + Km2*S+S*S2)
+    return -(Vmax * S * S2) / (Km1*S2 + Km2*S + S*S2)
 
 
-t_span = (0, 900)
+t_span = (0, 1000)
 t_eval = np.linspace(t_span[0], t_span[1], t_span[1]*10)
 
 sol = solve_ivp(

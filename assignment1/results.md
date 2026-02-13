@@ -7,7 +7,7 @@ geometry:
 
 ## Question 1: The "Living" Ice
 
-Table: Computed values
+Table: Computed values from Lineweaver-Burk plot
 
 |$S_2$|$K_m/V_\text{max}$|$1/V\text{max}$|$-1/K_{m1}$|$R^2$|$V\text{max}$|$K_{m1}$|
 |-----|-------------------|----------------|-----------|-----|--------------|-----|
@@ -24,11 +24,26 @@ Table: Computed values
 
 $$K_{m2}=0.1000 +- 1.122\\times10^{-11}$$
 
+Table: Computed values from Eadie-Hofstee plot
+
+|$S_2$|$-K_m$|$1/V\text{max}$|$R^2$|
+|---|-----------|---------------|----|
+|0.05|0.0333|0.3333|1.0000|
+|0.1|0.0500|0.5000|1.0000|
+|0.2|0.0667|0.6667|1.0000|
+|0.5|0.0833|0.8333|1.0000|
+|1.0|0.0909|0.9091|1.0000|
+|10000.0|0.1000|1.0000|1.0000|
+
+![Eadie-Hostee plot](eadie_hofstee.jpg)
+
+*Figure 2. Eadie-Hofstee plot.*
+
 <!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
 
 ![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
 
-*Figure 2. Concentration of $S_1$ over time (with inset zoom).* 
+*Figure 3. Concentration of $S_1$ over time (with inset zoom).* 
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 
@@ -37,4 +52,4 @@ It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 
 ![Feasible region of v1 vs v6](feasible_region.jpg)
 
-*Figure 3. Feasible region of $v_1$ vs $v_6$.*
+*Figure 4. Feasible region of $v_1$ vs $v_6$.*

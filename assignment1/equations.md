@@ -76,6 +76,6 @@ And $v_6>v_1$.
 
 $$v_1\geq0\implies v_1=v_6-D\geq0 \iff v_6 \geq D$$
 
-and $v_6=(V_{max}[Succ])/(K_m+[Succ])-(V_{max}[Fum])/(K_m+[Fum])$.
+The equation for the reaction rate $v_6$ is given by:
 
-e. 
+$$v_6=(V_{max}[Succ])/(K_m+[Succ])-(V_{max}[Fum])/(K_m+[Fum])$$

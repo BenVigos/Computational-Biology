@@ -10,6 +10,7 @@
     - One line for each S2 value
     - See line shape to see type of two-substrate kinetics
 
+- Identified ping-pong mechanism so use rate equation for that
 - Derivation of Km2 from Km1 using equation for $v$. Used the mean of all values for the highest S2 since we will be using S2 in high excess.
 
 - Eadie-Hofstee plot

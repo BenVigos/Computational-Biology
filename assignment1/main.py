@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
+import os
+print(os.getcwd())
 
 kinetics = pd.read_csv("Kinetics.csv")
 
@@ -51,6 +53,56 @@ plt.title("Lineweaver-Burk plot")
 plt.savefig("pingpong.jpg")
 plt.show()
 plt.clf()
+
+print("\nEadie-Hofstee plot")
+
+plt.figure(figsize=(6,5))
+
+print("|$S_2$|$-K_m$|$1/V\\text{max}$|$R^2$|")
+print("|---|-----------|---------------|----|")
+
+for value in kinetics["S2"].unique():
+    data = kinetics.loc[kinetics["S2"]==value]
+
+    v = data["Rate"]
+    S = data["S1"]
+
+    x = v / S
+    y = v
+    n = len(x)
+
+    plt.scatter(x, y, label=value)
+
+
+    x_mean = x.mean()
+    y_mean = y.mean()
+    Sxy = np.sum(x*y) - n*x_mean*y_mean
+    Sxx = np.sum(x*x) - n*x_mean*x_mean
+
+    a = Sxy/Sxx  
+    b = y_mean - a*x_mean  
+    y_pred = a*x + b
+
+    se = np.sum((y - y_pred)**2)
+    SSt = np.sum((y - y_mean)**2)
+    R2 = 1 - se/SSt
+
+    Km = -a
+    Vmax = b
+
+    print(f"|{value}|{a:.4f}|{b:.4f}|{R2:.4f}|{Km:.4f}|{Vmax:.4f}|")
+
+    x_plot = np.linspace(min(x), max(x), 100)
+    plt.plot(x_plot, a*x_plot + b)
+
+plt.xlabel(r"$v/S_1$")
+plt.ylabel(r"$v$")
+plt.title("Eadie-Hofstee plot")
+plt.legend(title=r"$S_2$ (mM) =")
+plt.savefig("eadie_hofstee.jpg")
+plt.show()
+plt.clf()
+
 
 print("\nFind Km2")
 S2 = 10000.0
@@ -202,5 +254,6 @@ ax.set_ylim(0, Vmax+1)
 plt.savefig('feasible_region.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()
+
 
 

@@ -90,7 +90,7 @@ for value in kinetics["S2"].unique():
     Km = -a
     Vmax = b
 
-    print(f"|{value}|{a:.4f}|{b:.4f}|{R2:.4f}|{Km:.4f}|{Vmax:.4f}|")
+    print(f"|{value}|{-Km:.4f}|{Vmax:.4f}|{R2:.4f}|")
 
     x_plot = np.linspace(min(x), max(x), 100)
     plt.plot(x_plot, a*x_plot + b)
@@ -222,7 +222,7 @@ ax.plot(box_x, box_y, 'k-', linewidth=2, label='Box boundary')
 # Plot the line y=x
 x_line = np.linspace(x_min, x_max+1, 10)
 y_line = x_line
-ax.plot(x_line, y_line, 'b-', linewidth=2, label='y=x')
+ax.plot(x_line, y_line, 'b-', linewidth=2, label='$v_6=v_1$ line')
 
 # Shade the region above y=x within the box
 x_fill = np.linspace(x_min, x_max, 100)
@@ -234,8 +234,8 @@ ax.fill_between(x_fill, y_lower, y_upper, alpha=0.3, color='cyan', label='Shaded
 ax.plot(D, 2*D, 'ro', markersize=10, label=f'Point (D, 2D)')
 
 # Set labels and title
-ax.set_xlabel('x', fontsize=12)
-ax.set_ylabel('y', fontsize=12)
+ax.set_xlabel('$v_1$', fontsize=12)
+ax.set_ylabel('$v_6$', fontsize=12)
 ax.set_title(r'Feasible region of $v_1$ and $v_6$', fontsize=14)
 ax.set_xlim(x_min - 1, x_max + 1)
 ax.set_ylim(y_min - 1, y_max + 1)

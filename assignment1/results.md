@@ -20,8 +20,6 @@ Table: Computed values from Lineweaver-Burk plot
 
 ![Lineweaver-Burk plot](pingpong.jpg)
 
-*Figure 1. Lineweaver–Burk plot.*
-
 $$K_{m2}=0.1000 +- 1.122\\times10^{-11}$$
 
 Table: Computed values from Eadie-Hofstee plot
@@ -37,19 +35,13 @@ Table: Computed values from Eadie-Hofstee plot
 
 ![Eadie-Hostee plot](eadie_hofstee.jpg)
 
-*Figure 2. Eadie-Hofstee plot.*
-
 <!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
 
 ![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
-
-*Figure 3. Concentration of $S_1$ over time (with inset zoom).* 
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 
 
 ## Question 2: The "Living" Ice
 
-![Feasible region of v1 vs v6](feasible_region.jpg)
-
-*Figure 4. Feasible region of $v_1$ vs $v_6$.*
+![Feasible region of $v_1$ vs $v_6$](feasible_region.jpg)

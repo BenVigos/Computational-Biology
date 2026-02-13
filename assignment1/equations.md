@@ -52,6 +52,12 @@ $$v_8=v_7=v_6=v_5=v_4=v_3=v_2=2v_1$$
 
 $$\dot{OAA}=v_6-v_1-v_9=v_6-v_1-D=0$$
 
+Combining the above equations we get:
+
+$$v_6-v_1-D=2v_1-v_1-D=v_1-D=0 \implies v_1 = D$$
+
+and hence $v_6=2D$.
+
 In order to have biomass conversion to X we must have:
 $$\dot{X}=v_9=D> 0$$
 

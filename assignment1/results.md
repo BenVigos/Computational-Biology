@@ -27,3 +27,8 @@ $$K_{m2}=0.1000 +- 1.122\times10^{-11}$$
 ![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
+
+
+## Question 2: The "Living" Ice
+
+![Feasible region of v1 vs v6](feasible_region.jpg)

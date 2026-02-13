@@ -79,8 +79,8 @@ for value in kinetics["S2"].unique():
     Sxy = np.sum(x*y) - n*x_mean*y_mean
     Sxx = np.sum(x*x) - n*x_mean*x_mean
 
-    a = Sxy/Sxx  
-    b = y_mean - a*x_mean  
+    a = Sxy/Sxx
+    b = y_mean - a*x_mean
     y_pred = a*x + b
 
     se = np.sum((y - y_pred)**2)
@@ -207,53 +207,82 @@ print("Question 2: The 'Living' Ice")
 Vmax = 7.0000 # dummy value for plotting
 D = 2 # dummy value for plotting
 
-# Create plot for Question 2
-fig, ax = plt.subplots(figsize=(8, 8))
+fig, (ax_left, ax_right) = plt.subplots(1, 2, figsize=(14, 7), sharey=True)
 
-# Define box boundaries
 x_min, x_max = 0, Vmax - D
 y_min, y_max = D, Vmax
 
-# Draw the box
+# ---- Left panel: Feasible region
 box_x = [x_min, x_max, x_max, x_min, x_min]
 box_y = [y_min, y_min, y_max, y_max, y_min]
-ax.plot(box_x, box_y, 'k-', linewidth=2, label='Box boundary')
+ax_left.plot(box_x, box_y, 'k-', linewidth=2, label='Box boundary')
 
-# Plot the line y=x
-x_line = np.linspace(x_min, x_max+1, 10)
+# Plot the line y=x on left (only inside the box)
+# start at the larger of x_min and y_min so the line doesn't go below y_mi
+x_line = np.linspace(0, x_max+3, 100)
 y_line = x_line
-ax.plot(x_line, y_line, 'b-', linewidth=2, label='$v_6=v_1$ line')
+ax_left.plot(x_line, y_line, 'b-', linewidth=2, label='y=x')
 
-# Shade the region above y=x within the box
-x_fill = np.linspace(x_min, x_max, 100)
+# Shade the region above y=x within the box on left
+x_fill = np.linspace(x_min, x_max, 200)
+# For each x, the lower bound is max(y_min, x) so the area above y=x is shaded
 y_upper = np.full_like(x_fill, y_max)
 y_lower = np.maximum(x_fill, y_min)  # y=x line, but clipped at y_min
-ax.fill_between(x_fill, y_lower, y_upper, alpha=0.3, color='cyan', label='Shaded region')
+ax_left.fill_between(x_fill, y_lower, y_upper, alpha=0.3, color='cyan', label='Shaded region')
 
-# Plot point (D, 2D)
-ax.plot(D, 2*D, 'ro', markersize=10, label=f'Point (D, 2D)')
+# Plot point (D, 2D) on left
+ax_left.plot(D, 2*D, 'ro', markersize=8, label=f'Point (D, 2D)')
 
-# Set labels and title
-ax.set_xlabel('$v_1$', fontsize=12)
-ax.set_ylabel('$v_6$', fontsize=12)
-ax.set_title(r'Feasible region of $v_1$ and $v_6$', fontsize=14)
-ax.set_xlim(x_min - 1, x_max + 1)
-ax.set_ylim(y_min - 1, y_max + 1)
-ax.grid(True, alpha=0.3)
-ax.legend()
-ax.set_aspect('equal')
+ax_left.set_title(r'Feasible region of $v_1$ and $v_6$', fontsize=14)
+ax_left.set_xlabel(r'$v_1$', fontsize=12)
+ax_left.set_ylabel(r'$v_6$', fontsize=12)
+ax_left.grid(True, alpha=0.3)
+ax_left.legend()
+ax_left.set_aspect('equal')
 
-# Set custom ticks to show only 0 and D
-ax.set_xticks([0, D, Vmax - D])
-ax.set_xticklabels(['0', 'D', r'$V_{max}-D$'])
-ax.set_yticks([D, 2*D, Vmax])
-ax.set_yticklabels(['D', r'$2 \cdot D$', r'$V_{max}$'])
-ax.set_xlim(0, Vmax-D+1)
-ax.set_ylim(0, Vmax+1)
+# ---- Right panel: Desired rate line y = 2x ----
+x_end_right = float(Vmax) / 2.0
+x_plot = np.linspace(x_min, x_end_right, 300)
+y_plot = 2 * x_plot
+ax_right.plot(x_plot, y_plot, 'm-', linewidth=2, label=r'$y = 2x$ (desired rate $D$)')
+# mark the endpoint where y hits Vmax
+ax_right.plot(x_end_right, float(Vmax), 'ks', markersize=6, label=r'Endpoint $(V_{max}/2, V_{max})$')
 
-plt.savefig('feasible_region.jpg', dpi=150, bbox_inches='tight')
+ax_right.set_title(r'Desired biomass rate', fontsize=14)
+ax_right.set_xlabel(r'$v_1$', fontsize=12)
+ax_right.set_ylabel(r'$v_6$', fontsize=12)
+ax_right.grid(True, alpha=0.3)
+ax_right.legend()
+ax_right.set_aspect('equal')
+
+ticks_x = [0, D, Vmax - D]
+ticklabels_x = ['0', 'D', r'$V_{max}-D$']
+ax_left.set_xticks(ticks_x)
+ax_left.set_xticklabels(ticklabels_x)
+
+# Right panel
+ax_right.set_xticks([Vmax/2])
+ax_right.set_xticklabels([r'$V_{max}/2$'])
+
+# Build y-ticks
+ax_left.set_yticks([D, 2*D, float(Vmax)])
+ax_left.set_yticklabels(['D', r'$2 \cdot D$', r'$v_{max}$'])
+
+# ax_right.set_yticks([Vmax])
+# ax_right.set_yticklabels([r'$V_{max}$'])
+
+ax_left.set_xlim(0, float(Vmax) + 1)
+ax_right.set_xlim(0, max(float(x_end_right), float(Vmax - D)) + 1)
+
+# Ensure y-limits cover up to Vmax
+for ax in (ax_left, ax_right):
+    ax.set_ylim(0, float(Vmax) + 1)
+
+
+plt.tight_layout()
+# Save combined figure
+plt.savefig('feasible_region_with_desired.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()
-
 
 

@@ -56,6 +56,6 @@ Table: Computed values from Eadie-Hofstee plot
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{feasible_region.jpg}
-\caption{Feasible region of $v_1$ vs $v_6$}
+\includegraphics[width=0.8\textwidth]{feasible_region_with_desired.jpg}
+\caption{Left: Feasible region of $v_1$ vs $v_6$. Right: Dependence of exact solution $v_6 = 2 v_1$ on D}
 \end{figure}

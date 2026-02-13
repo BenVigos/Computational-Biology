@@ -1,6 +1,9 @@
 ---
 geometry:
 - margin=1in
+header-includes:
+  - \usepackage{float}
+  - \usepackage{subcaption}
 ---
 
 # Assignment 1: Figures and tables
@@ -20,7 +23,11 @@ Table: Computed values from Lineweaver-Burk plot
 
 ![Lineweaver-Burk plot](pingpong.jpg)
 
-$$K_{m2}=0.1000 +- 1.122\\times10^{-11}$$
+From the rearranged equation we derive:
+
+$$K_{m2}=0.1000 \pm 1.122\times10^{-11}$$
+
+\newpage
 
 Table: Computed values from Eadie-Hofstee plot
 
@@ -35,13 +42,20 @@ Table: Computed values from Eadie-Hofstee plot
 
 ![Eadie-Hostee plot](eadie_hofstee.jpg)
 
-<!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{Concentration_with_Zoom.jpg}
+\caption{Concentration of $S_1$ over time}
+\vspace{0.5em}
+\textit{It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.}
+\end{figure}
 
-![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
+\newpage
 
-It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
+## Question 2: The Case of the Possible Biomass
 
-
-## Question 2: The "Living" Ice
-
-![Feasible region of $v_1$ vs $v_6$](feasible_region.jpg)
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{feasible_region.jpg}
+\caption{Feasible region of $v_1$ vs $v_6$}
+\end{figure}

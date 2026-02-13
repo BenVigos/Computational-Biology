@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
+import os
+print(os.getcwd())
 
 kinetics = pd.read_csv("Kinetics.csv")
 
@@ -51,6 +53,56 @@ plt.title("Lineweaver-Burk plot")
 plt.savefig("pingpong.jpg")
 plt.show()
 plt.clf()
+
+print("\nEadie-Hofstee plot")
+
+plt.figure(figsize=(6,5))
+
+print("|$S_2$|$-K_m$|$1/V\\text{max}$|$R^2$|")
+print("|---|-----------|---------------|----|")
+
+for value in kinetics["S2"].unique():
+    data = kinetics.loc[kinetics["S2"]==value]
+
+    v = data["Rate"]
+    S = data["S1"]
+
+    x = v / S
+    y = v
+    n = len(x)
+
+    plt.scatter(x, y, label=value)
+
+
+    x_mean = x.mean()
+    y_mean = y.mean()
+    Sxy = np.sum(x*y) - n*x_mean*y_mean
+    Sxx = np.sum(x*x) - n*x_mean*x_mean
+
+    a = Sxy/Sxx  
+    b = y_mean - a*x_mean  
+    y_pred = a*x + b
+
+    se = np.sum((y - y_pred)**2)
+    SSt = np.sum((y - y_mean)**2)
+    R2 = 1 - se/SSt
+
+    Km = -a
+    Vmax = b
+
+    print(f"|{value}|{-Km:.4f}|{Vmax:.4f}|{R2:.4f}|")
+
+    x_plot = np.linspace(min(x), max(x), 100)
+    plt.plot(x_plot, a*x_plot + b)
+
+plt.xlabel(r"$v/S_1$")
+plt.ylabel(r"$v$")
+plt.title("Eadie-Hofstee plot")
+plt.legend(title=r"$S_2$ (mM) =")
+plt.savefig("eadie_hofstee.jpg")
+plt.show()
+plt.clf()
+
 
 print("\nFind Km2")
 S2 = 10000.0
@@ -170,7 +222,7 @@ ax.plot(box_x, box_y, 'k-', linewidth=2, label='Box boundary')
 # Plot the line y=x
 x_line = np.linspace(x_min, x_max+1, 10)
 y_line = x_line
-ax.plot(x_line, y_line, 'b-', linewidth=2, label='y=x')
+ax.plot(x_line, y_line, 'b-', linewidth=2, label='$v_6=v_1$ line')
 
 # Shade the region above y=x within the box
 x_fill = np.linspace(x_min, x_max, 100)
@@ -182,8 +234,8 @@ ax.fill_between(x_fill, y_lower, y_upper, alpha=0.3, color='cyan', label='Shaded
 ax.plot(D, 2*D, 'ro', markersize=10, label=f'Point (D, 2D)')
 
 # Set labels and title
-ax.set_xlabel('x', fontsize=12)
-ax.set_ylabel('y', fontsize=12)
+ax.set_xlabel('$v_1$', fontsize=12)
+ax.set_ylabel('$v_6$', fontsize=12)
 ax.set_title(r'Feasible region of $v_1$ and $v_6$', fontsize=14)
 ax.set_xlim(x_min - 1, x_max + 1)
 ax.set_ylim(y_min - 1, y_max + 1)
@@ -202,5 +254,6 @@ ax.set_ylim(0, Vmax+1)
 plt.savefig('feasible_region.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()
+
 
 

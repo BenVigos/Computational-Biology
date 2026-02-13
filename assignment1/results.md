@@ -1,13 +1,16 @@
 ---
 geometry:
 - margin=1in
+header-includes:
+  - \usepackage{float}
+  - \usepackage{subcaption}
 ---
 
 # Assignment 1: Figures and tables
 
 ## Question 1: The "Living" Ice
 
-Table: Computed values
+Table: Computed values from Lineweaver-Burk plot
 
 |$S_2$|$K_m/V_\text{max}$|$1/V\text{max}$|$-1/K_{m1}$|$R^2$|$V\text{max}$|$K_{m1}$|
 |-----|-------------------|----------------|-----------|-----|--------------|-----|
@@ -20,21 +23,39 @@ Table: Computed values
 
 ![Lineweaver-Burk plot](pingpong.jpg)
 
-*Figure 1. Lineweaver–Burk plot.*
+From the rearranged equation we derive:
 
-$$K_{m2}=0.1000 +- 1.122\\times10^{-11}$$
+$$K_{m2}=0.1000 \pm 1.122\times10^{-11}$$
 
-<!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
+\newpage
 
-![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
+Table: Computed values from Eadie-Hofstee plot
 
-*Figure 2. Concentration of $S_1$ over time (with inset zoom).* 
+|$S_2$|$-K_m$|$1/V\text{max}$|$R^2$|
+|---|-----------|---------------|----|
+|0.05|0.0333|0.3333|1.0000|
+|0.1|0.0500|0.5000|1.0000|
+|0.2|0.0667|0.6667|1.0000|
+|0.5|0.0833|0.8333|1.0000|
+|1.0|0.0909|0.9091|1.0000|
+|10000.0|0.1000|1.0000|1.0000|
 
-It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
+![Eadie-Hostee plot](eadie_hofstee.jpg)
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{Concentration_with_Zoom.jpg}
+\caption{Concentration of $S_1$ over time}
+\vspace{0.5em}
+\textit{It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.}
+\end{figure}
 
-## Question 2: The "Living" Ice
+\newpage
 
-![Feasible region of v1 vs v6](feasible_region.jpg)
+## Question 2: The Case of the Possible Biomass
 
-*Figure 3. Feasible region of $v_1$ vs $v_6$.*
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{feasible_region.jpg}
+\caption{Feasible region of $v_1$ vs $v_6$}
+\end{figure}

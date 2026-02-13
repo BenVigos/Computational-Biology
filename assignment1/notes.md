@@ -1,9 +1,30 @@
 # Notes
 
 ## Equations and Model
-Covers: Derivation of $K_{m2}$ for Question 1, the use of the Lineweaver-Burke plot (from which you can get Km1 and Vmax) for different S2.
+### Question 1
+- Lineweaver-Burk plot
+    - 1/v over 1/[S]
+    - slope = Km/Vmax
+    - y-intercept = 1/Vmax
+    - x-intercept = -1/Km
+    - One line for each S2 value
+    - See line shape to see type of two-substrate kinetics
 
-Stoichiometric matrix N, steady state equillibrium.
+- Identified ping-pong mechanism so use rate equation for that
+- Derivation of Km2 from Km1 using equation for $v$. Used the mean of all values for the highest S2 since we will be using S2 in high excess.
+
+- Eadie-Hofstee plot
+    - slope = -Km
+    - y-intercept = Vmax
+    - x-intercept = Vmax/Km
+
+### Question 2
+- Stoichiometric matrix N, steady state equillibrium.
+- Assume steady state so $Nv=0$ and substituting $v_9=D$ which gives $v_6=2v_1$, $v_6-v_1-D=0$. $v_1=D$.
+- We have the exact solution that $v_1=D$ and $v_6=2D$
+
+- Assuming we have biomass conversion to X we must have $D>0$ so $v_6>v_1$
+- Irrevirsbility and michaelis menten constraints give $v_1\leq v_{6,max}-D \iff v_1+D\leq $v_{6,max}$ and $v_6>v_1$.
 
 Discus solver used (RK54), set max_step to 0.1. 
 

@@ -20,11 +20,15 @@ Table: Computed values
 
 ![Lineweaver-Burk plot](pingpong.jpg)
 
-$$K_{m2}=0.1000 +- 1.122\times10^{-11}$$
+*Figure 1. Lineweaver–Burk plot.*
+
+$$K_{m2}=0.1000 +- 1.122\\times10^{-11}$$
 
 <!-- ![Concentration of $S_1$ over time](Concentration.jpg) -->
 
 ![Concentration of $S_1$ over time](Concentration_with_Zoom.jpg)
+
+*Figure 2. Concentration of $S_1$ over time (with inset zoom).* 
 
 It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 
@@ -32,3 +36,5 @@ It took 660.29 seconds (11.0 minutes) to reach a concentration below 1 g/L.
 ## Question 2: The "Living" Ice
 
 ![Feasible region of v1 vs v6](feasible_region.jpg)
+
+*Figure 3. Feasible region of $v_1$ vs $v_6$.*

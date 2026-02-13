@@ -116,7 +116,6 @@ plt.plot(sol.t_events[0], sol.y_events[0][0], "x", color="k")
 
 plt.savefig("Concentration.jpg")
 plt.show()
-plt.clf()
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -185,7 +184,7 @@ ax.plot(D, 2*D, 'ro', markersize=10, label=f'Point (D, 2D)')
 # Set labels and title
 ax.set_xlabel('x', fontsize=12)
 ax.set_ylabel('y', fontsize=12)
-ax.set_title('Question 2: Box and Region Plot', fontsize=14)
+ax.set_title(r'Feasible region of $v_1$ and $v_6$', fontsize=14)
 ax.set_xlim(x_min - 1, x_max + 1)
 ax.set_ylim(y_min - 1, y_max + 1)
 ax.grid(True, alpha=0.3)
@@ -200,7 +199,7 @@ ax.set_yticklabels(['D', r'$2 \cdot D$', r'$V_{max}$'])
 ax.set_xlim(0, Vmax-D+1)
 ax.set_ylim(0, Vmax+1)
 
-plt.savefig('question2_plot.jpg', dpi=150, bbox_inches='tight')
+plt.savefig('feasible_region.jpg', dpi=150, bbox_inches='tight')
 plt.show()
 plt.clf()
 

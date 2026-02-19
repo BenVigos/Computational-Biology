@@ -86,6 +86,18 @@ def viterbi_algorithm(sequence, A, B, P):
 
     return best_path
 
+def rna_vel(t, u, s, beta, gamma, c, a, b):
+    """Calculate the RNA velocity based on the given parameters.
+    dudt = alpha - b * u"""
+
+    alpha = c / (1 + np.exp(b*(t-a)))
+
+    dudt = alpha - beta * u
+
+    dsdt = beta * u - gamma * s
+
+
+
 ### Task 1: Patient alpha ###
 
 # (a) Identify the Regulatory Mechanism: Analyze the sequence AGCGC to infer which regulatory
@@ -106,6 +118,9 @@ P = [0.5, 0.5] # Initial state probabilities
 
 path = viterbi_algorithm(sequence, A, B, P)
 print("Most likely sequence of hidden states:", path)
+
+
+
 
 
 

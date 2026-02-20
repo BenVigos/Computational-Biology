@@ -10,14 +10,15 @@ def get_letter_index(letter):
     :param letter: A character representing a nucleotide.
     :return: An integer index corresponding to the nucleotide.
     """
-    if letter == 'A':
-        return 0
-    elif letter == 'U':
-        return 1
-    elif letter == 'G':
-        return 2
-    elif letter == 'C':
-        return 3
+    match letter:
+        case 'A':
+            return 0
+        case 'U':
+            return 1
+        case 'G':
+            return 2
+        case 'C':
+            return 3
 
 def get_exon_intron_state(state):
     """
@@ -25,12 +26,13 @@ def get_exon_intron_state(state):
     :param state: An integer index representing the state.
     :return: A string 'Exon' or 'Intron' corresponding to the state.
     """
-    if state == 0:
-        return 'E'
-    elif state == 1:
-        return 'I'
-    else:
-        return '?'
+    match state:
+        case 0:
+            return 'E'
+        case 1:
+            return 'I'
+        case _:
+            return '?'
 
 def viterbi_algorithm(sequence, A, B, P):
     """

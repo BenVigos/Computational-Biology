@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+from scipy.integrate import solve_ivp
 
 ### Functions for Task 1, 2, 3 ###
 
@@ -121,10 +121,54 @@ P = [0.5, 0.5] # Initial state probabilities
 path = viterbi_algorithm(sequence, A, B, P)
 print("Most likely sequence of hidden states:", path)
 
+# (b) Based on the mechanism you identified for patient alpha, choose the appropriate mathematical 
+# framework to model the gene regulation dynamics ODE model vs SDEVelo model. Also, the choice of 
+# model formulation may depend on the observed mRNA status. Parameter values for these models are 
+# given in Tables 4 and 5, respectively. Ensure to present relevant graphs/visualizations. 
+
+# Trascription problem: use ODE
+m_a, m_b = 2.35, 2.35 #s-1
+gamma_a, gamma_b = 1,1  #s-1
+k_pa, k_pb = 1.0, 1.0 #s-1
+theta_a, theta_b = 0.21, 0.21 #M
+n_a, n_b = 3, 3 # hill coefficient
+delta_pa, delta_pb = 1.0, 1.0 #s-1
+mRNA_a, mRNA_b = 0.8, 0.8 #M
+P_a, P_b = 0.8, 0.8 #M
 
 
+def hill_inhibition(P, theta, n):
+    """Calculate the Hill inhibition function."""
+    return theta**n / (theta**n + P**n)
 
+def hill_activation(P, theta, n):
+    """Calculate the Hill activation function."""
+    return P**n / (theta**n + P**n)
 
+def patient_alpha_ode(t, y):
+    """Calculate the derivatives of mRNA and protein for Patient Alpha."""
+    ra, rb, P_a, P_b = y
+    dra_dt = m_a * hill_inhibition(P_a, theta_a, n_a) - gamma_a * ra
+    drb_dt = m_b * 1 - gamma_b * rb # no inhibition on rb
+    dPa_dt = k_pa * ra - delta_pa * P_a
+    dPb_dt = k_pb * rb - delta_pb * P_b
+    return [dra_dt, drb_dt, dPa_dt, dPb_dt]
+
+t = np.linspace(0, 50, 1000)
+y0 = [mRNA_a, mRNA_b, P_a, P_b]
+sol_alpha = solve_ivp(patient_alpha_ode, [0, 50], y0, t_eval=t)
+
+pA_alpha = sol_alpha.y[2]
+pB_alpha = sol_alpha.y[3]
+
+plt.figure(figsize=(8, 6))
+plt.plot(t, pA_alpha, label='pA(t)', color='red', linewidth=2)
+plt.xlabel('Tempo [s]', fontsize=12)
+plt.ylabel('Concentrazione Proteina A [pA]', fontsize=12)
+plt.title('Time Evolution of pA Concentration', fontsize=14)
+plt.legend()
+plt.grid(True)
+plt.show()
 
 ### Task 2: Analysis of Patient Sample Beta ###
 

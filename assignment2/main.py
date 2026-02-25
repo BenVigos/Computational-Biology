@@ -134,21 +134,20 @@ mRNA_a, mRNA_b = 0.8, 0.8  # M
 P_a, P_b = 0.8, 0.8  # M
 
 
-def hill_inhibition(P, theta, n):
-    """Calculate the Hill inhibition function."""
-    return 1 - hill_activation(P, theta, n)
-    return theta**n / (theta**n + P**n)
-
-
 def hill_activation(P, theta, n):
     """Calculate the Hill activation function."""
     return P**n / (theta**n + P**n)
 
 
+def hill_inhibition(P, theta, n):
+    """Calculate the Hill inhibition function."""
+    return 1 - hill_activation(P, theta, n)
+
+
 def patient_alpha_ode(t, y):
     """Calculate the derivatives of mRNA and protein for Patient Alpha."""
     ra, rb, P_a, P_b = y
-    dra_dt = m_a * hill_inhibition(P_a, theta_a, n_a) - gamma_a * ra
+    dra_dt = m_a * hill_inhibition(P_b, theta_b, n_b) - gamma_a * ra
     drb_dt = m_b * 1 - gamma_b * rb  # no inhibition on rb
     dPa_dt = k_pa * ra - delta_pa * P_a
     dPb_dt = k_pb * rb - delta_pb * P_b

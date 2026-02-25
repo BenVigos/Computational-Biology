@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 
 ### Functions for Task 1, 2, 3 ###
 
+AUGC_to_index = {'A': 0, 'U': 1, 'G': 2, 'C': 3} # usage: AUGC_to_index.get(letter)
+index_to_exon_intron = {0: 'E', 1: 'I'} # usage: index_to_exon_intron.get(state, '?')
+
+
 def get_letter_index(letter):
     """
     Helper function to convert a letter (A, C, G, T) to an index (0, 1, 2, 3).

@@ -125,6 +125,7 @@ print(f"Most likely sequence of hidden states for {sequence}:", path)
 # model formulation may depend on the observed mRNA status. Parameter values for these models are
 # given in Tables 4 and 5, respectively. Ensure to present relevant graphs/visualizations.
 
+<<<<<<< Updated upstream
 # Trascription problem: use ODE
 m_a, m_b = 2.35, 2.35  # s-1
 gamma_a, gamma_b = 1, 1  # s-1

@@ -135,12 +135,24 @@ n_a, n_b = 3, 3  # hill coefficient
 delta_pa, delta_pb = 1.0, 1.0  # s-1
 mRNA_a, mRNA_b = 0.8, 0.8  # M
 P_a, P_b = 0.8, 0.8  # M
+=======
+# Trascription problem: use ODE (assumption: simpe two-gene network)
+m_a, m_b = 2.35, 2.35 #s-1
+gamma_a, gamma_b = 1,1  #s-1
+k_pa, k_pb = 1.0, 1.0 #s-1
+theta_a, theta_b = 0.21, 0.21 #M
+n_a, n_b = 3, 3 # hill coefficient (assumption: use hill and not PWL activation)
+delta_pa, delta_pb = 1.0, 1.0 #s-1
+mRNA_a, mRNA_b = 0.8, 0.8 #M
+P_a, P_b = 0.8, 0.8 #M
+>>>>>>> Stashed changes
 
 
 def hill_activation(P, theta, n):
     """Calculate the Hill activation function."""
     return P**n / (theta**n + P**n)
 
+<<<<<<< Updated upstream
 
 def hill_inhibition(P, theta, n):
     """Calculate the Hill inhibition function."""
@@ -152,18 +164,36 @@ def patient_alpha_ode(t, y):
     ra, rb, P_a, P_b = y
     dra_dt = m_a * hill_inhibition(P_b, theta_b, n_b) - gamma_a * ra
     drb_dt = m_b * 1 - gamma_b * rb  # no inhibition on rb
+=======
+def hill_inhibition(P, theta, n):
+    """Calculate the Hill inhibition function."""
+    return 1- hill_activation(P, theta, n)
+
+def patient_alpha_ode(t, y, hijack = None):
+    """Calculate the derivatives of mRNA and protein for Patient Alpha."""
+    ra, rb, P_a, P_b = y
+    dra_dt = m_a * hill_activation(P_b, theta_b, n_b) - gamma_a * ra
+    if hijack:
+        drb_dt = m_b * 1 - gamma_b * rb # no inhibition on rb
+    else:
+        drb_dt = m_b * hill_inhibition(P_a, theta_a, n_a) - gamma_b * rb
+>>>>>>> Stashed changes
     dPa_dt = k_pa * ra - delta_pa * P_a
     dPb_dt = k_pb * rb - delta_pb * P_b
     return [dra_dt, drb_dt, dPa_dt, dPb_dt]
 
+<<<<<<< Updated upstream
 
 t = np.linspace(0, 50, 1000)
+=======
+t_eval = np.linspace(0, 100, 1000)
+>>>>>>> Stashed changes
 y0 = [mRNA_a, mRNA_b, P_a, P_b]
-sol_alpha = solve_ivp(patient_alpha_ode, [0, 50], y0, t_eval=t)
 
-pA_alpha = sol_alpha.y[2]
-pB_alpha = sol_alpha.y[3]
+sol_alpha = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(True,))
+sol_alpha_regular = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(False,))
 
+<<<<<<< Updated upstream
 plt.figure(figsize=(8, 6))
 plt.plot(t, pA_alpha, label="pA(t)", color="red", linewidth=2)
 plt.xlabel("Tempo [s]", fontsize=12)
@@ -173,6 +203,130 @@ plt.legend()
 plt.grid(True)
 plt.savefig("pA over time")
 plt.clf()
+=======
+def plots_alpha(sol, t, hijack=None):
+    ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
+    
+    # pA, pB over time
+    plt.figure(figsize=(8, 6))
+    plt.plot(t, pA, label='Protein A (Guardian)', linewidth=2)
+    plt.plot(t, pB, label='Protein B (Proliferator)', linewidth=2)
+    plt.xlabel('Time [s]', fontsize=12)
+    plt.ylabel('Concentration [M]', fontsize=12)
+    plt.title('Time Evolution of Protein Concentrations', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_1_proteins_time_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_1_proteins_time.png", dpi=300)
+    plt.show()
+    
+    # mRNAs over time
+    plt.figure(figsize=(8, 6))
+    plt.plot(t, ra, label='mRNA A',linewidth=2, linestyle='--')
+    plt.plot(t, rb, label='mRNA B', linewidth=2, linestyle='--')
+    plt.xlabel('Time [s]', fontsize=12)
+    plt.ylabel('Concentration [M]', fontsize=12)
+    plt.title('Time Evolution of mRNA Concentrations', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_2_mRNAs_time_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_2_mRNAs_time.png", dpi=300)
+    plt.show()
+    
+    # phase plot pA vs pB and mRNA_A vs mRNA_B
+    plt.figure(figsize=(8, 6))
+    plt.plot(pA, pB, color='black', linewidth=2, label='Protein Trajectory')
+    plt.scatter([pA[0]], [pB[0]], color='black', zorder=5, label='Start Proteins (t=0)')
+    plt.scatter([pA[-1]], [pB[-1]], color='yellow', zorder=5, s=100, marker='*', label='End (Proteins Equilibrium)')
+    plt.plot(ra, rb, color='blue', linewidth=2, label='mRNA Trajectory')
+    plt.scatter([ra[0]], [rb[0]], color='blue', zorder=5, label='Start mRNA (t=0)')
+    plt.scatter([ra[-1]], [rb[-1]], color='orange', zorder=5, s=100, marker='*', label='End (mRNA Equilibrium)')
+    plt.xlabel('$P_a, r_a$ Concentration [M]', fontsize=12)
+    plt.ylabel('$P_b, r_b$ Concentration [M]', fontsize=12)
+    plt.title('Phase Space: Protein A vs Protein B and mRNA A vs mRNA B', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_3_phase_space_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_3_phase_space.png", dpi=300)
+    plt.show()
+    
+    # hill Functions
+    P_vals = np.linspace(0, 1.5, 100)
+    act = hill_activation(P_vals, theta_a, n_a)
+    inh = hill_inhibition(P_vals, theta_a, n_a)
+    
+    plt.figure(figsize=(8, 6))
+    plt.plot(P_vals, act, label=f'Activation ($\\theta$={theta_a}, n={n_a})', color='green', linewidth=2)
+    if hijack: 
+        plt.plot(P_vals, np.ones_like(P_vals), label=f'Hijacked, no inhibition', color='orange', linewidth=2)
+    else:
+        plt.plot(P_vals, inh, label=f'Inhibition ($\\theta$={theta_a}, n={n_a})', color='orange', linewidth=2)
+    plt.axvline(x=theta_a, color='grey', linestyle=':', label='Threshold ($\\theta$)')
+    plt.xlabel('Regulator Protein Concentration [M]', fontsize=12)
+    plt.ylabel('Hill Function', fontsize=12)
+    plt.title('Hill Functions for Activation & Inhibition', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_4_hill_functions_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_4_hill_functions.png", dpi=300)
+    plt.show()
+    
+    # transcription rates over time (m_a, m_b, hill functions)
+    transcription_rate_A = m_a * hill_activation(pB, theta_b, n_b)
+    if hijack:
+        transcription_rate_B = np.full_like(t, m_b) # 1*m_b, no inhibition on B
+    else:
+        transcription_rate_B = m_b * hill_inhibition(pA, theta_a, n_a)
+    
+    plt.figure(figsize=(8, 6))
+    plt.plot(t, transcription_rate_A, label='Gene A Transcription Rate $m_a * H_{\\theta_b, n_b}(P_B)$', linewidth=2)
+    plt.plot(t, transcription_rate_B, label='Gene B Transcription Rate $m_b * H_{\\theta_a, n_a}(P_A)$', linewidth=2)
+    plt.xlabel('Time [s]', fontsize=12)
+    plt.ylabel('Rate [M/s]', fontsize=12)
+    plt.title('Transcription Rates Over Time', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_5_transcription_rates_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_5_transcription_rates.png", dpi=300)
+    plt.show()
+    
+    # translation rates over time (k_pa, k_pb, mRNA concentrations)
+    translation_rate_A = k_pa * ra
+    translation_rate_B = k_pb * rb
+    
+    plt.figure(figsize=(8, 6))
+    plt.plot(t, translation_rate_A, label='Protein A Translation Rate $k_{pa} * r_a$', linewidth=2)
+    plt.plot(t, translation_rate_B, label='Protein B Translation Rate $k_{pb} * r_b$', linewidth=2)
+    plt.xlabel('Time [s]', fontsize=12)
+    plt.ylabel('Rate [M/s]', fontsize=12)
+    plt.title('Translation Rates Over Time', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    if hijack:
+        plt.savefig("alpha_6_translation_rates_hijack.png", dpi=300)
+    else:
+        plt.savefig("alpha_6_translation_rates.png", dpi=300)
+    plt.show()
+
+plots_alpha(sol_alpha, t_eval, hijack=True)
+plots_alpha(sol_alpha_regular, t_eval, hijack=False)
+>>>>>>> Stashed changes
 
 ### Task 2: Analysis of Patient Sample Beta ###
 

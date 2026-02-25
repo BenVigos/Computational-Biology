@@ -11,4 +11,5 @@ dependencies = [
     "pandas>=3.0.0",
     "pandoc>=2.4",
     "scipy>=1.17.0",
+    "sdevelo>=0.2.9",
 ]

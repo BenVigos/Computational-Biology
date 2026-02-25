@@ -123,7 +123,7 @@ P = [0.5, 0.5] # Initial state probabilities
 
 
 path = viterbi_algorithm(sequence, A, B, P)
-print("Most likely sequence of hidden states:", path)
+print(f"Most likely sequence of hidden states for {sequence}:", path)
 
 # (b) Based on the mechanism you identified for patient alpha, choose the appropriate mathematical 
 # framework to model the gene regulation dynamics ODE model vs SDEVelo model. Also, the choice of 
@@ -172,6 +172,7 @@ plt.ylabel('Concentrazione Proteina A [pA]', fontsize=12)
 plt.title('Time Evolution of pA Concentration', fontsize=14)
 plt.legend()
 plt.grid(True)
+plt.savefig("pA over time")
 plt.show()
 
 ### Task 2: Analysis of Patient Sample Beta ###
@@ -183,7 +184,7 @@ plt.show()
 sequence = 'AUUAU'
 
 path = viterbi_algorithm(sequence, A, B, P)
-print("Most likely sequence of hidden states:", path)
+print(f"Most likely sequence of hidden states for {sequence}:", path)
 
 
 ### Task 3: Comparative Analysis & Diagnosis ###

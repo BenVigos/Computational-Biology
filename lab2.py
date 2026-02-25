@@ -149,17 +149,19 @@ def phase_portrait(system,
 
     return fig, ax
 
+alpha, beta, gamma, delta = 2, 1.1, 1, 0.9
+a0, b0 = 1, 0.5
 def dadt(a, b):
-    return a**2 + b - b**2 - 5
+    return alpha*a - beta*a*b #a**2 + b - b**2 - 5
 
 def dbdt(a, b):
-    return 2*a - 8*b**2
+    return -gamma*b + delta*a*b #a**2 - b**2 - 8
 
-def nca(a):
-    return 5 - a
+def nca(alpha, beta):
+    return alpha/beta
 
-def ncb(a):
-    return a/4
+def ncb(gamma, delta):
+    return gamma/delta
 
 def system(vars):
     a, b = vars[0], vars[1]
@@ -171,7 +173,7 @@ def system(vars):
 # Example usage: create a phase portrait for the example linear system
 if __name__ == '__main__':
     fig, ax = phase_portrait(system,
-                             x0=[0, 0],
+                             x0=[a0, b0],
                              dx=5,
                              dy=5,
                              grid_points=200,

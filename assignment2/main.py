@@ -348,7 +348,7 @@ u, s, p, t = solve_sde_velo(0.01, 1000)
 plt.plot(p[0], p[1], label="Patient Beta", color="tab:red")
 plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
 plt.axhline(theta[1], color="gray", linestyle="--")
-plt.plot(pA, pB, label="Patient Alpha", color="tab:blue")
+plt.plot(sol_alpha.y[2], sol_alpha.y[3], label="Patient Alpha", color="tab:blue")
 
 plt.xlabel("Protein A Concentration [M]")
 plt.ylabel("Protein B Concentration [M]")
@@ -374,13 +374,13 @@ plt.plot(t, mean_p[0], color="tab:blue")
 plt.fill_between(
     t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
 )
-plt.plot(t, pA, color="tab:blue", linestyle="--")
+plt.plot(t, sol_alpha.y[2], color="tab:blue", linestyle="--")
 
 plt.plot(t, mean_p[1], color="tab:red")
 plt.fill_between(
     t, mean_p[1] - err_p[1], mean_p[1] + err_p[1], color="tab:red", alpha=0.2
 )
-plt.plot(t, pB, color="tab:red", linestyle="--")
+plt.plot(t, sol_alpha.y[3], color="tab:red", linestyle="--")
 
 
 species_handles = [

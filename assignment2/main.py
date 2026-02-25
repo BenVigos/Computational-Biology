@@ -125,46 +125,21 @@ print(f"Most likely sequence of hidden states for {sequence}:", path)
 # model formulation may depend on the observed mRNA status. Parameter values for these models are
 # given in Tables 4 and 5, respectively. Ensure to present relevant graphs/visualizations.
 
-<<<<<<< Updated upstream
-# Trascription problem: use ODE
-m_a, m_b = 2.35, 2.35  # s-1
-gamma_a, gamma_b = 1, 1  # s-1
-k_pa, k_pb = 1.0, 1.0  # s-1
-theta_a, theta_b = 0.21, 0.21  # M
-n_a, n_b = 3, 3  # hill coefficient
-delta_pa, delta_pb = 1.0, 1.0  # s-1
-mRNA_a, mRNA_b = 0.8, 0.8  # M
-P_a, P_b = 0.8, 0.8  # M
-=======
-# Trascription problem: use ODE (assumption: simpe two-gene network)
+# Trascription problem: use ODE (assumption: simple two-gene network)
 m_a, m_b = 2.35, 2.35 #s-1
 gamma_a, gamma_b = 1,1  #s-1
 k_pa, k_pb = 1.0, 1.0 #s-1
 theta_a, theta_b = 0.21, 0.21 #M
-n_a, n_b = 3, 3 # hill coefficient (assumption: use hill and not PWL activation)
+n_a, n_b = 3, 3 # hill coefficient (assumption: use hill and not PWL activation because of low n coefficients)
 delta_pa, delta_pb = 1.0, 1.0 #s-1
 mRNA_a, mRNA_b = 0.8, 0.8 #M
 P_a, P_b = 0.8, 0.8 #M
->>>>>>> Stashed changes
 
 
 def hill_activation(P, theta, n):
     """Calculate the Hill activation function."""
     return P**n / (theta**n + P**n)
 
-<<<<<<< Updated upstream
-
-def hill_inhibition(P, theta, n):
-    """Calculate the Hill inhibition function."""
-    return 1 - hill_activation(P, theta, n)
-
-
-def patient_alpha_ode(t, y):
-    """Calculate the derivatives of mRNA and protein for Patient Alpha."""
-    ra, rb, P_a, P_b = y
-    dra_dt = m_a * hill_inhibition(P_b, theta_b, n_b) - gamma_a * ra
-    drb_dt = m_b * 1 - gamma_b * rb  # no inhibition on rb
-=======
 def hill_inhibition(P, theta, n):
     """Calculate the Hill inhibition function."""
     return 1- hill_activation(P, theta, n)
@@ -177,33 +152,16 @@ def patient_alpha_ode(t, y, hijack = None):
         drb_dt = m_b * 1 - gamma_b * rb # no inhibition on rb
     else:
         drb_dt = m_b * hill_inhibition(P_a, theta_a, n_a) - gamma_b * rb
->>>>>>> Stashed changes
     dPa_dt = k_pa * ra - delta_pa * P_a
     dPb_dt = k_pb * rb - delta_pb * P_b
     return [dra_dt, drb_dt, dPa_dt, dPb_dt]
 
-<<<<<<< Updated upstream
-
-t = np.linspace(0, 50, 1000)
-=======
 t_eval = np.linspace(0, 100, 1000)
->>>>>>> Stashed changes
 y0 = [mRNA_a, mRNA_b, P_a, P_b]
 
 sol_alpha = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(True,))
 sol_alpha_regular = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(False,))
 
-<<<<<<< Updated upstream
-plt.figure(figsize=(8, 6))
-plt.plot(t, pA_alpha, label="pA(t)", color="red", linewidth=2)
-plt.xlabel("Tempo [s]", fontsize=12)
-plt.ylabel("Concentrazione Proteina A [pA]", fontsize=12)
-plt.title("Time Evolution of pA Concentration", fontsize=14)
-plt.legend()
-plt.grid(True)
-plt.savefig("pA over time")
-plt.clf()
-=======
 def plots_alpha(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     
@@ -326,7 +284,6 @@ def plots_alpha(sol, t, hijack=None):
 
 plots_alpha(sol_alpha, t_eval, hijack=True)
 plots_alpha(sol_alpha_regular, t_eval, hijack=False)
->>>>>>> Stashed changes
 
 ### Task 2: Analysis of Patient Sample Beta ###
 

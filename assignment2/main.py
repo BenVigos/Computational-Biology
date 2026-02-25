@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from matplotlib.lines import Line2D
+
 
 np.random.seed(3)
 
@@ -45,7 +47,7 @@ def viterbi_algorithm(sequence, A, B, P):
 
     # Initialization step
     for s in range(n_states):
-        V[s, 0] = P[s] * B[s, get_letter_index(sequence[s])]
+        V[s, 0] = P[s] * B[s, get_letter_index(sequence[0])]
 
     # Recursion step
     for t in range(1, T):
@@ -56,7 +58,7 @@ def viterbi_algorithm(sequence, A, B, P):
                 prob = (
                     V[s_prev, t - 1]
                     * A[s_prev, s]
-                    * B[s, get_letter_index(sequence[s])]
+                    * B[s, get_letter_index(sequence[t])]
                 )
                 if prob > max_prob:
                     max_prob = prob
@@ -154,7 +156,7 @@ def patient_alpha_ode(t, y):
     return [dra_dt, drb_dt, dPa_dt, dPb_dt]
 
 
-t = np.linspace(0, 50, 5000)
+t = np.linspace(0, 50, 1000)
 y0 = [mRNA_a, mRNA_b, P_a, P_b]
 sol_alpha = solve_ivp(patient_alpha_ode, [0, 50], y0, t_eval=t)
 
@@ -220,9 +222,7 @@ def solve_sde_velo(dt, steps):
             du = (c[g] - current_beta[g] * u[g, i]) * dt + sigma_1[g] * dW1
             u[g, i + 1] = max(0, u[g, i] + du)
 
-            ds = (current_beta[g] * u[g, i] - gamma[g] * s[g, i]) * dt + sigma_2[
-                g
-            ] * dW2
+            ds = (current_beta[g] * u[g, i] - gamma[g] * s[g, i]) * dt + sigma_2[g] * dW2
             s[g, i + 1] = max(0, s[g, i] + ds)
 
             dp = (k_p[g] * s[g, i] - delta[g] * p[g, i]) * dt
@@ -231,7 +231,7 @@ def solve_sde_velo(dt, steps):
     return u, s, p, t
 
 
-u, s, p, t = solve_sde_velo(0.01, 5000)
+u, s, p, t = solve_sde_velo(0.01, 1000)
 
 plt.plot(p[0], p[1], label="Patient Beta", color="tab:red")
 plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
@@ -248,29 +248,58 @@ plt.annotate(
     "Final State", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
 )
 
+plt.savefig("A_vs_B_Phase")
 plt.show()
 
 
 n_runs = 10
-all_results = [solve_sde_velo(0.01, 5000) for _ in range(n_runs)]
+all_results = [solve_sde_velo(0.01, 1000) for _ in range(n_runs)]
 protein_runs = np.array([res[2] for res in all_results])
 mean_p = np.mean(protein_runs, axis=0)
 err_p = 1.96 * (np.std(protein_runs, axis=0) / np.sqrt(n_runs))
 
-plt.plot(t, mean_p[0], color="tab:blue", label="Protein A")
+plt.plot(t, mean_p[0], color="tab:blue")
 plt.fill_between(
     t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
 )
+plt.plot(t, pA_alpha, color="tab:blue", linestyle="--")
 
-plt.plot(t, mean_p[1], color="tab:red", label="Protein B")
+plt.plot(t, mean_p[1], color="tab:red")
 plt.fill_between(
     t, mean_p[1] - err_p[1], mean_p[1] + err_p[1], color="tab:red", alpha=0.2
 )
+plt.plot(t, pB_alpha, color="tab:red", linestyle="--")
+
+
+species_handles = [
+    Line2D([0], [0], color="tab:blue", lw=2, label="Protein A"),
+    Line2D([0], [0], color="tab:red", lw=2, label="Protein B"),
+]
+model_handles = [
+    Line2D([0], [0], color="black", lw=2, linestyle="-", label="SDEVelo"),
+    Line2D([0], [0], color="black", lw=2, linestyle="--", label="ODE"),
+]
+
+ax = plt.gca()
+
+plt.subplots_adjust(right=0.78)
+
+leg_species = ax.legend(
+    handles=species_handles, title="Species",
+    loc="upper left", bbox_to_anchor=(1.02, 1.00), borderaxespad=0.0
+)
+ax.add_artist(leg_species)
+
+ax.legend(
+    handles=model_handles, title="Model",
+    loc="upper left", bbox_to_anchor=(1.02, 0.80), borderaxespad=0.0
+)
+
 
 plt.xlabel("Time [s]")
 plt.ylabel("Concentration [M]")
 
-plt.legend()
+plt.savefig("ODE_vs_SDE")
 plt.show()
 
 ### Task 3: Comparative Analysis & Diagnosis ###

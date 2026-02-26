@@ -124,10 +124,15 @@ $$\begin{align}
 and solving for R and E. This yields the fixed points:
 1. $(R^*, E^*) = (0, 0)$
 2. $(R^*, E^*) = \left(\frac{\gamma}{\delta}, \frac{\alpha}{\beta}\right)$
-3. $(R^*, E^*) = \left(\frac{\alpha}{\beta}, \frac{\gamma}{\delta}\right)$
 
 The jacobian matrix for this system is given by:
 $$J = \begin{bmatrix}
 \alpha - \beta E & -\beta R \\
 \delta E & -\gamma + \delta R
 \end{bmatrix}$$
+
+The stability of the fixed points can be determined by evaluating the eigenvalues of the jacobian matrix at each fixed point.
+
+The eigenvalues at the first fixed point $(0, 0)$ are:
+$$\lambda_1 = \alpha = 2$$
+$$\lambda_2 = -\gamma = -1$$

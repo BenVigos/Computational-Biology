@@ -128,7 +128,6 @@ print(f"Most likely sequence of hidden states for {sequence}:", path)
 # given in Tables 4 and 5, respectively. Ensure to present relevant graphs/visualizations.
 
 # Trascription problem: use ODE (assumption: simple two-gene network)
-m_a, m_b = 2.35, 2.35 #s-1 # assumption: no steady state since same rates
 gamma_a, gamma_b = 1,1  #s-1
 k_pa, k_pb = 1.0, 1.0 #s-1 
 theta_a, theta_b = 0.21, 0.21 #M
@@ -164,7 +163,6 @@ y0 = [mRNA_a, mRNA_b, P_a, P_b]
 sol_alpha = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(True,))
 sol_alpha_regular = solve_ivp(patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(False,))
 
-def plots_alpha(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     
     # pA, pB over time

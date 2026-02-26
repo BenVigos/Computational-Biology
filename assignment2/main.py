@@ -11,12 +11,12 @@ np.random.seed(3)
 
 def get_letter_index(letter):
     """
-    Helper function to convert a letter (A, C, G, T) to an index (0, 1, 2, 3).
+    Helper function to convert a letter (A, C, G, U) to an index (0, 1, 2, 3).
     :param letter: A character representing a nucleotide.
     :return: An integer index corresponding to the nucleotide.
     """
     index = {"A": 0, "U": 1, "G": 2, "C": 3}
-    return index.get(letter)
+    return index.get(letter, ValueError)
 
 
 def get_exon_intron_state(state):
@@ -420,3 +420,5 @@ plt.show()
 # Compare the protein phase portraits for Patient Alpha and Patient Beta. Describe the dynamic
 # behaviors observed in each plot. What do these different behaviors imply about the cellular "fate" of
 # each sample? Justify your conclusions based on the trajectories in your plots.
+
+# %%

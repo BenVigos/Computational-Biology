@@ -51,11 +51,6 @@ obtaining:
 Then, Jacobian is:
 $$ J = \begin{pmatrix} \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} \end{pmatrix} = \begin{pmatrix} \alpha - \beta E & -\beta R \\ \delta E & -\gamma + \delta R \end{pmatrix}$$
 
-\left[ \begin{array}{cc}
-2 & -1 \\
-& 1 & -1
-\end{array} \right]
-
 At point $R=0, E=0$: $$J(0,0) = \begin{pmatrix} 2 & 0 \\ 0 & -1 \end{pmatrix}$$
 
 So that $\lambda_1 = 2$ e $\lambda_2 = -1$, then $(0,0)$ is point of saddle (unstable).

@@ -11,12 +11,12 @@ np.random.seed(3)
 
 def get_letter_index(letter):
     """
-    Helper function to convert a letter (A, C, G, T) to an index (0, 1, 2, 3).
+    Helper function to convert a letter (A, C, G, U) to an index (0, 1, 2, 3).
     :param letter: A character representing a nucleotide.
     :return: An integer index corresponding to the nucleotide.
     """
     index = {"A": 0, "U": 1, "G": 2, "C": 3}
-    return index.get(letter)
+    return index.get(letter, ValueError)
 
 
 def get_exon_intron_state(state):
@@ -324,95 +324,192 @@ def solve_sde_velo(dt, steps):
     p[:, 0] = 0.8
 
     for i in range(steps - 1):
-        inhibition_B = hill_inhibition(p[0, i], theta[1], n[1])
-        current_beta = np.array([beta[0], beta[1] * inhibition_B])
+        activation_of_A = hill_activation(p[1, i], theta[1], n[1])
+        inhibition_of_B = hill_inhibition(p[0, i], theta[0], n[0])
 
-        for g in range(2):
-            dW1 = np.random.normal(0, np.sqrt(dt))
-            dW2 = np.random.normal(0, np.sqrt(dt))
+        current_c = np.array([c[0] * activation_of_A, c[1] * inhibition_of_B])
 
-            du = (c[g] - current_beta[g] * u[g, i]) * dt + sigma_1[g] * dW1
-            u[g, i + 1] = max(0, u[g, i] + du)
+        dW1 = np.random.normal(0, np.sqrt(dt), 2)
+        dW2 = np.random.normal(0, np.sqrt(dt), 2)
 
-            ds = (current_beta[g] * u[g, i] - gamma[g] * s[g, i]) * dt + sigma_2[g] * dW2
-            s[g, i + 1] = max(0, s[g, i] + ds)
+        du = (current_c - beta * u[:, i]) * dt + sigma_1 * dW1
+        u[:, i + 1] = np.maximum(0, u[:, i] + du)
 
-            dp = (k_p[g] * s[g, i] - delta[g] * p[g, i]) * dt
-            p[g, i + 1] = max(0, p[g, i] + dp)
+        ds = (b * u[:, i] - gamma * s[:, i]) * dt + sigma_2 * dW2
+        s[:, i + 1] = np.maximum(0, s[:, i] + ds)
+
+        dp = (k_p * s[:, i] - delta * p[:, i]) * dt
+        p[:, i + 1] = np.maximum(0, p[:, i] + dp)
 
     return u, s, p, t
 
 ra, rb, pA, pB = sol_alpha.y[0], sol_alpha.y[1], sol_alpha.y[2], sol_alpha.y[3]
 u, s, p, t = solve_sde_velo(0.01, 1000)
 
-plt.plot(p[0], p[1], label="Patient Beta", color="tab:red")
-plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
-plt.axhline(theta[1], color="gray", linestyle="--")
-plt.plot(sol_alpha.y[2], sol_alpha.y[3], label="Patient Alpha", color="tab:blue")
+def plot_ode_sdevelo(sol_ode, sol_sde, label_ode, label_sde, savefig=None):
+    ra, rb, pA, pB = sol_ode.y
+    u, s, p, t = sol_sde
+    plt.plot(p[0], p[1], label=label_sde, color="tab:red")
+    # plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
+    # plt.axhline(theta[1], color="gray", linestyle="--")
+    plt.plot(sol_alpha_regular.y[2], sol_alpha_regular.y[3], label=label_ode, color="tab:blue")
 
-plt.xlabel("Protein A Concentration [M]")
-plt.ylabel("Protein B Concentration [M]")
-plt.legend()
-plt.grid(True, which="both", linestyle=":", alpha=0.5)
+    plt.xlabel("Protein A Concentration [M]")
+    plt.ylabel("Protein B Concentration [M]")
+    plt.legend()
+    plt.grid(True, which="both", linestyle=":", alpha=0.5)
 
-plt.scatter(p[0, -1], p[1, -1], color="black", zorder=5)
-plt.annotate(
-    "Final State", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
-)
+    # plt.scatter(p[0, -1], p[1, -1], color="black", zorder=5)
+    # plt.annotate(
+    #     "Final State", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
+    # )
+    if savefig is not None:
+        plt.savefig(savefig)
+    plt.show()
 
-plt.savefig("A_vs_B_Phase")
-plt.show()
-
-
-n_runs = 10
-all_results = [solve_sde_velo(0.01, 1000) for _ in range(n_runs)]
-protein_runs = np.array([res[2] for res in all_results])
-mean_p = np.mean(protein_runs, axis=0)
-err_p = 1.96 * (np.std(protein_runs, axis=0) / np.sqrt(n_runs))
-
-plt.plot(t, mean_p[0], color="tab:blue")
-plt.fill_between(
-    t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
-)
-plt.plot(t, sol_alpha.y[2], color="tab:blue", linestyle="--")
-
-plt.plot(t, mean_p[1], color="tab:red")
-plt.fill_between(
-    t, mean_p[1] - err_p[1], mean_p[1] + err_p[1], color="tab:red", alpha=0.2
-)
-plt.plot(t, sol_alpha.y[3], color="tab:red", linestyle="--")
+plot_ode_sdevelo(sol_alpha, solve_sde_velo(0.01, 1000), "Patient Alpha", "Patient Beta")
+plot_ode_sdevelo(sol_alpha_regular, solve_sde_velo(0.01, 1000), "Patient Alpha", "Patient Beta")
 
 
-species_handles = [
-    Line2D([0], [0], color="tab:blue", lw=2, label="Protein A"),
-    Line2D([0], [0], color="tab:red", lw=2, label="Protein B"),
-]
-model_handles = [
-    Line2D([0], [0], color="black", lw=2, linestyle="-", label="SDEVelo"),
-    Line2D([0], [0], color="black", lw=2, linestyle="--", label="ODE"),
-]
+def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
+    all_results = [solve_sde_velo(dt, steps) for _ in range(n_runs)]
+    protein_runs = np.array([res[2] for res in all_results])
+    mean_p = np.mean(protein_runs, axis=0)
+    err_p = 1.96 * (np.std(protein_runs, axis=0) / np.sqrt(n_runs))
 
-ax = plt.gca()
+    plt.plot(t, mean_p[0], color="tab:blue")
+    plt.fill_between(
+        t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
+    )
+    plt.plot(t, sol_alpha_regular.y[2], color="tab:blue", linestyle="--")
 
-plt.subplots_adjust(right=0.78)
-
-leg_species = ax.legend(
-    handles=species_handles, title="Species",
-    loc="upper left", bbox_to_anchor=(1.02, 1.00), borderaxespad=0.0
-)
-ax.add_artist(leg_species)
-
-ax.legend(
-    handles=model_handles, title="Model",
-    loc="upper left", bbox_to_anchor=(1.02, 0.80), borderaxespad=0.0
-)
+    plt.plot(t, mean_p[1], color="tab:red")
+    plt.fill_between(
+        t, mean_p[1] - err_p[1], mean_p[1] + err_p[1], color="tab:red", alpha=0.2
+    )
+    plt.plot(t, sol_alpha_regular.y[3], color="tab:red", linestyle="--")
 
 
-plt.xlabel("Time [s]")
-plt.ylabel("Concentration [M]")
+    species_handles = [
+        Line2D([0], [0], color="tab:blue", lw=2, label="Protein A"),
+        Line2D([0], [0], color="tab:red", lw=2, label="Protein B"),
+    ]
+    model_handles = [
+        Line2D([0], [0], color="black", lw=2, linestyle="-", label="SDEVelo"),
+        Line2D([0], [0], color="black", lw=2, linestyle="--", label="ODE"),
+    ]
 
-plt.savefig("ODE_vs_SDE")
-plt.show()
+    ax = plt.gca()
+
+    plt.subplots_adjust(right=0.78)
+
+    leg_species = ax.legend(
+        handles=species_handles, title="Species",
+        loc="upper left", bbox_to_anchor=(1.02, 1.00), borderaxespad=0.0
+    )
+    ax.add_artist(leg_species)
+
+    ax.legend(
+        handles=model_handles, title="Model",
+        loc="upper left", bbox_to_anchor=(1.02, 0.80), borderaxespad=0.0
+    )
+
+
+    plt.xlabel("Time [s]")
+    plt.ylabel("Concentration [M]")
+
+    if savefig is not None:
+        plt.savefig(savefig)
+    plt.show()
+
+sdevelo_multiplot(10, 0.01, 10)
+
+### U, S, P, T
+
+# 1. Setup and Multirun Execution
+def plot_sdevelo_concentrations(n_runs: int, dt: float, steps: int):
+    all_u = np.zeros((n_runs, 2, steps))
+    all_s = np.zeros((n_runs, 2, steps))
+    all_p = np.zeros((n_runs, 2, steps))
+
+    for i in range(n_runs):
+        u, s, p, t = solve_sde_velo(dt, steps)
+        all_u[i] = u
+        all_s[i] = s
+        all_p[i] = p
+
+    # 2. Calculate Means and Standard Errors
+    mean_u = np.mean(all_u, axis=0)
+    mean_s = np.mean(all_s, axis=0)
+    mean_p = np.mean(all_p, axis=0)
+
+    # 95% Confidence Interval (1.96 * Standard Error)
+    err_u = 1.96 * (np.std(all_u, axis=0) / np.sqrt(n_runs))
+    err_s = 1.96 * (np.std(all_s, axis=0) / np.sqrt(n_runs))
+    err_p = 1.96 * (np.std(all_p, axis=0) / np.sqrt(n_runs))
+
+    # 3. Plotting
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Define styling: Colors for genes, linestyles for molecule types
+    styles = [
+        {"mean": mean_u, "err": err_u, "ls": ":",  "alpha_line": 0.8, "alpha_fill": 0.1},
+        {"mean": mean_s, "err": err_s, "ls": "--", "alpha_line": 0.8, "alpha_fill": 0.1},
+        {"mean": mean_p, "err": err_p, "ls": "-",  "alpha_line": 1.0, "alpha_fill": 0.2}
+    ]
+
+    colors = ["tab:blue", "tab:red"] # Gene A, Gene B
+
+    # Loop through genes and styles to plot lines and fill_betweens
+    for gene_idx, color in enumerate(colors):
+        for style in styles:
+            # Plot mean line
+            ax.plot(
+                t, style["mean"][gene_idx], 
+                color=color, linestyle=style["ls"], alpha=style["alpha_line"]
+            )
+            # Plot shaded error region
+            ax.fill_between(
+                t, 
+                style["mean"][gene_idx] - style["err"][gene_idx], 
+                style["mean"][gene_idx] + style["err"][gene_idx], 
+                color=color, alpha=style["alpha_fill"]
+            )
+
+    # 4. Create Custom Legends
+    gene_handles = [
+        Line2D([0], [0], color="tab:blue", lw=2, label="Gene A"),
+        Line2D([0], [0], color="tab:red", lw=2, label="Gene B"),
+    ]
+
+    molecule_handles = [
+        Line2D([0], [0], color="black", lw=2, linestyle=":", label="Unspliced (u)"),
+        Line2D([0], [0], color="black", lw=2, linestyle="--", label="Spliced (s)"),
+        Line2D([0], [0], color="black", lw=2, linestyle="-", label="Protein (p)"),
+    ]
+
+    # Adjust layout and add legends
+    plt.subplots_adjust(right=0.75)
+
+    leg_genes = ax.legend(
+        handles=gene_handles, title="Gene",
+        loc="upper left", bbox_to_anchor=(1.02, 1.00), borderaxespad=0.0
+    )
+    ax.add_artist(leg_genes)
+
+    ax.legend(
+        handles=molecule_handles, title="Molecule Type",
+        loc="upper left", bbox_to_anchor=(1.02, 0.75), borderaxespad=0.0
+    )
+
+    plt.xlabel("Time [s]")
+    plt.ylabel("Concentration [M]")
+    plt.title(f"Averaged SDE Trajectories ({n_runs} runs)")
+
+    plt.savefig("Multirun_SDE_Trajectory.png", dpi=300, bbox_inches="tight")
+    plt.show()
+
+plot_sdevelo_concentrations(10, 0.01, 1000)
 
 ### Task 3: Comparative Analysis & Diagnosis ###
 
@@ -420,3 +517,4 @@ plt.show()
 # Compare the protein phase portraits for Patient Alpha and Patient Beta. Describe the dynamic
 # behaviors observed in each plot. What do these different behaviors imply about the cellular "fate" of
 # each sample? Justify your conclusions based on the trajectories in your plots.
+

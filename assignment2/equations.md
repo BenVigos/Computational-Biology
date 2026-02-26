@@ -51,9 +51,9 @@ dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
 | $a_i$ | Time shift or activation delay for transcription ($s$). |
 | $\beta^*_i$ | Regulated splicing rate influenced by protein interactions. |
 | $\beta_i$ | Base splicing rate parameter ($s^{-1}$). |
-| $h^+(P, \theta, n)$ | Hill activation function used for Gene A. |
-| $h^-(P, \theta, n)$ | Hill inhibition function used for Gene B. |
-| $P_i$ | Concentration of Protein A or Protein B ($M$). |
+| $h^+(P, \theta, n)$ | Hill activation function. |
+| $h^-(P, \theta, n)$ | Hill inhibition function. |
+| $P_i$ | Concentration of Protein ($M$). |
 | $\theta_i$ | Expression threshold for protein binding ($M$). |
 | $n_i$ | Hill coefficient representing regulatory nonlinearity. |
 | $dU_i$ | Change in concentration of unspliced mRNA (pre-mRNA). |

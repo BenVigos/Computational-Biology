@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 from matplotlib.lines import Line2D
+import pandas as pd
 
 
 np.random.seed(3)
@@ -85,7 +86,8 @@ def viterbi_algorithm(sequence, A, B, P):
     for i, s in enumerate(best_path):
         best_path[i] = get_exon_intron_state(s)
 
-    return best_path
+
+    return best_path, V, backpointer
 
 
 def rna_vel(t, u, s, beta, gamma, c, a, b):
@@ -117,8 +119,12 @@ A = np.array([[0.9, 0.1], [0.2, 0.8]])  # Transition probabilities for the HMM s
 P = [0.5, 0.5]  # Initial state probabilities
 
 
-path = viterbi_algorithm(sequence, A, B, P)
+path, V, backpointer  = viterbi_algorithm(sequence, A, B, P)
+V_df = pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))])
+backpointer_df = pd.DataFrame(backpointer, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))])
 print(f"Most likely sequence of hidden states for {sequence}:", path)
+print(V_df)
+print(backpointer_df)
 
 # (b) Based on the mechanism you identified for patient alpha, choose the appropriate mathematical
 # framework to model the gene regulation dynamics ODE model vs SDEVelo model. Also, the choice of

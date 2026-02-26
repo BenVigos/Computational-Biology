@@ -330,29 +330,66 @@ def solve_sde_velo(dt, steps):
     return u, s, p, t
 
 
-def plot_ode_sdevelo(sol_ode, sol_sde, label_ode, label_sde, savefig=None):
-    ra, rb, pA, pB = sol_ode.y
+def sdevelo_phase_portrait(sol_sde, label_sde, ode_func, savefig=None, title="", ode_args=(), padding=0.1, grid_size=20):
     u, s, p, t = sol_sde
+
+    pA_min, pA_max = p[0].min(), p[0].max()
+    pB_min, pB_max = p[1].min(), p[1].max()
+
+    pA_range = pA_max - pA_min if (pA_max - pA_min) > 0 else 1.0
+    pB_range = pB_max - pB_min if (pB_max - pB_min) > 0 else 1.0
+
+    pA_grid = np.linspace(pA_min - padding * pA_range, pA_max + padding * pA_range, grid_size)
+    pB_grid = np.linspace(pB_min - padding * pB_range, pB_max + padding * pB_range, grid_size)
+    PA, PB = np.meshgrid(pA_grid, pB_grid)
+    
+    U = np.zeros_like(PA)
+    V = np.zeros_like(PB)
+    
+    for i in range(grid_size):
+        for j in range(grid_size):
+            state = [u[-1], s[-1], PA[i, j], PB[i, j]]
+            derivatives = ode_func(0, state, *ode_args) 
+            U[i, j] = derivatives[2] 
+            V[i, j] = derivatives[3]
+            
+    N = np.sqrt(U**2 + V**2)
+    N[N == 0] = 1.0
+    U_norm = U / N
+    V_norm = V / N
+
+    plt.quiver(PA, PB, U_norm, V_norm, color='lightgray', alpha=0.8, pivot='mid', scale=35, width=0.003)
+
+
+    plt.streamplot(PA, PB, U, V, color='lightgray', linewidth=1, density=1, arrowsize=1)
     plt.plot(p[0], p[1], label=label_sde, color="tab:red")
-    # plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
-    # plt.axhline(theta[1], color="gray", linestyle="--")
-    plt.plot(sol_ode.y[2], sol_ode.y[3], label=label_ode, color="tab:blue")
+    # # plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
+    # # plt.axhline(theta[1], color="gray", linestyle="--")
+    # plt.plot(sol_ode.y[2], sol_ode.y[3], label=label_ode, color="tab:blue")
 
     plt.xlabel("Protein A Concentration [M]")
     plt.ylabel("Protein B Concentration [M]")
     plt.legend()
     plt.grid(True, which="both", linestyle=":", alpha=0.5)
 
-    # plt.scatter(p[0, -1], p[1, -1], color="black", zorder=5)
-    # plt.annotate(
-    #     "Final State", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
-    # )
+    plt.scatter(p[0, 0], p[1, 0], color="black", zorder=5)
+    plt.annotate(
+        "Initial state", (p[0, 0], p[1, 0]), textcoords="offset points", xytext=(10, -10)
+    )
+
+    plt.scatter(p[0, -1], p[1, -1], color="black", zorder=5)
+    plt.annotate(
+        "Final state", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
+    )
+
+    plt.title(title)
+
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
     plt.show()
 
 
-def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
+def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     t = np.linspace(0, steps * dt, steps)
     all_results = [solve_sde_velo(dt, steps) for _ in range(n_runs)]
     protein_runs = np.array([res[2] for res in all_results])
@@ -363,13 +400,13 @@ def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
     plt.fill_between(
         t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
     )
-    plt.plot(t, sol_alpha_regular.y[2], color="tab:blue", linestyle="--")
+    plt.plot(t, sol_ode.y[2], color="tab:blue", linestyle="--")
 
     plt.plot(t, mean_p[1], color="tab:red")
     plt.fill_between(
         t, mean_p[1] - err_p[1], mean_p[1] + err_p[1], color="tab:red", alpha=0.2
     )
-    plt.plot(t, sol_alpha_regular.y[3], color="tab:red", linestyle="--")
+    plt.plot(t, sol_ode.y[3], color="tab:red", linestyle="--")
 
     species_handles = [
         Line2D([0], [0], color="tab:blue", lw=2, label="Protein A"),
@@ -400,16 +437,19 @@ def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
         bbox_to_anchor=(1.02, 0.80),
         borderaxespad=0.0,
     )
-
+    plt.title(f"{title} ($n_{{\\text{{SDEVelo}}}}={n_runs}$)")
     plt.xlabel("Time [s]")
     plt.ylabel("Concentration [M]")
+    plt.grid(True, which="both", linestyle=":", alpha=0.5)
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
     plt.show()
 
 
-def plot_sdevelo_concentrations(n_runs: int, dt: float, steps: int):
+def plot_sdevelo_concentrations(
+    n_runs: int, dt: float, steps: int, title: str = "", savefig=None
+):
     all_u = np.zeros((n_runs, 2, steps))
     all_s = np.zeros((n_runs, 2, steps))
     all_p = np.zeros((n_runs, 2, steps))
@@ -431,7 +471,7 @@ def plot_sdevelo_concentrations(n_runs: int, dt: float, steps: int):
     err_p = 1.96 * (np.std(all_p, axis=0) / np.sqrt(n_runs))
 
     # 3. Plotting
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots()
 
     # Define styling: Colors for genes, linestyles for molecule types
     styles = [
@@ -475,9 +515,9 @@ def plot_sdevelo_concentrations(n_runs: int, dt: float, steps: int):
     ]
 
     molecule_handles = [
-        Line2D([0], [0], color="black", lw=2, linestyle=":", label="Unspliced (u)"),
-        Line2D([0], [0], color="black", lw=2, linestyle="--", label="Spliced (s)"),
-        Line2D([0], [0], color="black", lw=2, linestyle="-", label="Protein (p)"),
+        Line2D([0], [0], color="black", lw=2, linestyle=":", label=r"Unspliced ($U$)"),
+        Line2D([0], [0], color="black", lw=2, linestyle="--", label=r"Spliced ($S$)"),
+        Line2D([0], [0], color="black", lw=2, linestyle="-", label=r"Protein ($P$)"),
     ]
 
     # Adjust layout and add legends
@@ -502,9 +542,11 @@ def plot_sdevelo_concentrations(n_runs: int, dt: float, steps: int):
 
     plt.xlabel("Time [s]")
     plt.ylabel("Concentration [M]")
-    plt.title(f"Averaged SDE Trajectories ({n_runs} runs)")
+    plt.title(rf"{title} ($n={n_runs})$")
+    plt.grid(True, which="both", linestyle=":", alpha=0.5)
 
-    plt.savefig("plots/Multirun_SDE_Trajectory.png", dpi=300, bbox_inches="tight")
+    if savefig is not None:
+        plt.savefig(f"plots/{savefig}")
     plt.show()
 
 
@@ -563,8 +605,8 @@ if __name__ == "__main__":
 
     ## patient beta
 
-    plots_alpha(sol_alpha, t_eval, hijack=True)
-    plots_alpha(sol_alpha_regular, t_eval, hijack=False)
+    # plots_alpha(sol_alpha, t_eval, hijack=True)
+    # plots_alpha(sol_alpha_regular, t_eval, hijack=False)
 
     ### Task 2: Analysis of Patient Sample Beta ###
 
@@ -590,16 +632,37 @@ if __name__ == "__main__":
     sigma_1 = np.array([0.05, 0.05])
     sigma_2 = np.array([0.05, 0.05])
 
-    plot_ode_sdevelo(
-        sol_alpha, solve_sde_velo(0.01, 10000), "Patient Alpha", "Patient Beta"
-    )
-    plot_ode_sdevelo(
-        sol_alpha_regular, solve_sde_velo(0.01, 10000), "Patient Alpha", "Patient Beta"
+    dt, t_max = 0.01, 100
+    steps = int(t_max / dt)
+    t_eval = np.linspace(0, t_max, steps)
+    sol_ode = solve_ivp(patient_alpha_ode, [0, t_max], y0, t_eval=t_eval, args=(False,))
+
+    sdevelo_phase_portrait(
+        solve_sde_velo(dt, steps),
+        "Patient Beta",
+        patient_alpha_ode,
+        ode_args=(False,),
+        title="Phase Portrait of Protein concentrations",
+        savefig="sdevelo_phase_portrait",
+        grid_size=100,
     )
 
-    sdevelo_multiplot(10, 0.01, 1000)
+    sdevelo_multiplot(
+        10,
+        dt,
+        steps,
+        sol_ode,
+        title="Protein concentration over time",
+        savefig="sdevelo_concentration_over_time",
+    )
 
-    plot_sdevelo_concentrations(10, 0.01, 10000)
+    plot_sdevelo_concentrations(
+        10,
+        dt,
+        steps,
+        title="Concentration of (un)spliced RNA and protein over time",
+        savefig="sdevelo_concentrations_overt_time",
+    )
 
     ### Task 3: Comparative Analysis & Diagnosis ###
 

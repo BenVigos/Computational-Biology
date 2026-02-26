@@ -27,16 +27,28 @@ where $h^+(P_b, \theta_b, n_b)$ and $h^-(P_a, \theta_a, n_a)$ are hill activatio
 ### SDEVelo
 
 $$\begin{align}
-du_i &= (c_i - \beta_i u_i)dt + \sigma_{1i}dW_1 \\
-ds_i &= (b_i u_i - \gamma_i s_i)dt +\sigma_{2i}dW_2 \\
-dp_i &= (k_{Pi} s_i - \delta_{Pi} p_i)dt
-\end{align}$$
+
+dU_a &= (\alpha_a(t) - \beta\circ U_a(t))dt + \sigma_{1a}dW_1 \\
+
+\alpha(t)_i &= \frac{c_i}{1+\exp b(t-a_i)} \\
+dB_t = dW_t = Z_i\sqrt(\Delta t) \\
+
+\beta_A^* &= \beta_a h^+(p_b, \theta_b, n_b) \\
 
 
-$$\begin{align}
-du_i &= (c_i - \beta_i u_i)dt + \sigma_{1i}dW_1 \\
-ds_i &= (b_i u_i - \gamma_i s_i)dt +\sigma_{2i}dW_2 \\
-dp_i &= (k_{Pi} s_i - \delta_{Pi} p_i)dt
+dS_a &= (\beta_a\circ U_a(t) - \gamma_a\circ S_a(t))dt + \sigma_{2a}dW_2 \\
+
+dP_a &= k_A S_a(t) - \sigma_a P_a \\
+
+\beta_b^* &= \beta_b h^+(p_a, \theta_a, n_a) \\
+
+
+\alpha(t)_i = \frac{c_i}{1+\exp b(t-a_i)} \\
+
+B = W_t = \sum_{i=1}^n Z_i\sqrt(\Delta t) \\
+
+
+
 \end{align}$$
 
 

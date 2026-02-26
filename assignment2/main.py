@@ -82,6 +82,8 @@ def viterbi_algorithm(sequence, A, B, P):
     best_path.append(-1)
     best_path.reverse()
 
+    print(backpointer, V)
+
     for i, s in enumerate(best_path):
         best_path[i] = get_exon_intron_state(s)
 
@@ -327,12 +329,12 @@ def solve_sde_velo(dt, steps):
         activation_of_A = hill_activation(p[1, i], theta[1], n[1])
         inhibition_of_B = hill_inhibition(p[0, i], theta[0], n[0])
 
-        current_c = np.array([c[0] * activation_of_A, c[1] * inhibition_of_B])
-
+        beta_star = np.array([c[0] * activation_of_A, c[1] * inhibition_of_B])
+        
         dW1 = np.random.normal(0, np.sqrt(dt), 2)
         dW2 = np.random.normal(0, np.sqrt(dt), 2)
 
-        du = (current_c - beta * u[:, i]) * dt + sigma_1 * dW1
+        du = (c - beta * u[:, i]) * dt + sigma_1 * dW1
         u[:, i + 1] = np.maximum(0, u[:, i] + du)
 
         ds = (b * u[:, i] - gamma * s[:, i]) * dt + sigma_2 * dW2
@@ -352,7 +354,7 @@ def plot_ode_sdevelo(sol_ode, sol_sde, label_ode, label_sde, savefig=None):
     plt.plot(p[0], p[1], label=label_sde, color="tab:red")
     # plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
     # plt.axhline(theta[1], color="gray", linestyle="--")
-    plt.plot(sol_alpha_regular.y[2], sol_alpha_regular.y[3], label=label_ode, color="tab:blue")
+    plt.plot(sol_ode.y[2], sol_ode.y[3], label=label_ode, color="tab:blue")
 
     plt.xlabel("Protein A Concentration [M]")
     plt.ylabel("Protein B Concentration [M]")
@@ -372,6 +374,7 @@ plot_ode_sdevelo(sol_alpha_regular, solve_sde_velo(0.01, 1000), "Patient Alpha",
 
 
 def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
+    t = np.linspace(0, steps * dt, steps)
     all_results = [solve_sde_velo(dt, steps) for _ in range(n_runs)]
     protein_runs = np.array([res[2] for res in all_results])
     mean_p = np.mean(protein_runs, axis=0)
@@ -422,7 +425,7 @@ def sdevelo_multiplot(n_runs, dt, steps, savefig=None):
         plt.savefig(savefig)
     plt.show()
 
-sdevelo_multiplot(10, 0.01, 10)
+sdevelo_multiplot(10, 0.01, 1000)
 
 ### U, S, P, T
 

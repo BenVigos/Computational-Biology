@@ -195,7 +195,7 @@ def hill_plots(sol, t, hijack=None):
     plt.plot(
         P_vals,
         act,
-        label=f"Activation ($\\theta$={theta_a}, n={n_a})",
+        label=f"Activation ($\\theta$={theta_a}, $n$={n_a})",
         color="green",
         linewidth=2,
     )
@@ -211,7 +211,7 @@ def hill_plots(sol, t, hijack=None):
         plt.plot(
             P_vals,
             inh,
-            label=f"Inhibition ($\\theta$={theta_a}, n={n_a})",
+            label=f"Inhibition ($\\theta$={theta_a}, $n$={n_a})",
             color="orange",
             linewidth=2,
         )
@@ -636,7 +636,7 @@ if __name__ == "__main__":
         steps,
         sol_ode,
         title="Protein concentration over time",
-        savefig="sdevelo_concentration_over_time",
+        savefig="sdevelo_versus_ode",
     )
 
     plot_sdevelo_concentrations(
@@ -644,7 +644,7 @@ if __name__ == "__main__":
         dt,
         steps,
         title="Concentration of (un)spliced RNA and protein over time",
-        savefig="sdevelo_concentrations_overt_time",
+        savefig="sdevelo_concentrations_over_time",
     )
 
     ### Task 3: Comparative Analysis & Diagnosis ###

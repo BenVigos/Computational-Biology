@@ -34,10 +34,10 @@ $$\begin{align}
 \end{align}$$
 
 where:
-* $\alphaR$:
-* $-\betaRE$:
-* $−\gammaE$:
-* $\deltaRE$:
+* $\alpha R$:
+* $-\beta RE$:
+* $−\gamma E$:
+* $\delta RE$:
 
 We use  $\alpha = 2, \beta = 1.1, \gamma = 1 and \delta = 0.9$.
 
@@ -49,7 +49,7 @@ obtaining:
 * $R_2^* = \frac{\gamma}{\delta} = \frac{1}{0.9} \approx 1.11$,  $E_2^* = \frac{\alpha}{\beta} = \frac{2}{1.1} \approx 1.81$
 
 Then, Jacobian is:
-$$ J = \begin{pmatrix} \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} \end{pmatrix} = \begin{pmatrix} \alpha - \beta E & -\beta R \\ \delta E & -\gamma + \delta R \end{pmatrix}$$
+$ J = \begin{pmatrix} \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} \end{pmatrix} = \begin{pmatrix} \alpha - \beta E & -\beta R \\ \delta E & -\gamma + \delta R \end{pmatrix}$
 
 At point $R=0, E=0$: $$J(0,0) = \begin{pmatrix} 2 & 0 \\ 0 & -1 \end{pmatrix}$$
 

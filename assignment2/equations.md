@@ -27,7 +27,7 @@ where $h^+(P_b, \theta_b, n_b)$ and $h^-(P_a, \theta_a, n_a)$ are hill activatio
 ### SDEVelo
 
 $$\begin{align}
-\alpha_A(t) &= \frac{c_a}{1+\exp b_A(t-a_A)} \\
+\alpha_A(t) &= \frac{c_A}{1+\exp b_A(t-a_A)} \\
 \beta_A^* &= \beta_A h^+(P_B, \theta_B, n_B) \\
 dU_A &= (\alpha_A(t) - \beta_A^* U_A(t))dt + \sigma_{1A}dW_{1A} \\
 dS_A &= (\beta_A^* U_A(t) - \gamma_A S_A(t))dt + \sigma_{2A}dW_{2A} \\
@@ -41,6 +41,34 @@ dU_B &= (\alpha_B(t) - \beta_B^* U_B(t))dt + \sigma_{1B}dW_{1B} \\
 dS_B &= (\beta_B^* U_B(t) - \gamma_B S_B(t))dt + \sigma_{2B}dW_{2B} \\
 dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
 \end{align}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $\alpha_i(t)$ | Time-dependent transcription rate of unspliced mRNA (pre-mRNA). |
+| $c_i$ | Maximum transcription rate coefficient for pre-mRNA ($Ms^{-1}$). |
+| $b_i$ | Steepness parameter of the transcription rate sigmoid function. |
+| $t$ | Time variable. |
+| $a_i$ | Time shift or activation delay for transcription ($s$). |
+| $\beta^*_i$ | Regulated splicing rate influenced by protein interactions. |
+| $\beta_i$ | Base splicing rate parameter ($s^{-1}$). |
+| $h^+(P, \theta, n)$ | Hill activation function used for Gene A. |
+| $h^-(P, \theta, n)$ | Hill inhibition function used for Gene B. |
+| $P_i$ | Concentration of Protein A or Protein B ($M$). |
+| $\theta_i$ | Expression threshold for protein binding ($M$). |
+| $n_i$ | Hill coefficient representing regulatory nonlinearity. |
+| $dU_i$ | Change in concentration of unspliced mRNA (pre-mRNA). |
+| $U_i(t)$ | Concentration of unspliced mRNA (pre-mRNA) at time $t$ ($M$). |
+| $dt$ | Time differential. |
+| $\sigma_{1i}$ | Noise intensity parameter for pre-mRNA transcription ($Ms^{-1/2}$). |
+| $dW_{1i}$ | Differential of the Wiener process for transcription noise. |
+| $dS_i$ | Change in concentration of spliced mRNA. |
+| $S_i(t)$ | Concentration of spliced mRNA at time $t$ ($M$). |
+| $\gamma_i$ | Degradation rate of spliced mRNA ($s^{-1}$). |
+| $\sigma_{2i}$ | Noise intensity parameter for the splicing process ($Ms^{-1/2}$). |
+| $dW_{2i}$ | Differential of the Wiener process for splicing noise. |
+| $dP_i$ | Change in concentration of Protein A or Protein B. |
+| $k_{Pi}$ | Translation rate of Protein A or Protein B ($s^{-1}$). |
+| $\delta_{Pi}$ | Degradation rate of Protein A or Protein B ($s^{-1}$). |
 
 ## Question 2
 

@@ -39,7 +39,7 @@ where:
 * $−\gamma E$:
 * $\delta RE$:
 
-We use  $\alpha = 2, \beta = 1.1, \gamma = 1 \text{and} \delta = 0.9$.
+We use  $\alpha = 2, \beta = 1.1, \gamma = 1$ and $\delta = 0.9$.
 
 For stability analysis, first we find stationary points as: 
 $\frac{dR}{dt} = R(\alpha - \beta E) = 0$ and

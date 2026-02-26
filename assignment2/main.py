@@ -126,9 +126,9 @@ print(f"Most likely sequence of hidden states for {sequence}:", path)
 # given in Tables 4 and 5, respectively. Ensure to present relevant graphs/visualizations.
 
 # Trascription problem: use ODE (assumption: simple two-gene network)
-m_a, m_b = 2.35, 2.35 #s-1
+m_a, m_b = 2.35, 2.35 #s-1 # assumption: no steady state since same rates
 gamma_a, gamma_b = 1,1  #s-1
-k_pa, k_pb = 1.0, 1.0 #s-1
+k_pa, k_pb = 1.0, 1.0 #s-1 
 theta_a, theta_b = 0.21, 0.21 #M
 n_a, n_b = 3, 3 # hill coefficient (assumption: use hill and not PWL activation because of low n coefficients)
 delta_pa, delta_pb = 1.0, 1.0 #s-1
@@ -342,7 +342,7 @@ def solve_sde_velo(dt, steps):
 
     return u, s, p, t
 
-
+ra, rb, pA, pB = sol_alpha.y[0], sol_alpha.y[1], sol_alpha.y[2], sol_alpha.y[3]
 u, s, p, t = solve_sde_velo(0.01, 1000)
 
 plt.plot(p[0], p[1], label="Patient Beta", color="tab:red")

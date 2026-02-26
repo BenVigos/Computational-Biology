@@ -82,8 +82,14 @@ def viterbi_algorithm(sequence, A, B, P):
     for i, s in enumerate(best_path):
         best_path[i] = get_exon_intron_state(s)
 
+    backpointer_symbolic = np.empty(backpointer.shape, dtype=object)
 
-    return best_path, V, backpointer
+    for i, r in enumerate(backpointer):
+        for j, s in enumerate(r):
+            backpointer_symbolic[i, j] = get_exon_intron_state(s)
+
+
+    return best_path, V, backpointer_symbolic
 
 
 def rna_vel(t, u, s, beta, gamma, c, a, b):
@@ -532,8 +538,12 @@ if __name__ == "__main__":
 
     P = [0.5, 0.5]  # Initial state probabilities
 
-    path = viterbi_algorithm(sequence, A, B, P)
+    path, V, backpointer = viterbi_algorithm(sequence, A, B, P)
+    print("For patient Alpha:")
     print(f"Most likely sequence of hidden states for {sequence}:", path)
+    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
+    print("Backpointer Matrix (state indices):\n", pd.DataFrame(backpointer, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
+    print("\n")
 
     # (b) Based on the mechanism you identified for patient alpha, choose the appropriate mathematical
     # framework to model the gene regulation dynamics ODE model vs SDEVelo model. Also, the choice of
@@ -574,8 +584,11 @@ if __name__ == "__main__":
 
     sequence = "AUUAU"
 
-    path = viterbi_algorithm(sequence, A, B, P)
+    path, V, backpointer = viterbi_algorithm(sequence, A, B, P)
+    print("For patient Beta:")
     print(f"Most likely sequence of hidden states for {sequence}:", path)
+    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
+    print("Backpointer Matrix (state indices):\n", pd.DataFrame(backpointer, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
 
     a = np.array([1.0, 0.25])
     b = np.array([0.0005, 0.0005])

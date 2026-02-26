@@ -145,7 +145,7 @@ def concentration_overtime(sol, t, hijack=None):
         plt.savefig("plots/alpha_1_proteins_mrna_time_hijack.png", dpi=300)
     else:
         plt.savefig("plots/alpha_1_proteins_mrna_time.png", dpi=300)
-    plt.show()
+    plt.clf()
 
 def phase_plots(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
@@ -182,7 +182,7 @@ def phase_plots(sol, t, hijack=None):
         plt.savefig("plots/alpha_3_phase_space_hijack.png", dpi=300)     
     else:
         plt.savefig("plots/alpha_3_phase_space.png", dpi=300)
-    plt.show()
+    plt.clf()
 
 def hill_plots(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
@@ -226,7 +226,7 @@ def hill_plots(sol, t, hijack=None):
         plt.savefig("plots/alpha_4_hill_functions_hijack.png", dpi=300)
     else:
         plt.savefig("plots/alpha_4_hill_functions.png", dpi=300)
-    plt.show()
+    plt.clf()
 
 def plot_rates(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
@@ -256,7 +256,7 @@ def plot_rates(sol, t, hijack=None):
         plt.savefig("plots/alpha_5_rates_hijack.png", dpi=300)
     else:
         plt.savefig("plots/alpha_5_rates.png", dpi=300)
-    plt.show()
+    plt.clf()
 
 def solve_sde_velo(dt, steps):
     t = np.linspace(0, steps * dt, steps)
@@ -293,68 +293,105 @@ def solve_sde_velo(dt, steps):
     return u, s, p, t
 
 
-def sdevelo_phase_portrait(sol_sde, label_sde, ode_func, savefig=None, title="", ode_args=(), padding=0.1, grid_size=20):
+def sdevelo_phase_portrait(
+    sol_sde, 
+    label_sde, 
+    ode_func=None, 
+    sol_ode=None, 
+    label_ode="ODE Trajectory", 
+    savefig=None, 
+    title="", 
+    ode_args=(), 
+    padding=0.1, 
+    grid_size=20,
+    show_vector_field=True
+):
     u, s, p, t = sol_sde
     pA_sde, pB_sde = np.ravel(p[0]), np.ravel(p[1])
 
     pA_min, pA_max = pA_sde.min(), pA_sde.max()
     pB_min, pB_max = pB_sde.min(), pB_sde.max()
 
+    if sol_ode is not None:
+        pA_ode, pB_ode = sol_ode.y[2], sol_ode.y[3]
+        pA_min, pA_max = min(pA_min, pA_ode.min()), max(pA_max, pA_ode.max())
+        pB_min, pB_max = min(pB_min, pB_ode.min()), max(pB_max, pB_ode.max())
+
     pA_range = pA_max - pA_min if (pA_max - pA_min) > 0 else 1.0
     pB_range = pB_max - pB_min if (pB_max - pB_min) > 0 else 1.0
 
-    pA_grid = np.linspace(max(0, pA_min - padding * pA_range), pA_max + padding * pA_range, grid_size)
-    pB_grid = np.linspace(max(0, pB_min - padding * pB_range), pB_max + padding * pB_range, grid_size)
-    PA, PB = np.meshgrid(pA_grid, pB_grid)
-    
-    U = np.zeros_like(PA)
-    V = np.zeros_like(PB)
-    
-    def mrna_roots(vars_r, pa_val, pb_val):
-        ra, rb = vars_r
-        derivs = ode_func(0, [ra, rb, pa_val, pb_val], *ode_args)
-        return [derivs[0], derivs[1]] 
-    
-    ra_guess, rb_guess = np.mean(u), np.mean(s)
-    
-    for i in range(grid_size):
-        for j in range(grid_size):
-            pa_val = PA[i, j]
-            pb_val = PB[i, j]
-            
-            try:
-                ra_ss, rb_ss = fsolve(mrna_roots, [ra_guess, rb_guess], args=(pa_val, pb_val))
-            except Exception:
-                ra_ss, rb_ss = ra_guess, rb_guess
-                
-            derivatives = ode_func(0, [ra_ss, rb_ss, pa_val, pb_val], *ode_args) 
-            
-            U[i, j] = float(np.squeeze(derivatives[2]))
-            V[i, j] = float(np.squeeze(derivatives[3]))
-            
-    N = np.sqrt(U**2 + V**2)
-    N[N == 0] = 1.0
-    U_norm = U / N
-    V_norm = V / N
-
     fig, ax = plt.subplots()
 
-    ax.quiver(PA, PB, U_norm, V_norm, color='lightgray', alpha=0.8, pivot='mid')
-    ax.plot(pA_sde, pB_sde, label=label_sde, color="tab:purple", zorder=4, alpha=0.8)
+    if show_vector_field and ode_func is not None:
+        pA_grid = np.linspace(max(0, pA_min - padding * pA_range), pA_max + padding * pA_range, grid_size)
+        pB_grid = np.linspace(max(0, pB_min - padding * pB_range), pB_max + padding * pB_range, grid_size)
+        PA, PB = np.meshgrid(pA_grid, pB_grid)
+        
+        U = np.zeros_like(PA)
+        V = np.zeros_like(PB)
+        
+        def mrna_roots(vars_r, pa_val, pb_val):
+            ra, rb = vars_r
+            derivs = ode_func(0, [ra, rb, pa_val, pb_val], *ode_args)
+            return [derivs[0], derivs[1]] 
+        
+        ra_guess, rb_guess = 0.8, 0.8
+        
+        for i in range(grid_size):
+            for j in range(grid_size):
+                pa_val = PA[i, j]
+                pb_val = PB[i, j]
+                
+                try:
+                    ra_ss, rb_ss = fsolve(mrna_roots, [ra_guess, rb_guess], args=(pa_val, pb_val))
+                except Exception:
+                    ra_ss, rb_ss = ra_guess, rb_guess
+                    
+                derivatives = ode_func(0, [ra_ss, rb_ss, pa_val, pb_val], *ode_args) 
+                
+                U[i, j] = float(np.squeeze(derivatives[2]))
+                V[i, j] = float(np.squeeze(derivatives[3]))
+                
+        N = np.sqrt(U**2 + V**2)
+        N[N == 0] = 1.0
+        U_norm = U / N
+        V_norm = V / N
 
-    ax.scatter(pA_sde[0], pB_sde[0], color="tab:purple", marker="o", zorder=5, label="Initial state")
-    ax.scatter(pA_sde[-1], pB_sde[-1], color="tab:purple", marker="v", zorder=5, label="Final state")
+        ax.quiver(PA, PB, U_norm, V_norm, color='lightgray', alpha=0.8, pivot='mid')
+
+    if sol_ode is not None:
+        ax.plot(pA_ode, pB_ode, label=label_ode, color="tab:orange", zorder=3, linestyle="--", alpha=0.6)
+        ax.scatter(pA_ode[0], pB_ode[0], color="tab:orange", marker="o", zorder=5)
+        ax.scatter(pA_ode[-1], pB_ode[-1], color="tab:orange", marker="v", zorder=5)
+
+    ax.plot(pA_sde, pB_sde, label=label_sde, color="tab:purple", zorder=4, alpha=0.6)
+    ax.scatter(pA_sde[0], pB_sde[0], color="tab:purple", marker="o", zorder=5, label="Initial state (SDE)")
+    ax.scatter(pA_sde[-1], pB_sde[-1], color="tab:purple", marker="v", zorder=5, label="Final state (SDE)")
 
     ax.set_xlabel("Protein A Concentration [M]")
     ax.set_ylabel("Protein B Concentration [M]")
     ax.grid(True, alpha=0.3)
 
-    ax.legend()
+    handles, labels = ax.get_legend_handles_labels()
+    
+    if show_vector_field and ode_func is not None:
+        ode_proxy = Line2D([0], [0], color='gray', marker=r'$\rightarrow$', markersize=8, linestyle='None')
+        handles.append(ode_proxy)
+        labels.append("ODE Vector Field")
+        
+    if sol_ode is not None:
+        ode_start_proxy = Line2D([0], [0], color='tab:orange', marker='o', markersize=6, linestyle='None')
+        ode_end_proxy = Line2D([0], [0], color='tab:orange', marker='v', markersize=6, linestyle='None')
+        handles.extend([ode_start_proxy, ode_end_proxy])
+        labels.extend(["Initial state (ODE)", "Final state (ODE)"])
+
+    ax.legend(handles=handles, labels=labels, loc='best', fontsize='small')
     ax.set_title(title)
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}", bbox_inches="tight")
-    plt.show()
+    
+    plt.close(fig)
 
 def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     t = np.linspace(0, steps * dt, steps)
@@ -411,7 +448,7 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
-    plt.show()
+    plt.clf()
 
 
 def plot_sdevelo_concentrations(
@@ -514,7 +551,7 @@ def plot_sdevelo_concentrations(
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
-    plt.show()
+    plt.clf()
 
 
 if __name__ == "__main__":
@@ -623,9 +660,11 @@ if __name__ == "__main__":
     sdevelo_phase_portrait(
         solve_sde_velo(dt, steps),
         "Patient Beta",
-        patient_alpha_ode,
-        ode_args=(False,),
-        grid_size=20,
+        # ode_func=patient_alpha_ode,
+        sol_ode=sol_ode,
+        label_ode="Mechanism I w/o hijack (ODE)",
+        # ode_args=(False,),
+        grid_size=30,
         title="Phase Portrait of Protein concentrations",
         savefig="sdevelo_phase_portrait",
     )

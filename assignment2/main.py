@@ -326,7 +326,7 @@ def sdevelo_phase_portrait(
     label_ode="ODE Trajectory", 
     savefig=None, 
     title="", 
-    ode_args=(), 
+    ode_args=(False), 
     padding=0.1, 
     grid_size=20,
     show_vector_field=True
@@ -404,7 +404,6 @@ def sdevelo_phase_portrait(
 
     ax.plot(pA_sde, pB_sde, label=label_sde, color="tab:purple", zorder=4, alpha=0.6)
     ax.scatter(pA_sde[0], pB_sde[0], color="tab:purple", marker="o", zorder=5, label="Initial state (SDE)")
-    ax.scatter(pA_sde[-1], pB_sde[-1], color="tab:purple", marker="v", zorder=5, label="Final state (SDE)")
 
     ax.set_xlabel("Protein A Concentration [M]")
     ax.set_ylabel("Protein B Concentration [M]")
@@ -419,9 +418,8 @@ def sdevelo_phase_portrait(
         
     if sol_ode is not None:
         ode_start_proxy = Line2D([0], [0], color='tab:orange', marker='o', markersize=6, linestyle='None')
-        ode_end_proxy = Line2D([0], [0], color='tab:orange', marker='v', markersize=6, linestyle='None')
-        handles.extend([ode_start_proxy, ode_end_proxy])
-        labels.extend(["Initial state (ODE)", "Final state (ODE)"])
+        handles.extend([ode_start_proxy])
+        labels.extend(["Initial state (ODE)"])
 
     ax.legend(handles=handles, labels=labels, loc='best', fontsize='small')
     ax.set_title(title)
@@ -709,14 +707,15 @@ if __name__ == "__main__":
         savefig="sdevelo_phase_portrait",
     )
 
-    sdevelo_multiplot(
-        10,
-        dt,
-        steps,
-        sol_ode,
-        title="Protein concentration over time",
-        savefig="sdevelo_versus_ode",
-    )
+    # hijacked_ode = solve_ivp(patient_alpha_ode, [0, t_max], y0, t_eval=t_eval, args=(True,))
+    # sdevelo_multiplot(
+    #     10,
+    #     dt,
+    #     steps,
+    #     hijacked_ode,
+    #     title="Protein concentration over time",
+    #     savefig="sdevelo_versus_ode",
+    # )
 
     plot_sdevelo_concentrations(
         10,

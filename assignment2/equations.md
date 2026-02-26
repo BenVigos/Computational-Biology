@@ -39,10 +39,10 @@ where:
 * $−\gamma E$:
 * $\delta RE$:
 
-We use  $\alpha = 2, \beta = 1.1, \gamma = 1 and \delta = 0.9$.
+We use  $\alpha = 2, \beta = 1.1, \gamma = 1 \text{and} \delta = 0.9$.
 
 For stability analysis, first we find stationary points as: 
-$\frac{dR}{dt} = R(\alpha - \beta E) = 0$ \\ 
+$\frac{dR}{dt} = R(\alpha - \beta E) = 0$ and
 $\frac{dE}{dt} = E(-\gamma + \delta R) = 0$
 obtaining:
 * $R_1^* = 0$, $E_1^* = 0$
@@ -51,9 +51,17 @@ obtaining:
 Then, Jacobian is:
 $ J = \begin{pmatrix} \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} \end{pmatrix} = \begin{pmatrix} \alpha - \beta E & -\beta R \\ \delta E & -\gamma + \delta R \end{pmatrix}$
 
+\[
+J =
+\begin{pmatrix}
+\alpha - \beta E & -\beta R \\
+\delta E & -\gamma + \delta R
+\end{pmatrix}
+\]
+
 At point $R=0, E=0$: $$J(0,0) = \begin{pmatrix} 2 & 0 \\ 0 & -1 \end{pmatrix}$$
 
-So that $\lambda_1 = 2$ e $\lambda_2 = -1$, $(0,0)$ is point of saddle (unstable).
+So that $\lambda_1 = 2$ e $\lambda_2 = -1$, then $(0,0)$ is point of saddle (unstable).
 
 At point, $(R = 1.11, E = 1.81)$, $$J(R^*,E^*) = \begin{pmatrix} 0 & -1.22 \\ 1.63 & 0 \end{pmatrix}$$.
 

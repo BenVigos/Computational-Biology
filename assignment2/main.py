@@ -94,29 +94,29 @@ def viterbi_algorithm(sequence, A, B, P):
     return best_path, V, backpointer_symbolic
 
 
-def rna_vel(t, u, s, beta, gamma, c, a, b):
-    """Calculate the RNA velocity based on the given parameters.
-    dudt = alpha - b * u"""
-
-    alpha = c / (1 + np.exp(b * (t - a)))
-
-    dudt = alpha - beta * u
-
-    dsdt = beta * u - gamma * s
-
-
 def hill_activation(P, theta, n):
-    """Calculate the Hill activation function."""
+    """Calculate the Hill activation function.
+
+    :param P: Concentration of the regulator protein.
+    :param theta: Threshold concentration for activation.
+    :param n: Hill coefficient.
+    """
     return P**n / (theta**n + P**n)
 
 
 def hill_inhibition(P, theta, n):
-    """Calculate the Hill inhibition function."""
+    """Calculate the Hill inhibition function.
+    :param P: Concentration of the regulator protein.
+    :param theta: Threshold concentration for inhibition.
+    :param n: Hill coefficient."""
     return 1 - hill_activation(P, theta, n)
 
 
 def patient_alpha_ode(t, y, hijack=None):
-    """Calculate the derivatives of mRNA and protein for Patient Alpha."""
+    """Calculate the derivatives of mRNA and protein for Patient Alpha.
+    :param t: Time variable (not used in this ODE but required by solve_ivp).
+    :param y: A list or array containing the current values of [ra, rb, P_a, P_b].
+    """
     ra, rb, P_a, P_b = y
     dra_dt = m_a * hill_activation(P_b, theta_b, n_b) - gamma_a * ra
     if hijack:
@@ -127,7 +127,12 @@ def patient_alpha_ode(t, y, hijack=None):
     dPb_dt = k_pb * rb - delta_pb * P_b
     return [dra_dt, drb_dt, dPa_dt, dPb_dt]
 
-def concentration_overtime(sol, t, hijack=None):
+def concentration_overtime(sol, t, hijack=False):
+    """Plot the time evolution of mRNA and protein concentrations.
+    :param sol: Solution object.
+    :param t: Time points corresponding to the solution.
+    :param hijack: Boolean indicating whether to plot the hijacked scenario or not.
+    """
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # pA, pB over time
     plt.figure(figsize=(8, 6))
@@ -147,7 +152,12 @@ def concentration_overtime(sol, t, hijack=None):
         plt.savefig("plots/alpha_1_proteins_mrna_time.png", dpi=300)
     plt.clf()
 
-def phase_plots(sol, t, hijack=None):
+def phase_plots(sol, t, hijack=False):
+    """"Plot the phase space of protein concentrations and mRNA concentrations.
+    :param sol: Solution object.
+    :param t: Time points corresponding to the solution.
+    :param hijack: Boolean indicating whether to plot the hijacked scenario or not.
+    """
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # phase plot pA vs pB and mRNA_A vs mRNA_B
     plt.figure(figsize=(8, 6))
@@ -184,7 +194,13 @@ def phase_plots(sol, t, hijack=None):
         plt.savefig("plots/alpha_3_phase_space.png", dpi=300)
     plt.clf()
 
-def hill_plots(sol, t, hijack=None):
+def hill_plots(sol, t, hijack=False):
+    """Plot the Hill activation and inhibition functions for the given parameters.
+
+    :param sol: solution object containing the trajectories of mRNA and protein concentrations.
+    :param t: time points corresponding to the solution.
+    :param hijack: Boolean indicating whether to plot the hijacked scenario (no inhibition) or not.
+    """
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # hill Functions
     P_vals = np.linspace(0, 1.5, 100)
@@ -228,7 +244,12 @@ def hill_plots(sol, t, hijack=None):
         plt.savefig("plots/alpha_4_hill_functions.png", dpi=300)
     plt.clf()
 
-def plot_rates(sol, t, hijack=None):
+def plot_rates(sol, t, hijack=False):
+    """Plot the transcription and translation rates over time based on the solution trajectories.
+    :param sol: solution object containing the trajectories of mRNA and protein concentrations.
+    :param t: time points corresponding to the solution.
+    :param hijack: Boolean indicating whether to plot the hijacked scenario (no inhibition) or not.
+    """
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # transcription rates over time (m_a, m_b, hill functions)
     transcription_rate_A = m_a * hill_activation(pB, theta_b, n_b)
@@ -259,6 +280,10 @@ def plot_rates(sol, t, hijack=None):
     plt.clf()
 
 def solve_sde_velo(dt, steps):
+    """Solve the SDEVelo model
+    :param dt: Time step for the simulation.
+    :param steps: Number of time steps to simulate.
+    """
     t = np.linspace(0, steps * dt, steps)
 
     # empty arrays:
@@ -306,6 +331,19 @@ def sdevelo_phase_portrait(
     grid_size=20,
     show_vector_field=True
 ):
+    """Plot the phase portrait of the SDEVelo solution, optionally overlaying the ODE trajectory and vector field.
+    :param sol_sde: Solution object from the SDEVelo simulation containing u, s, p, t.
+    :param label_sde: Label for the SDEVelo trajectory in the legend.
+    :param ode_func: Function defining the ODE system (for vector field calculation).
+    :param sol_ode: Solution object from the ODE simulation to overlay on the phase portrait.
+    :param label_ode: Label for the ODE trajectory in the legend.
+    :param savefig: Filename to save the plot, if not None.
+    :param title: Title of the plot.
+    :param ode_args: Additional arguments to pass to the ODE function when calculating the vector field.
+    :param padding: Fractional padding to add around the min/max of the data for vector field limits.
+    :param grid_size: Number of points along each axis for the vector field grid.
+    :param show_vector_field: Boolean indicating whether to show the vector field or not.
+    """
     u, s, p, t = sol_sde
     pA_sde, pB_sde = np.ravel(p[0]), np.ravel(p[1])
 
@@ -394,6 +432,7 @@ def sdevelo_phase_portrait(
     plt.close(fig)
 
 def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
+    """Run multiple simulations of the SDEVelo model, calculate mean and confidence intervals."""
     t = np.linspace(0, steps * dt, steps)
     all_results = [solve_sde_velo(dt, steps) for _ in range(n_runs)]
     protein_runs = np.array([res[2] for res in all_results])
@@ -454,6 +493,7 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
 def plot_sdevelo_concentrations(
     n_runs: int, dt: float, steps: int, title: str = "", savefig=None
 ):
+    """Run multiple simulations of the SDEVelo model, calculate mean and confidence intervals for U, S, P, and plot them."""
     all_u = np.zeros((n_runs, 2, steps))
     all_s = np.zeros((n_runs, 2, steps))
     all_p = np.zeros((n_runs, 2, steps))

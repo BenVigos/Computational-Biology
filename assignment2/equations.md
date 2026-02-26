@@ -42,6 +42,8 @@ dS_B &= (\beta_B^* U_B(t) - \gamma_B S_B(t))dt + \sigma_{2B}dW_{2B} \\
 dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
 \end{align}$$
 
+Table: Definitions of the parameters used in the SDEVelo equations
+
 | Parameter | Definition |
 | :--- | :--- |
 | $\alpha_i(t)$ | Time-dependent transcription rate of unspliced mRNA (pre-mRNA). |

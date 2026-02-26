@@ -119,66 +119,35 @@ def patient_alpha_ode(t, y, hijack=None):
     dPb_dt = k_pb * rb - delta_pb * P_b
     return [dra_dt, drb_dt, dPa_dt, dPb_dt]
 
-
-def plots_alpha(sol, t, hijack=None):
+def concentration_overtime(sol, t, hijack=None):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
-
     # pA, pB over time
     plt.figure(figsize=(8, 6))
-    plt.plot(t, pA, label="Protein A (Guardian)", linewidth=2)
-    plt.plot(t, pB, label="Protein B (Proliferator)", linewidth=2)
+    plt.plot(t, pA, label='Protein A (Guardian)', color = "blue", linewidth=1.5)
+    plt.plot(t, pB, label='Protein B (Proliferator)', color = "turquoise", linewidth=1.5)
+    plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "black", linestyle="--")
+    plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "red", linestyle="--")
     plt.xlabel("Time [s]", fontsize=12)
     plt.ylabel("Concentration [M]", fontsize=12)
-    plt.title("Time Evolution of Protein Concentrations", fontsize=14)
+    plt.title("Time Evolution of Protein and mRNA Concentrations", fontsize=14)
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     if hijack:
-        plt.savefig("plots/alpha_1_proteins_time_hijack.png", dpi=300)
+        plt.savefig("plots/alpha_1_proteins_mrna_time_hijack.png", dpi=300)
     else:
-        plt.savefig("plots/alpha_1_proteins_time.png", dpi=300)
+        plt.savefig("plots/alpha_1_proteins_mrna_time.png", dpi=300)
     plt.show()
 
-    # mRNAs over time
-    plt.figure(figsize=(8, 6))
-    plt.plot(t, ra, label="mRNA A", linewidth=2, linestyle="--")
-    plt.plot(t, rb, label="mRNA B", linewidth=2, linestyle="--")
-    plt.xlabel("Time [s]", fontsize=12)
-    plt.ylabel("Concentration [M]", fontsize=12)
-    plt.title("Time Evolution of mRNA Concentrations", fontsize=14)
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    if hijack:
-        plt.savefig("plots/alpha_2_mRNAs_time_hijack.png", dpi=300)
-    else:
-        plt.savefig("plots/alpha_2_mRNAs_time.png", dpi=300)
-    plt.show()
-
+def phase_plots(sol, t, hijack=None):
+    ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # phase plot pA vs pB and mRNA_A vs mRNA_B
     plt.figure(figsize=(8, 6))
     plt.plot(pA, pB, color="black", linewidth=2, label="Protein Trajectory")
     plt.scatter([pA[0]], [pB[0]], color="black", zorder=5, label="Start Proteins (t=0)")
-    plt.scatter(
-        [pA[-1]],
-        [pB[-1]],
-        color="yellow",
-        zorder=5,
-        s=100,
-        marker="*",
-        label="End (Proteins Equilibrium)",
-    )
+
     plt.plot(ra, rb, color="blue", linewidth=2, label="mRNA Trajectory")
     plt.scatter([ra[0]], [rb[0]], color="blue", zorder=5, label="Start mRNA (t=0)")
-    plt.scatter(
-        [ra[-1]],
-        [rb[-1]],
-        color="orange",
-        zorder=5,
-        s=100,
-        marker="*",
-        label="End (mRNA Equilibrium)",
-    )
     plt.xlabel("$P_a, r_a$ Concentration [M]", fontsize=12)
     plt.ylabel("$P_b, r_b$ Concentration [M]", fontsize=12)
     plt.title("Phase Space: Protein A vs Protein B and mRNA A vs mRNA B", fontsize=14)
@@ -186,11 +155,29 @@ def plots_alpha(sol, t, hijack=None):
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     if hijack:
-        plt.savefig("plots/alpha_3_phase_space_hijack.png", dpi=300)
+        plt.scatter(
+        [ra[-1]],
+        [rb[-1]],
+        color="orange",
+        zorder=5,
+        s=100,
+        marker="*",
+        label="End (mRNA Equilibrium)")
+        plt.scatter(
+        [pA[-1]],
+        [pB[-1]],
+        color="yellow",
+        zorder=5,
+        s=100,
+        marker="*",
+        label="End (Proteins Equilibrium)")
+        plt.savefig("plots/alpha_3_phase_space_hijack.png", dpi=300)     
     else:
         plt.savefig("plots/alpha_3_phase_space.png", dpi=300)
     plt.show()
 
+def hill_plots(sol, t, hijack=None):
+    ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # hill Functions
     P_vals = np.linspace(0, 1.5, 100)
     act = hill_activation(P_vals, theta_a, n_a)
@@ -233,6 +220,8 @@ def plots_alpha(sol, t, hijack=None):
         plt.savefig("plots/alpha_4_hill_functions.png", dpi=300)
     plt.show()
 
+def plot_rates(sol, t, hijack=None):
+    ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # transcription rates over time (m_a, m_b, hill functions)
     transcription_rate_A = m_a * hill_activation(pB, theta_b, n_b)
     if hijack:
@@ -240,60 +229,26 @@ def plots_alpha(sol, t, hijack=None):
     else:
         transcription_rate_B = m_b * hill_inhibition(pA, theta_a, n_a)
 
-    plt.figure(figsize=(8, 6))
-    plt.plot(
-        t,
-        transcription_rate_A,
-        label="Gene A Transcription Rate $m_a * H_{\\theta_b, n_b}(P_B)$",
-        linewidth=2,
-    )
-    plt.plot(
-        t,
-        transcription_rate_B,
-        label="Gene B Transcription Rate $m_b * H_{\\theta_a, n_a}(P_A)$",
-        linewidth=2,
-    )
-    plt.xlabel("Time [s]", fontsize=12)
-    plt.ylabel("Rate [M/s]", fontsize=12)
-    plt.title("Transcription Rates Over Time", fontsize=14)
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    if hijack:
-        plt.savefig("plots/alpha_5_transcription_rates_hijack.png", dpi=300)
-    else:
-        plt.savefig("plots/alpha_5_transcription_rates.png", dpi=300)
-    plt.show()
-
     # translation rates over time (k_pa, k_pb, mRNA concentrations)
     translation_rate_A = k_pa * ra
     translation_rate_B = k_pb * rb
 
     plt.figure(figsize=(8, 6))
-    plt.plot(
-        t,
-        translation_rate_A,
-        label="Protein A Translation Rate $k_{pa} * r_a$",
-        linewidth=2,
-    )
-    plt.plot(
-        t,
-        translation_rate_B,
-        label="Protein B Translation Rate $k_{pb} * r_b$",
-        linewidth=2,
-    )
+    plt.plot(t, transcription_rate_A, label='Gene A Transcription Rate $m_a * H_{\\theta_b, n_b}(P_B)$', linewidth=2)
+    plt.plot(t, transcription_rate_B, label='Gene B Transcription Rate $m_b * H_{\\theta_a, n_a}(P_A)$', linewidth=2)
+    plt.plot(t, translation_rate_A, label='Protein A Translation Rate $k_{pa} * r_a$', linewidth=1.5, linestyle='--')
+    plt.plot(t, translation_rate_B, label='Protein B Translation Rate $k_{pb} * r_b$', linewidth=1.5, linestyle='--')
     plt.xlabel("Time [s]", fontsize=12)
     plt.ylabel("Rate [M/s]", fontsize=12)
-    plt.title("Translation Rates Over Time", fontsize=14)
+    plt.title("Transcription and Translation Rates Over Time", fontsize=14)
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     if hijack:
-        plt.savefig("plots/alpha_6_translation_rates_hijack.png", dpi=300)
+        plt.savefig("plots/alpha_5_rates_hijack.png", dpi=300)
     else:
-        plt.savefig("plots/alpha_6_translation_rates.png", dpi=300)
+        plt.savefig("plots/alpha_5_rates.png", dpi=300)
     plt.show()
-
 
 def solve_sde_velo(dt, steps):
     t = np.linspace(0, steps * dt, steps)
@@ -561,10 +516,19 @@ if __name__ == "__main__":
         patient_alpha_ode, [0, 100], y0, t_eval=t_eval, args=(False,)
     )
 
-    ## patient beta
+    # regular
+    concentration_overtime(sol_alpha_regular, t_eval, hijack=False)
+    phase_plots(sol_alpha_regular, t_eval, hijack=False)
+    hill_plots(sol_alpha_regular, t_eval, hijack=False)
+    plot_rates(sol_alpha_regular, t_eval, hijack=False)
 
-    plots_alpha(sol_alpha, t_eval, hijack=True)
-    plots_alpha(sol_alpha_regular, t_eval, hijack=False)
+    # hijack 
+    concentration_overtime(sol_alpha, t_eval, hijack=True)
+    phase_plots(sol_alpha, t_eval, hijack=True)
+    hill_plots(sol_alpha, t_eval, hijack=True)
+    plot_rates(sol_alpha, t_eval, hijack=True)
+
+    ## patient beta
 
     ### Task 2: Analysis of Patient Sample Beta ###
 

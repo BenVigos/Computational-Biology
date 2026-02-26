@@ -2,6 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
+from scipy.optimize import fsolve
+from scipy.interpolate import griddata
 from matplotlib.lines import Line2D
 import pandas as pd
 
@@ -293,62 +295,66 @@ def solve_sde_velo(dt, steps):
 
 def sdevelo_phase_portrait(sol_sde, label_sde, ode_func, savefig=None, title="", ode_args=(), padding=0.1, grid_size=20):
     u, s, p, t = sol_sde
+    pA_sde, pB_sde = np.ravel(p[0]), np.ravel(p[1])
 
-    pA_min, pA_max = p[0].min(), p[0].max()
-    pB_min, pB_max = p[1].min(), p[1].max()
+    pA_min, pA_max = pA_sde.min(), pA_sde.max()
+    pB_min, pB_max = pB_sde.min(), pB_sde.max()
 
     pA_range = pA_max - pA_min if (pA_max - pA_min) > 0 else 1.0
     pB_range = pB_max - pB_min if (pB_max - pB_min) > 0 else 1.0
 
-    pA_grid = np.linspace(pA_min - padding * pA_range, pA_max + padding * pA_range, grid_size)
-    pB_grid = np.linspace(pB_min - padding * pB_range, pB_max + padding * pB_range, grid_size)
+    pA_grid = np.linspace(max(0, pA_min - padding * pA_range), pA_max + padding * pA_range, grid_size)
+    pB_grid = np.linspace(max(0, pB_min - padding * pB_range), pB_max + padding * pB_range, grid_size)
     PA, PB = np.meshgrid(pA_grid, pB_grid)
     
     U = np.zeros_like(PA)
     V = np.zeros_like(PB)
     
+    def mrna_roots(vars_r, pa_val, pb_val):
+        ra, rb = vars_r
+        derivs = ode_func(0, [ra, rb, pa_val, pb_val], *ode_args)
+        return [derivs[0], derivs[1]] 
+    
+    ra_guess, rb_guess = np.mean(u), np.mean(s)
+    
     for i in range(grid_size):
         for j in range(grid_size):
-            state = [u[-1], s[-1], PA[i, j], PB[i, j]]
-            derivatives = ode_func(0, state, *ode_args) 
-            U[i, j] = derivatives[2] 
-            V[i, j] = derivatives[3]
+            pa_val = PA[i, j]
+            pb_val = PB[i, j]
+            
+            try:
+                ra_ss, rb_ss = fsolve(mrna_roots, [ra_guess, rb_guess], args=(pa_val, pb_val))
+            except Exception:
+                ra_ss, rb_ss = ra_guess, rb_guess
+                
+            derivatives = ode_func(0, [ra_ss, rb_ss, pa_val, pb_val], *ode_args) 
+            
+            U[i, j] = float(np.squeeze(derivatives[2]))
+            V[i, j] = float(np.squeeze(derivatives[3]))
             
     N = np.sqrt(U**2 + V**2)
     N[N == 0] = 1.0
     U_norm = U / N
     V_norm = V / N
 
-    plt.quiver(PA, PB, U_norm, V_norm, color='lightgray', alpha=0.8, pivot='mid', scale=35, width=0.003)
+    fig, ax = plt.subplots()
 
+    ax.quiver(PA, PB, U_norm, V_norm, color='lightgray', alpha=0.8, pivot='mid')
+    ax.plot(pA_sde, pB_sde, label=label_sde, color="tab:purple", zorder=4, alpha=0.8)
 
-    plt.streamplot(PA, PB, U, V, color='lightgray', linewidth=1, density=1, arrowsize=1)
-    plt.plot(p[0], p[1], label=label_sde, color="tab:red")
-    # # plt.axvline(theta[0], color="gray", linestyle="--", label="Binding Threshold (θ)")
-    # # plt.axhline(theta[1], color="gray", linestyle="--")
-    # plt.plot(sol_ode.y[2], sol_ode.y[3], label=label_ode, color="tab:blue")
+    ax.scatter(pA_sde[0], pB_sde[0], color="tab:purple", marker="o", zorder=5, label="Initial state")
+    ax.scatter(pA_sde[-1], pB_sde[-1], color="tab:purple", marker="v", zorder=5, label="Final state")
 
-    plt.xlabel("Protein A Concentration [M]")
-    plt.ylabel("Protein B Concentration [M]")
-    plt.legend()
-    plt.grid(True, which="both", linestyle=":", alpha=0.5)
+    ax.set_xlabel("Protein A Concentration [M]")
+    ax.set_ylabel("Protein B Concentration [M]")
+    ax.grid(True, alpha=0.3)
 
-    plt.scatter(p[0, 0], p[1, 0], color="black", zorder=5)
-    plt.annotate(
-        "Initial state", (p[0, 0], p[1, 0]), textcoords="offset points", xytext=(10, -10)
-    )
-
-    plt.scatter(p[0, -1], p[1, -1], color="black", zorder=5)
-    plt.annotate(
-        "Final state", (p[0, -1], p[1, -1]), textcoords="offset points", xytext=(10, -10)
-    )
-
-    plt.title(title)
+    ax.legend()
+    ax.set_title(title)
 
     if savefig is not None:
-        plt.savefig(f"plots/{savefig}")
+        plt.savefig(f"plots/{savefig}", bbox_inches="tight")
     plt.show()
-
 
 def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     t = np.linspace(0, steps * dt, steps)
@@ -401,7 +407,7 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     plt.title(f"{title} ($n_{{\\text{{SDEVelo}}}}={n_runs}$)")
     plt.xlabel("Time [s]")
     plt.ylabel("Concentration [M]")
-    plt.grid(True, which="both", linestyle=":", alpha=0.5)
+    plt.grid(True, alpha=0.3)
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
@@ -504,7 +510,7 @@ def plot_sdevelo_concentrations(
     plt.xlabel("Time [s]")
     plt.ylabel("Concentration [M]")
     plt.title(rf"{title} ($n={n_runs})$")
-    plt.grid(True, which="both", linestyle=":", alpha=0.5)
+    plt.grid(True, alpha=0.3)
 
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
@@ -619,9 +625,9 @@ if __name__ == "__main__":
         "Patient Beta",
         patient_alpha_ode,
         ode_args=(False,),
+        grid_size=20,
         title="Phase Portrait of Protein concentrations",
         savefig="sdevelo_phase_portrait",
-        grid_size=100,
     )
 
     sdevelo_multiplot(

@@ -305,7 +305,7 @@ beta = np.array([2.35, 2.35])
 gamma = np.array([1.0, 1.0])
 n = np.array([3, 3])
 theta = np.array([0.21, 0.21])
-k_p = np.array([1.0, 1.0])
+k_P = np.array([1.0, 1.0])
 m = np.array([2.35, 2.35])
 delta = np.array([1.0, 1.0])
 sigma_1 = np.array([0.05, 0.05])
@@ -326,27 +326,28 @@ def solve_sde_velo(dt, steps):
     p[:, 0] = 0.8
 
     for i in range(steps - 1):
+        alpha = c / (1 + np.exp(b * (t[i] - a)))
         activation_of_A = hill_activation(p[1, i], theta[1], n[1])
         inhibition_of_B = hill_inhibition(p[0, i], theta[0], n[0])
 
-        beta_star = np.array([c[0] * activation_of_A, c[1] * inhibition_of_B])
-        
+        beta_star = np.array([beta[0] * activation_of_A, beta[1] * inhibition_of_B])
+
         dW1 = np.random.normal(0, np.sqrt(dt), 2)
         dW2 = np.random.normal(0, np.sqrt(dt), 2)
 
-        du = (c - beta * u[:, i]) * dt + sigma_1 * dW1
+        du = (alpha - beta_star * u[:, i]) * dt + sigma_1 * dW1
         u[:, i + 1] = np.maximum(0, u[:, i] + du)
 
-        ds = (b * u[:, i] - gamma * s[:, i]) * dt + sigma_2 * dW2
+        ds = (beta_star * u[:, i] - gamma * s[:, i]) * dt + sigma_2 * dW2
         s[:, i + 1] = np.maximum(0, s[:, i] + ds)
 
-        dp = (k_p * s[:, i] - delta * p[:, i]) * dt
+        dp = (k_P * s[:, i] - delta * p[:, i]) * dt
         p[:, i + 1] = np.maximum(0, p[:, i] + dp)
 
     return u, s, p, t
 
-ra, rb, pA, pB = sol_alpha.y[0], sol_alpha.y[1], sol_alpha.y[2], sol_alpha.y[3]
-u, s, p, t = solve_sde_velo(0.01, 1000)
+# ra, rb, pA, pB = sol_alpha.y[0], sol_alpha.y[1], sol_alpha.y[2], sol_alpha.y[3]
+# u, s, p, t = solve_sde_velo(0.01, 1000)
 
 def plot_ode_sdevelo(sol_ode, sol_sde, label_ode, label_sde, savefig=None):
     ra, rb, pA, pB = sol_ode.y
@@ -369,8 +370,8 @@ def plot_ode_sdevelo(sol_ode, sol_sde, label_ode, label_sde, savefig=None):
         plt.savefig(savefig)
     plt.show()
 
-plot_ode_sdevelo(sol_alpha, solve_sde_velo(0.01, 1000), "Patient Alpha", "Patient Beta")
-plot_ode_sdevelo(sol_alpha_regular, solve_sde_velo(0.01, 1000), "Patient Alpha", "Patient Beta")
+plot_ode_sdevelo(sol_alpha, solve_sde_velo(0.01, 5000), "Patient Alpha", "Patient Beta")
+# plot_ode_sdevelo(sol_alpha_regular, solve_sde_velo(0.01, 1000), "Patient Alpha", "Patient Beta")
 
 
 def sdevelo_multiplot(n_runs, dt, steps, savefig=None):

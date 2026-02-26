@@ -27,30 +27,20 @@ where $h^+(P_b, \theta_b, n_b)$ and $h^-(P_a, \theta_a, n_a)$ are hill activatio
 ### SDEVelo
 
 $$\begin{align}
-
-dU_a &= (\alpha_a(t) - \beta\circ U_a(t))dt + \sigma_{1a}dW_1 \\
-
-\alpha(t)_i &= \frac{c_i}{1+\exp b(t-a_i)} \\
-dB_t = dW_t = Z_i\sqrt(\Delta t) \\
-
-\beta_A^* &= \beta_a h^+(p_b, \theta_b, n_b) \\
-
-
-dS_a &= (\beta_a\circ U_a(t) - \gamma_a\circ S_a(t))dt + \sigma_{2a}dW_2 \\
-
-dP_a &= k_A S_a(t) - \sigma_a P_a \\
-
-\beta_b^* &= \beta_b h^+(p_a, \theta_a, n_a) \\
-
-
-\alpha(t)_i = \frac{c_i}{1+\exp b(t-a_i)} \\
-
-B = W_t = \sum_{i=1}^n Z_i\sqrt(\Delta t) \\
-
-
-
+\alpha_A(t) &= \frac{c_a}{1+\exp b_A(t-a_A)} \\
+\beta_A^* &= \beta_A h^+(P_B, \theta_B, n_B) \\
+dU_A &= (\alpha_A(t) - \beta_A^* U_A(t))dt + \sigma_{1A}dW_{1A} \\
+dS_A &= (\beta_A^* U_A(t) - \gamma_A S_A(t))dt + \sigma_{2A}dW_{2A} \\
+dP_A &= (k_{PA} S_A(t) - \delta_{PA} P_A(t))dt \\
 \end{align}$$
 
+$$\begin{align}
+\alpha_B(t) &= \frac{c_B}{1+\exp b_B(t-a_B)} \\
+\beta_B^* &= \beta_B h^-(P_A, \theta_A, n_A) \\
+dU_B &= (\alpha_B(t) - \beta_B^* U_B(t))dt + \sigma_{1B}dW_{1B} \\
+dS_B &= (\beta_B^* U_B(t) - \gamma_B S_B(t))dt + \sigma_{2B}dW_{2B} \\
+dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
+\end{align}$$
 
 ## Question 2
 

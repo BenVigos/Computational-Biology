@@ -5,15 +5,16 @@ geometry:
 # Assignment 2: Model development and equations 
 
 ## Viterbi algorithm
--$\delta_t(s)$: the maximum probability of being in state s at time t given the observed sequence up to time t.
+- $\delta_t(s)$: the maximum probability of being in state s at time t given the observed sequence up to time t.
 
--$\Pi(s)$: the initial probability of being in state s at time t=0.
+- $\Pi(s)$: the initial probability of being in state s at time t=0.
 
--$B(O_t|s)$: the emission probability of observing O_t given state s.
+- $B(O_t|s)$: the emission probability of observing O_t given state s.
 
--$\psi_t(s)$: the state at time t-1 that maximizes the probability of being in state s at time t.
+- $\psi_t(s)$: the state at time t-1 that maximizes the probability of being in state s at time t.
 
 The Viterbi algorithm has the following steps:
+
 1. *Initialization:* Set the initial probabilities for each state at time t=0.
 $$\delta_1(s) = \Pi(s) \times B(O_1|s)$$
 where $\Pi(s)$ is the initial probability of being in state s and $B(O_1|s)$ is the emission probability of observing $O_1$ given state s.
@@ -25,6 +26,7 @@ $$\delta_t(s) = \max_{r\in s} [\delta_{t-1}(r) \times A(r,s), B(O_t|s)]$$
 where $A(r,s)$ is the transition probability from state r to state s.
 
 and $$\psi_t(s) = argmax [\delta_{t}(r) \times A(r,s)]$$
+
 3. *Termination:* After processing all time steps, identify the state with the highest probability at the final time step.
 $$P_t = \max{[\delta_t(s)]}$$
 4. *Backtracking:* Trace back through the states to determine the most likely sequence of states that led to the observed data.

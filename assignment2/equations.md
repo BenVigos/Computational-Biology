@@ -5,42 +5,31 @@ geometry:
 # Assignment 2: Model development and equations 
 
 ## Viterbi algorithm
--$\delta_t(s)$: the maximum probability of being in state s at time t given the observed sequence up to time t.
-
--$\Pi(s)$: the initial probability of being in state s at time t=0.
-
--$B(O_t|s)$: the emission probability of observing O_t given state s.
-
--$\psi_t(s)$: the state at time t-1 that maximizes the probability of being in state s at time t.
-
 The Viterbi algorithm has the following steps:
-1. *Initialization:* Set the initial probabilities for each state at time t=0.
+
+1. *Initialization:* 
 $$\delta_1(s) = \Pi(s) \times B(O_1|s)$$
 where $\Pi(s)$ is the initial probability of being in state s and $B(O_1|s)$ is the emission probability of observing $O_1$ given state s.
 
 and $$\psi_1(s) = none$$
 
-2. *Recursion:* For each time step t and each state, calculate the maximum probability of being in that state given the previous states and the observed data. This involves using the transition probabilities and the emission probabilities.
+2. *Recursion:* 
 $$\delta_t(s) = \max_{r\in s} [\delta_{t-1}(r) \times A(r,s), B(O_t|s)]$$
 where $A(r,s)$ is the transition probability from state r to state s.
 
 and $$\psi_t(s) = argmax [\delta_{t}(r) \times A(r,s)]$$
-3. *Termination:* After processing all time steps, identify the state with the highest probability at the final time step.
+3. *Termination:* 
 $$P_t = \max{[\delta_t(s)]}$$
-4. *Backtracking:* Trace back through the states to determine the most likely sequence of states that led to the observed data.
+4. *Backtracking:* Trace back through the states to determine the most likely sequence of states.
 
-The equation for the recursion step can be expressed as:
-$$V_t(j) = \max_{i} [V_{t-1}(i) \times a_{ij}] \times b_j(o_t)$$
-where:
-- $V_t(j)$ is the maximum probability of being in state j at time t.
-- $V_{t-1}(i)$ is the maximum probability of being in state i at time t-1.
-- $a_{ij}$ is the transition probability from state i to state j.
-- $b_j(o_t)$ is the emission probability of observing o_t given state j.
+where above, $\delta_t(s)$ is the maximum probability of being in state s at time t given the observed sequence up to time t,
+$B(O_t|s)$ is the emission probability of observing $O_t$ given state s,
+and $\psi_t(s)$ is the state at time t-1 that maximizes the probability of being in state s at time t.
 
 
 ## Question 1
 
-### ODEs
+### ODEs - Mechanism I: Transcriptional Hijack
 
 $$
 \begin{aligned}
@@ -57,21 +46,21 @@ Table: Definitions of the parameters used in the ODEs
 
 | Parameter | Definition |
 | :--- | :--- |
-| $dr_i$ | Change in concentration of transcribed mRNA A or B. |
-| $m_i$ | Maximum transcription rate coefficient for mRNA ($Ms^{-1}$). |
-| $h^+(P, \theta, n)$ | Hill activation function. |
-| $h^-(P, \theta, n)$ | Hill inhibition function. |
-| $\theta_i$ | Expression threshold for protein binding ($M$). |
-| $n_i$ | Hill coefficient representing regulatory nonlinearity. |
-| $\gamma_i$ | Degradation rate of mRNA ($s^{-1}$). |
-| $r_i$ | Concentration of transcribed mRNA A or B ($M$). |
-| $dP_i$ | Change in concentration of Protein A or Protein B. |
-| $k_{Pi}$ | Translation rate of Protein A or Protein B ($s^{-1}$). |
-| $P_i$ | Concentration of Protein ($M$). |
-| $\delta_{Pi}$ | Degradation rate of Protein A or Protein B ($s^{-1}$). |
-| $dt$ | Time differential. |
+| $r_i$ | Concentration of transcribed mRNA A or B (M, mol L$^{-1}$). |
+| $\dfrac{dr_i}{dt}$ | Time-derivative / change in concentration of transcribed mRNA (M s$^{-1}$). |
+| $m_i$ | Maximum transcription rate coefficient for mRNA (M s$^{-1}$). |
+| $h^+(P, \theta, n)$ | Hill activation function (dimensionless). |
+| $h^-(P, \theta, n)$ | Hill inhibition function (dimensionless). |
+| $\theta_i$ | Expression threshold for protein binding (M, mol L$^{-1}$). |
+| $n_i$ | Hill coefficient representing regulatory nonlinearity (dimensionless, unitless). |
+| $\gamma_i$ | Degradation rate of mRNA (s$^{-1}$). |
+| $P_i$ | Concentration of Protein (M, mol L$^{-1}$). |
+| $\dfrac{dP_i}{dt}$ | Time-derivative / change in protein concentration (M s$^{-1}$). |
+| $k_{Pi}$ | Effective translation rate (s$^{-1}$) converting mRNA concentration to protein production rate. |
+| $\delta_{Pi}$ | Degradation rate of Protein A or Protein B (s$^{-1}$). |
+| $t$ | Time (s, seconds). |
 
-### SDEVelo
+### SDEVelo - Mechanism II: Splicing Sabotage
 
 $$
 \begin{aligned}
@@ -97,48 +86,47 @@ Table: Definitions of the parameters used in the SDEVelo equations
 
 | Parameter | Definition |
 | :--- | :--- |
-| $\alpha_i(t)$ | Time-dependent transcription rate of unspliced mRNA (pre-mRNA). |
-| $c_i$ | Maximum transcription rate coefficient for pre-mRNA ($Ms^{-1}$). |
-| $b_i$ | Steepness parameter of the transcription rate sigmoid function. |
-| $t$ | Time variable. |
-| $a_i$ | Time shift or activation delay for transcription ($s$). |
-| $\beta^*_i$ | Regulated splicing rate influenced by protein interactions. |
-| $\beta_i$ | Base splicing rate parameter ($s^{-1}$). |
-| $h^+(P, \theta, n)$ | Hill activation function. |
-| $h^-(P, \theta, n)$ | Hill inhibition function. |
-| $P_i$ | Concentration of Protein ($M$). |
-| $\theta_i$ | Expression threshold for protein binding ($M$). |
-| $n_i$ | Hill coefficient representing regulatory nonlinearity. |
-| $dU_i$ | Change in concentration of unspliced mRNA (pre-mRNA). |
-| $U_i(t)$ | Concentration of unspliced mRNA (pre-mRNA) at time $t$ ($M$). |
-| $dt$ | Time differential. |
-| $\sigma_{1i}$ | Noise intensity parameter for pre-mRNA transcription ($Ms^{-1/2}$). |
-| $dW_{1i}$ | Differential of the Wiener process for transcription noise. |
-| $dS_i$ | Change in concentration of spliced mRNA. |
-| $S_i(t)$ | Concentration of spliced mRNA at time $t$ ($M$). |
-| $\gamma_i$ | Degradation rate of spliced mRNA ($s^{-1}$). |
-| $\sigma_{2i}$ | Noise intensity parameter for the splicing process ($Ms^{-1/2}$). |
-| $dW_{2i}$ | Differential of the Wiener process for splicing noise. |
-| $dP_i$ | Change in concentration of Protein A or Protein B. |
-| $k_{Pi}$ | Translation rate of Protein A or Protein B ($s^{-1}$). |
-| $\delta_{Pi}$ | Degradation rate of Protein A or Protein B ($s^{-1}$). |
+| $\alpha_i(t)$ | Time-dependent transcription rate of unspliced mRNA (pre-mRNA) (M s$^{-1}$). |
+| $c_i$ | Maximum transcription rate coefficient for pre-mRNA (M s$^{-1}$). |
+| $b_i$ | Steepness parameter of the transcription rate sigmoid function (s$^{-1}$). |
+| $t$ | Time (s). |
+| $a_i$ | Time shift or activation delay for transcription (s). |
+| $\beta^*_i$ | Regulated splicing rate influenced by protein interactions (s$^{-1}$). |
+| $\beta_i$ | Base splicing rate parameter (s$^{-1}$). |
+| $h^+(P, \theta, n)$ | Hill activation function (dimensionless). |
+| $h^-(P, \theta, n)$ | Hill inhibition function (dimensionless). |
+| $P_i$ | Concentration of Protein (M). |
+| $\theta_i$ | Expression threshold for protein binding (M). |
+| $n_i$ | Hill coefficient (dimensionless). |
+| $U_i(t)$ | Concentration of unspliced mRNA (pre-mRNA) at time $t$ (M). |
+| $dU_i$ | Change in unspliced mRNA concentration (M s$^{-1}$). |
+| $S_i(t)$ | Concentration of spliced mRNA at time $t$ (M). |
+| $dS_i$ | Change in spliced mRNA concentration (M s$^{-1}$). |
+| $\gamma_i$ | Degradation rate of spliced mRNA (s$^{-1}$). |
+| $\sigma_{1i}$ | Noise intensity parameter for pre-mRNA transcription (M s$^{-1/2}$). |
+| $\sigma_{2i}$ | Noise intensity parameter for the splicing process (M s$^{-1/2}$). |
+| $dW_{1i}, dW_{2i}$ | Differentials of the Wiener process (units of s$^{1/2}$); stochastic increments scale as $\sqrt{\Delta t}$. |
+| $k_{Pi}$ | Translation rate (s$^{-1}$). |
+| $\delta_{Pi}$ | Protein degradation rate (s$^{-1}$). |
+| $dt$ | Time differential (s). |
 
 
 ## Downstream metabolic effects
 $$
 \begin{aligned}
-\frac{dR}{dt} &= \alpha R - \beta RE \\
-\frac{dE}{dt} &= -\gamma E + \delta RE
+\frac{dR}{dt} &= \alpha R - \beta R E \\
+\frac{dE}{dt} &= -\gamma E + \delta R E
 \end{aligned}
 $$
 
-where:
-* $\alpha R$: the growth of the resource R, which is proportional to its current amount. This term represents the natural growth or replenishment of the resource in the absence of any interactions with the enzyme E.
-* $-\beta RE$: the consumption of the resource R by the enzyme E. This term represents the rate at which the enzyme E utilizes the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
-* $-\gamma E$: the natural decay or degradation of the enzyme E. This term represents the rate at which the enzyme E is lost or deactivated over time, independent of its interaction with the resource R.
-* $\delta RE$: the production or activation of the enzyme E by the resource R. This term represents the rate at which the enzyme E is generated or activated in response to the presence of the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
+Where:
 
-with $\alpha=2$, $\beta=1.1$, $\gamma=1$, $\delta=0.9$, $R(0)=1$ and $E(0)=0.5$
+* $\alpha R$: represents the natural growth or replenishment of the resource in the absence of any interactions with the enzyme E. 
+* $-\beta R E$: represents the rate at which the enzyme E utilizes the resource R. 
+* $-\gamma E$: represents the rate at which the enzyme E is lost or deactivated over time, independent of its interaction with the resource R. 
+* $\delta R E$: represents the rate at which the enzyme E is generated or activated in response to the presence of the resource R. 
+
+with $\alpha=2\;[\mathrm{T^{-1}}]$, $\beta=1.1\;[\mathrm{M^{-1} L^{3} T^{-1}}]$, $\gamma=1\;\mathrm{[T^{-1}]}$, $\delta=0.9\;\mathrm{[M^{-1} L^{3} T^{-1}]}$, $R(0)=1\;\mathrm{[M^{1} L^{-3}]}$ and $E(0)=0.5\;\mathrm{[M^{1} L^{-3}]}$
 
 The fixed points of this system can be found by setting the derivatives to zero:
 $$
@@ -168,7 +156,7 @@ The stability of the fixed points can be determined by evaluating the eigenvalue
 The eigenvalues at the first fixed point $(0, 0)$ are:
 
 $$det(J-\lambda I) = 0 \implies (\alpha - \lambda)(-\gamma - \lambda) = 0$$
-$$\implies \lambda_1 = \alpha = 2, \quad \lambda_2 = -\gamma = -1$$
+$$\implies \lambda_1 = \alpha = 2 , \quad \lambda_2 = -\gamma = -1 $$
 
 This indicates that the first fixed point is a saddle point, which is unstable.
 
@@ -180,3 +168,5 @@ $$\implies \lambda^2 + \alpha \gamma = 0$$
 $$\implies \lambda = \pm i \sqrt{\alpha \gamma} = \pm i \sqrt{2}$$
 
 Since the eigenvalues are purely imaginary, the second fixed point is a center, which is stable but not asymptotically stable. This means that the system will exhibit oscillatory behavior around this fixed point.
+
+

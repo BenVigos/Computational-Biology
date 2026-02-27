@@ -167,6 +167,41 @@ def system(vars):
     a, b = vars[0], vars[1]
     return [dadt(a, b), dbdt(a, b)]
 
+m_a, m_b = 2.35, 2.35  # unit
+gamma_a, gamma_b = 1, 1  # s-1
+k_pa, k_pb = 1.0, 1.0  # s-1
+theta_a, theta_b = 0.21, 0.21  # M
+n_a, n_b = (
+        3,
+        3,
+    )  # hill coefficient (assumption: use hill and not PWL activation because of low n coefficients)
+delta_pa, delta_pb = 1.0, 1.0  # s-1
+mRNA_a, mRNA_b = 0.8, 0.8  # M
+P_a, P_b = 0.8, 0.8  # M
+y0 = [mRNA_a, mRNA_b, P_a, P_b]
+def hill_activation(P, theta, n):
+    return (P**n) / (theta**n + P**n)
+
+def hill_inhibition(P, theta, n):
+    return (theta**n) / (theta**n + P**n)
+
+def patient_alpha_ode(vars):
+    """
+    To work with phase_portrait, vars must be length 2.
+    We will treat Pa and Pb as the primary variables.
+    """
+    Pa, Pb = vars
+    
+    # We assume mRNA (ra, rb) reaches steady state quickly:
+    # ra = (m_a * hill) / gamma_a
+    ra = (m_a * hill_activation(Pb, theta_b, n_b)) / gamma_a
+    rb = (m_b * hill_inhibition(Pa, theta_a, n_a)) / gamma_a # Using inhibition for B
+    
+    # Differential equations for Proteins
+    dPa_dt = k_pa * ra - delta_pa * Pa
+    dPb_dt = k_pb * rb - delta_pb * Pb
+    
+    return [dPa_dt, dPb_dt]
 
 
 
@@ -180,4 +215,18 @@ if __name__ == '__main__':
                              figsize=(6, 6),
                              fontsize=12,
                              streamplot_kwargs={'density': 1.5, 'color': 'gray'})
+    plt.show()
+
+    # Use a 2D initial guess for Pa and Pb
+    initial_guess_2d = [0.8, 0.8] 
+
+    fig, ax = phase_portrait(patient_alpha_ode,
+                             x0=initial_guess_2d,
+                             xlim=(0, 2), # Set specific limits to see the Hill dynamics
+                             ylim=(0, 2),
+                             grid_points=100,
+                             title='Patient Alpha: Protein Dynamics (Pa vs Pb)',
+                             xlabel='Protein A',
+                             ylabel='Protein B',
+                             streamplot_kwargs={'density': 1.0, 'color': 'gray'})
     plt.show()

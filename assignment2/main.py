@@ -136,10 +136,10 @@ def concentration_overtime(sol, t, hijack=False):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # pA, pB over time
     plt.figure(figsize=(8, 6))
-    plt.plot(t, pA, label='Protein A (Guardian)', color = "blue", linewidth=1.5)
-    plt.plot(t, pB, label='Protein B (Proliferator)', color = "turquoise", linewidth=1.5)
-    plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "black", linestyle="--")
-    plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "red", linestyle="--")
+    plt.plot(t, pA, label='Protein A', color = "tab:blue", linewidth=1.5)
+    plt.plot(t, pB, label='Protein B', color = "tab:red", linewidth=1.5)
+    plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "tab:blue", linestyle="--")
+    plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "tab:red", linestyle="--")
     plt.xlabel("Time [s]", fontsize=12)
     plt.ylabel("Concentration [M]", fontsize=12)
     plt.title("Time Evolution of Protein and mRNA Concentrations", fontsize=14)
@@ -161,11 +161,11 @@ def phase_plots(sol, t, hijack=False):
     ra, rb, pA, pB = sol.y[0], sol.y[1], sol.y[2], sol.y[3]
     # phase plot pA vs pB and mRNA_A vs mRNA_B
     plt.figure(figsize=(8, 6))
-    plt.plot(pA, pB, color="black", linewidth=2, label="Protein Trajectory")
-    plt.scatter([pA[0]], [pB[0]], color="black", zorder=5, label="Start Proteins (t=0)")
+    plt.plot(pA, pB, color="tab:orange", linewidth=2, label="Protein Trajectory", alpha = 0.8)
+    plt.scatter([pA[0]], [pB[0]], color="tab:orange", zorder=5, label="Start Proteins (t=0)")
 
-    plt.plot(ra, rb, color="blue", linewidth=2, label="mRNA Trajectory")
-    plt.scatter([ra[0]], [rb[0]], color="blue", zorder=5, label="Start mRNA (t=0)")
+    plt.plot(ra, rb, color="tab:blue", linewidth=2, label="mRNA Trajectory", alpha = 0.6)
+    plt.scatter([ra[0]], [rb[0]], color="tab:blue", zorder=5, label="Start mRNA (t=0)")
     plt.xlabel("$P_a, r_a$ Concentration [M]", fontsize=12)
     plt.ylabel("$P_b, r_b$ Concentration [M]", fontsize=12)
     plt.title("Phase Space: Protein A vs Protein B and mRNA A vs mRNA B", fontsize=14)
@@ -176,7 +176,7 @@ def phase_plots(sol, t, hijack=False):
         plt.scatter(
         [ra[-1]],
         [rb[-1]],
-        color="orange",
+        color="tab:orange",
         zorder=5,
         s=100,
         marker="*",
@@ -184,7 +184,7 @@ def phase_plots(sol, t, hijack=False):
         plt.scatter(
         [pA[-1]],
         [pB[-1]],
-        color="yellow",
+        color="tab:blue",
         zorder=5,
         s=100,
         marker="*",
@@ -207,28 +207,27 @@ def hill_plots(sol, t, hijack=False):
     act = hill_activation(P_vals, theta_a, n_a)
     inh = hill_inhibition(P_vals, theta_a, n_a)
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
     plt.plot(
         P_vals,
         act,
         label=f"Activation ($\\theta$={theta_a}, $n$={n_a})",
-        color="green",
+        color="tab:red",
         linewidth=2,
     )
-    if hijack:
-        plt.plot(
+    plt.plot(
             P_vals,
             np.ones_like(P_vals),
             label=f"Hijacked, no inhibition",
-            color="orange",
+            color="tab:blue", linestyle="--",
             linewidth=2,
         )
-    else:
-        plt.plot(
+
+    plt.plot(
             P_vals,
             inh,
             label=f"Inhibition ($\\theta$={theta_a}, $n$={n_a})",
-            color="orange",
+            color="tab:blue",
             linewidth=2,
         )
     plt.axvline(x=theta_a, color="grey", linestyle=":", label="Threshold ($\\theta$)")
@@ -238,10 +237,7 @@ def hill_plots(sol, t, hijack=False):
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    if hijack:
-        plt.savefig("plots/alpha_4_hill_functions_hijack.png", dpi=300)
-    else:
-        plt.savefig("plots/alpha_4_hill_functions.png", dpi=300)
+    plt.savefig("plots/alpha_4_hill_functions.png", dpi=300)
     plt.clf()
 
 def plot_rates(sol, t, hijack=False):
@@ -263,10 +259,10 @@ def plot_rates(sol, t, hijack=False):
     translation_rate_B = k_pb * rb
 
     plt.figure(figsize=(8, 6))
-    plt.plot(t, transcription_rate_A, label='Gene A Transcription Rate $m_a * H_{\\theta_b, n_b}(P_B)$', linewidth=2)
-    plt.plot(t, transcription_rate_B, label='Gene B Transcription Rate $m_b * H_{\\theta_a, n_a}(P_A)$', linewidth=2)
-    plt.plot(t, translation_rate_A, label='Protein A Translation Rate $k_{pa} * r_a$', linewidth=1.5, linestyle='--')
-    plt.plot(t, translation_rate_B, label='Protein B Translation Rate $k_{pb} * r_b$', linewidth=1.5, linestyle='--')
+    plt.plot(t, transcription_rate_A, label='Gene A Transcription Rate', linewidth=1.5, color="tab:blue", linestyle='--')
+    plt.plot(t, transcription_rate_B, label='Gene B Transcription Rate', linewidth=1.5, color ="tab:red", linestyle ='--')
+    plt.plot(t, translation_rate_A, label='Protein A Translation Rate', linewidth=1.5, color="tab:blue")
+    plt.plot(t, translation_rate_B, label='Protein B Translation Rate', linewidth=1.5, color="tab:red")
     plt.xlabel("Time [s]", fontsize=12)
     plt.ylabel("Rate [M/s]", fontsize=12)
     plt.title("Transcription and Translation Rates Over Time", fontsize=14)
@@ -357,8 +353,8 @@ def sdevelo_phase_portrait(
 
     pA_range = pA_max - pA_min if (pA_max - pA_min) > 0 else 1.0
     pB_range = pB_max - pB_min if (pB_max - pB_min) > 0 else 1.0
-
-    fig, ax = plt.subplots()
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     if show_vector_field and ode_func is not None:
         pA_grid = np.linspace(max(0, pA_min - padding * pA_range), pA_max + padding * pA_range, grid_size)
@@ -437,6 +433,7 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     mean_p = np.mean(protein_runs, axis=0)
     err_p = 1.96 * (np.std(protein_runs, axis=0) / np.sqrt(n_runs))
 
+    plt.figure(figsize=(8, 6))
     plt.plot(t, mean_p[0], color="tab:blue")
     plt.fill_between(
         t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
@@ -519,7 +516,7 @@ def plot_sdevelo_concentrations(
     err_p = 1.96 * (np.std(all_p, axis=0) / np.sqrt(n_runs))
 
     # 3. Plotting
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     # Define styling: Colors for genes, linestyles for molecule types
     styles = [
@@ -569,14 +566,14 @@ def plot_sdevelo_concentrations(
     ]
 
     # Adjust layout and add legends
-    plt.subplots_adjust(right=0.75)
+    # plt.subplots_adjust(right=0.75)
 
     leg_genes = ax.legend(
         handles=gene_handles,
         title="Gene",
-        loc="upper left",
-        bbox_to_anchor=(1.02, 1.00),
-        borderaxespad=0.0,
+        loc="upper center",
+        # bbox_to_anchor=(1.02, 1.00),
+        # borderaxespad=0.0,
     )
     ax.add_artist(leg_genes)
 
@@ -584,8 +581,8 @@ def plot_sdevelo_concentrations(
         handles=molecule_handles,
         title="Molecule Type",
         loc="upper left",
-        bbox_to_anchor=(1.02, 0.75),
-        borderaxespad=0.0,
+        # bbox_to_anchor=(1.02, 0.75),
+        # borderaxespad=0.0,
     )
 
     plt.xlabel("Time [s]")
@@ -596,6 +593,142 @@ def plot_sdevelo_concentrations(
     if savefig is not None:
         plt.savefig(f"plots/{savefig}")
     plt.clf()
+
+def phase_portrait(system,
+                    x0=None,
+                    xlim=None,
+                    ylim=None,
+                    dx=5,
+                    dy=5,
+                    grid_points=100,
+                    figsize=(6, 6),
+                    fontsize=12,
+                    streamplot_kwargs=None,
+                    plot_nullclines=True,
+                    title=None,
+                    xlabel=None,
+                    ylabel=None,
+                    nullcline_labels=None,
+                    fixedpoint_label='stable fixed point',
+                    show_legend=True):
+    """Create a phase portrait for a 2D system.
+
+    Parameters
+    ----------
+    system : callable
+        Function that accepts a length-2 array-like [x, y] (or two arrays) and
+        returns [dx/dt, dy/dt]. The function should support numpy arrays.
+    x0 : array-like, optional
+        Initial guess for finding a fixed point with fsolve. Default [0, 0].
+    xlim, ylim : tuple, optional
+        Axis limits as (min, max). If None they are set relative to the fixed
+        point using dx/dy.
+    dx, dy : float
+        Range around the fixed point to build the plotting window when xlim/
+        ylim are not provided.
+    grid_points : int
+        Number of points along each axis for the vector field grid.
+    figsize : tuple
+        Figure size passed to plt.subplots.
+    fontsize : int
+        Font size for labels and title.
+    streamplot_kwargs : dict, optional
+        Additional keyword args forwarded to ax.streamplot.
+    plot_nullclines : bool
+        If True, draw contour lines where dx/dt=0 and dy/dt=0.
+
+    Returns
+    -------
+    fig, ax
+    """
+    # Prepare default kwargs
+    if streamplot_kwargs is None:
+        streamplot_kwargs = {'density': 1.0, 'color': 'gray'}
+
+    # Find fixed point
+    x0 = np.asarray(x0) if x0 is not None else np.array([0.0, 0.0])
+    try:
+        fp = fsolve(system, x0)
+    except Exception:
+        # fallback to zero if fsolve fails
+        fp = np.array([0.0, 0.0])
+
+    # Determine plotting ranges
+    if xlim is None:
+        x_min, x_max = fp[0] - dx, fp[0] + dx
+    else:
+        x_min, x_max = xlim
+    if ylim is None:
+        y_min, y_max = fp[1] - dy, fp[1] + dy
+    else:
+        y_min, y_max = ylim
+
+    x = np.linspace(x_min, x_max, int(grid_points))
+    y = np.linspace(y_min, y_max, int(grid_points))
+    X, Y = np.meshgrid(x, y)
+
+    # Evaluate vector field. Accept systems that return lists or arrays.
+    d = system([X, Y])
+    # ensure we have two arrays
+    dX = np.asarray(d[0])
+    dY = np.asarray(d[1])
+
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # Streamplot
+    ax.streamplot(X, Y, dX, dY, **streamplot_kwargs)
+
+    # Plot fixed point
+    ax.plot(fp[0], fp[1], marker='x', color='k', markersize=8, markeredgewidth=2)
+    if fixedpoint_label:
+        ax.annotate(fixedpoint_label, xy=(fp[0], fp[1]), xytext=(5, 5), textcoords='offset points', fontsize=fontsize)
+
+    # Nullclines via contour at level 0
+    handles = []
+    labels = []
+    if plot_nullclines:
+        try:
+            c1 = ax.contour(X, Y, dX, levels=[0], colors='C0', linestyles='--', linewidths=1)
+            c2 = ax.contour(X, Y, dY, levels=[0], colors='C1', linestyles='-.', linewidths=1)
+            # create legend handles
+            # use provided labels if any
+            if nullcline_labels is None:
+                nc_labels = ('dx/dt = 0', 'dy/dt = 0')
+            else:
+                # ensure we have at least two labels
+                nc_labels = tuple(nullcline_labels)
+                if len(nc_labels) < 2:
+                    defaults = ('dx/dt = 0', 'dy/dt = 0')
+                    nc_labels = tuple(list(nc_labels) + list(defaults[len(nc_labels):]))
+            handles.append(Line2D([0], [0], color='C0', linestyle='--'))
+            labels.append(nc_labels[0])
+            handles.append(Line2D([0], [0], color='C1', linestyle='-.'))
+            labels.append(nc_labels[1])
+        except Exception:
+            # if contouring fails (e.g., non-finite values), skip nullclines
+            pass
+
+    # axis labels and formatting
+    ax.set_xlabel(xlabel if xlabel is not None else 'x', fontsize=fontsize)
+    ax.set_ylabel(ylabel if ylabel is not None else 'y', fontsize=fontsize)
+    if title is not None:
+        ax.set_title(title, fontsize=fontsize)
+    else:
+        ax.set_title('Phase portrait', fontsize=fontsize)
+
+    # Add a legend combining nullcline proxies (if any)
+    if show_legend and handles:
+        # include fixed point in legend too if requested
+        fp_label = fixedpoint_label if fixedpoint_label else None
+        if fp_label:
+            handles = [Line2D([0], [0], color='k', marker='x', linestyle='')] + handles
+            labels = [fp_label] + labels
+        ax.legend(handles, labels, fontsize=fontsize)
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
+
+    return fig, ax
 
 
 if __name__ == "__main__":
@@ -737,3 +870,39 @@ if __name__ == "__main__":
     # Compare the protein phase portraits for Patient Alpha and Patient Beta. Describe the dynamic
     # behaviors observed in each plot. What do these different behaviors imply about the cellular "fate" of
     # each sample? Justify your conclusions based on the trajectories in your plots.
+
+
+    # BONUS
+    # a) Explain what each term in the equations (αR, −βRE, −γE, δRE) represents biologically in the 
+    # context of a cellular resource and a growth-promoting enzyme. (In your Model/Eqn video) 
+    # b) Carry out a stability analysis  for, 𝛼 = 2, 𝛽 = 1.1, 𝛾 = 1 and 𝛿 = 0.9, R(0) = 1 and E(0) =0.5 
+    # (And discuss in your results and discussions video) 
+    # c) Plot the stream plot with equilibrium point and nullclines (And explain in your Figures video) 
+
+    alpha, beta, gamma, delta = 2, 1.1, 1, 0.9
+    a0, b0 = 1, 0.5
+    def dadt(a, b): # a is R, b is E
+        return alpha*a - beta*a*b 
+
+    def dbdt(a, b):
+        return -gamma*b + delta*a*b 
+
+    def nca(alpha, beta):
+        return alpha/beta
+
+    def ncb(gamma, delta):
+        return gamma/delta
+
+    def system(vars):
+        a, b = vars[0], vars[1]
+        return [dadt(a, b), dbdt(a, b)]
+    
+    fig, ax = phase_portrait(system,
+                             x0=[a0, b0],
+                             dx=5,
+                             dy=5,
+                             grid_points=200,
+                             figsize=(6, 6),
+                             fontsize=12,
+                             streamplot_kwargs={'density': 1.5, 'color': 'gray'})
+    plt.savefig("plots/bonus_phase_portrait.png", dpi=300)

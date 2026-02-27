@@ -16,6 +16,29 @@ of the sequence and works backward, to see if it converges on the same state seq
 
 ## Figures and tables
 
+Table 1: Viterbi probabilities, most likely sequence is all exons.
+
+Table 2:
+
+Figure 1: Illustrates the hijacking in mechanism I. Usually there is Inhibition of Gene B by Protein A, and Activation of Gene A by Protein B. However, the hijacking caused by the studied cancer means there is no inhibition of Gene B by Protein A.
+
+Figure 2: This Phase Space of Protein A and B and mRNA A and B aims to illustrate the effect of the hijacking. Protein A increases as Protein B increases, which reduces the amount of Protein B. This feedback loop ensures that cell division by Protein B remains controlled. With hijacking (b) we see that protein A and B both increase, which causes uncontrolled cell division.
+
+Figure 2 shows the Time Evolution of the Protein and mRNA concentrations. In a healthy state the increase in Protein B causes a slightly delayed increase in Protein A (seen by the shift of the peak to the right), which then stops mRNA B production and decreases Protein B concentration.
+
+In the Hijacked state the concentrations both reach their steady state equillibrium at circa 2.3 molar.
+
+Figure 3 shows the Translation and Transcription rates. These follow a very similar shape to Figure 2 as they are the first derivative of Figure 2.
+
+
+
+Figure 5. Aims to illustrate the behaviour of Mechanism II, modelled using SDEVelo, compared to the healthy state, modelled using ODE. The SDE has clear stochastic behaviour but follows a somewhat similar trajectory to the Healthy ODE.
+
+Figure 6. Aims to show the effect of Mechanism II, by showing the concentrations of (un)spliced RNA and protein over time. This shows that, as we saw in Figure 5, the concentration of Gene B is kept below 0.5 molar. However, we can see a massive buildup of unspliced RNA for Gene B.
+
+Figure 7 shows the Phase Portrait with two distinct fixed points. At (0,0) we have a saddle point that is attractive in the E direction, but repulsive in the R direction. Around (1.1, 1.8) we see a stable fixed point: a stable spiral. 
+
+
 ## Results and implications
 
 Discussion Draft 

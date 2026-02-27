@@ -836,10 +836,10 @@ if __name__ == "__main__":
 
     sdevelo_phase_portrait(
         solve_sde_velo(dt, steps),
-        "Patient Beta",
+        "Patient Beta (SDE)",
         # ode_func=patient_alpha_ode,
         sol_ode=sol_ode,
-        label_ode="Mechanism I w/o hijack (ODE)",
+        label_ode="Healthy State (ODE)",
         # ode_args=(False,),
         grid_size=30,
         title="Phase Portrait of Protein concentrations",
@@ -904,5 +904,7 @@ if __name__ == "__main__":
                              grid_points=200,
                              figsize=(6, 6),
                              fontsize=12,
-                             streamplot_kwargs={'density': 1.5, 'color': 'gray'})
+                             streamplot_kwargs={'density': 1.5, 'color': 'gray'},
+                             xlabel="R",
+                             ylabel="E")
     plt.savefig("plots/bonus_phase_portrait.png", dpi=300)

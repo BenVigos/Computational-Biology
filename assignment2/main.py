@@ -138,8 +138,8 @@ def concentration_overtime(sol, t, hijack=False):
     plt.figure(figsize=(8, 6))
     plt.plot(t, pA, label='Protein A', color = "tab:blue", linewidth=1.5)
     plt.plot(t, pB, label='Protein B', color = "tab:red", linewidth=1.5)
-    plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "tab:red", linestyle="--")
-    plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "tab:blue", linestyle="--")
+    plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "tab:blue", linestyle="--")
+    plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "tab:red", linestyle="--")
     plt.xlabel("Time [s]", fontsize=12)
     plt.ylabel("Concentration [M]", fontsize=12)
     plt.title("Time Evolution of Protein and mRNA Concentrations", fontsize=14)
@@ -353,8 +353,8 @@ def sdevelo_phase_portrait(
 
     pA_range = pA_max - pA_min if (pA_max - pA_min) > 0 else 1.0
     pB_range = pB_max - pB_min if (pB_max - pB_min) > 0 else 1.0
-
-    fig, ax = plt.subplots()
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     if show_vector_field and ode_func is not None:
         pA_grid = np.linspace(max(0, pA_min - padding * pA_range), pA_max + padding * pA_range, grid_size)
@@ -433,6 +433,7 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
     mean_p = np.mean(protein_runs, axis=0)
     err_p = 1.96 * (np.std(protein_runs, axis=0) / np.sqrt(n_runs))
 
+    plt.figure(figsize=(8, 6))
     plt.plot(t, mean_p[0], color="tab:blue")
     plt.fill_between(
         t, mean_p[0] - err_p[0], mean_p[0] + err_p[0], color="tab:blue", alpha=0.2
@@ -509,7 +510,7 @@ def plot_sdevelo_concentrations(
     err_p = 1.96 * (np.std(all_p, axis=0) / np.sqrt(n_runs))
 
     # 3. Plotting
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8, 6))
 
     # Define styling: Colors for genes, linestyles for molecule types
     styles = [

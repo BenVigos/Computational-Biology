@@ -15,32 +15,54 @@ The Viterbi algorithm has the following steps:
 
 ### ODEs
 
-$$\begin{align}
+$$
+\begin{aligned}
 \frac{dr_a}{dt} &= m_a \times h^+(P_b, \theta_b, n_b) + \gamma_a \times r_a \\
 \frac{dr_b}{dt} &= m_b \times h^-(P_a, \theta_a, n_a) + \gamma_b \times r_b \\
-\frac{dP_a}{dt} &= k_a \times r_a - \delta_a \times P_a \\  
-\frac{dP_b}{dt} &= k_b \times r_b - \delta_b \times P_b
-\end{align}$$
+\frac{dP_a}{dt} &= k_{Pa} \times r_a - \delta_{Pa} \times P_a \\  
+\frac{dP_b}{dt} &= k_{Pb} \times r_b - \delta_{Pb} \times P_b
+\end{aligned}
+$$
 
-where $h^+(P_b, \theta_b, n_b)$ and $h^-(P_a, \theta_a, n_a)$ are hill activation and inhibition function respectively. When transcriptional hijack, $h^-(P_a, \theta_a, n_a) = 1$
+When transcriptional hijack, $h^-(P_a, \theta_a, n_a) = 1$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $dr_i$ | Change in concentration of transcribed mRNA A or B. |
+| $m_i$ | Maximum transcription rate coefficient for mRNA ($Ms^{-1}$). |
+| $h^+(P, \theta, n)$ | Hill activation function. |
+| $h^-(P, \theta, n)$ | Hill inhibition function. |
+| $\theta_i$ | Expression threshold for protein binding ($M$). |
+| $n_i$ | Hill coefficient representing regulatory nonlinearity. |
+| $\gamma_i$ | Degradation rate of mRNA ($s^{-1}$). |
+| $r_i$ | Concentration of transcribed mRNA A or B ($M$). |
+| $dP_i$ | Change in concentration of Protein A or Protein B. |
+| $k_{Pi}$ | Translation rate of Protein A or Protein B ($s^{-1}$). |
+| $P_i$ | Concentration of Protein ($M$). |
+| $\delta_{Pi}$ | Degradation rate of Protein A or Protein B ($s^{-1}$). |
+| $dt$ | Time differential. |
 
 ### SDEVelo
 
-$$\begin{align}
+$$
+\begin{aligned}
 \alpha_A(t) &= \frac{c_A}{1+\exp b_A(t-a_A)} \\
 \beta_A^* &= \beta_A h^+(P_B, \theta_B, n_B) \\
 dU_A &= (\alpha_A(t) - \beta_A^* U_A(t))dt + \sigma_{1A}dW_{1A} \\
 dS_A &= (\beta_A^* U_A(t) - \gamma_A S_A(t))dt + \sigma_{2A}dW_{2A} \\
 dP_A &= (k_{PA} S_A(t) - \delta_{PA} P_A(t))dt \\
-\end{align}$$
+\end{aligned}
+$$
 
-$$\begin{align}
+$$
+\begin{aligned}
 \alpha_B(t) &= \frac{c_B}{1+\exp b_B(t-a_B)} \\
 \beta_B^* &= \beta_B h^-(P_A, \theta_A, n_A) \\
 dU_B &= (\alpha_B(t) - \beta_B^* U_B(t))dt + \sigma_{1B}dW_{1B} \\
 dS_B &= (\beta_B^* U_B(t) - \gamma_B S_B(t))dt + \sigma_{2B}dW_{2B} \\
 dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
-\end{align}$$
+\end{aligned}
+$$
 
 Table: Definitions of the parameters used in the SDEVelo equations
 
@@ -74,15 +96,17 @@ Table: Definitions of the parameters used in the SDEVelo equations
 
 ## Question 2
 
-$$\begin{align}
+$$
+\begin{aligned}
 \frac{dR}{dt} &= \alpha R - \beta RE \\
 \frac{dE}{dt} &= -\gamma E + \delta RE\\
-\end{align}$$
+\end{aligned}
+$$
 
 where:
 * $\alpha R$:
 * $-\beta RE$:
-* $−\gamma E$:
+* $-\gamma E$:
 * $\delta RE$:
 
 We use  $\alpha = 2, \beta = 1.1, \gamma = 1$ and $\delta = 0.9$.
@@ -110,18 +134,22 @@ Using $\lambda^2 - \text{trace}(J)\lambda + \text{det}(J) = 0$, with $\text{det}
 
 
 ## Downstream metabolic effects
-$$\begin{align}
-\frac{dR}{dt} = \alpha R - \beta R E\\
-\frac{dE}{dt} = -\gamma E + \delta E R
-\end{align}$$
+$$
+\begin{aligned}
+\frac{dR}{dt} &= \alpha R - \beta RE \\
+\frac{dE}{dt} &= -\gamma E + \delta RE
+\end{aligned}
+$$
 
 with $\alpha=2$, $\beta=1.1$, $\gamma=1$, $delta=0.9$, $R(0)=1$ and $E(0)=0.5$
 
 The fixed points of this system can be found by setting the derivatives to zero:
-$$\begin{align}
+$$
+\begin{aligned}
 0 &= \alpha R - \beta R E \\
 0 &= -\gamma E + \delta E R
-\end{align}$$
+\end{aligned}
+$$
 
 and solving for R and E. This yields the fixed points:
 1. $(R^*, E^*) = (0, 0)$

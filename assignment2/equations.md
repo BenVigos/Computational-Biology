@@ -135,10 +135,10 @@ $$
 where:
 * $\alpha R$: the growth of the resource R, which is proportional to its current amount. This term represents the natural growth or replenishment of the resource in the absence of any interactions with the enzyme E.
 * $-\beta RE$: the consumption of the resource R by the enzyme E. This term represents the rate at which the enzyme E utilizes the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
-* $−\gamma E$: the natural decay or degradation of the enzyme E. This term represents the rate at which the enzyme E is lost or deactivated over time, independent of its interaction with the resource R.
+* $-\gamma E$: the natural decay or degradation of the enzyme E. This term represents the rate at which the enzyme E is lost or deactivated over time, independent of its interaction with the resource R.
 * $\delta RE$: the production or activation of the enzyme E by the resource R. This term represents the rate at which the enzyme E is generated or activated in response to the presence of the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
 
-with $\alpha=2$, $\beta=1.1$, $\gamma=1$, $delta=0.9$, $R(0)=1$ and $E(0)=0.5$
+with $\alpha=2$, $\beta=1.1$, $\gamma=1$, $\delta=0.9$, $R(0)=1$ and $E(0)=0.5$
 
 The fixed points of this system can be found by setting the derivatives to zero:
 $$

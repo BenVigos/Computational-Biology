@@ -8,6 +8,8 @@ header-includes:
 
 # Assignment 2: Figures and tables
 
+## Patient Alpha
+
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.8\textwidth]{plots/alpha_4_hill_functions.png}
@@ -38,6 +40,8 @@ header-includes:
 \subfloat[Hijacked State]{\includegraphics[width=0.45\textwidth]{plots/alpha_5_rates_hijack.png}}
 \caption{Translation and Transcription Rates overtime for Patient Alpha}
 \end{figure}
+
+## Patient Beta
 
 ![Phase Portrait of the Protein concentrations of Patient Beta](plots/sdevelo_phase_portrait.png)
 

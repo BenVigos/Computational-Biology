@@ -16,19 +16,15 @@ of the sequence and works backward, to see if it converges on the same state seq
 
 ## Figures and tables
 
-Table 1: Viterbi probabilities, most likely sequence is all exons.
-
-Table 2:
-
 Figure 1: Illustrates the hijacking in mechanism I. Usually there is Inhibition of Gene B by Protein A, and Activation of Gene A by Protein B. However, the hijacking caused by the studied cancer means there is no inhibition of Gene B by Protein A.
 
-Figure 2: This Phase Space of Protein A and B and mRNA A and B aims to illustrate the effect of the hijacking. Protein A increases as Protein B increases, which reduces the amount of Protein B. This feedback loop ensures that cell division by Protein B remains controlled. With hijacking (b) we see that protein A and B both increase, which causes uncontrolled cell division.
+Figure 2: This Phase Space of Protein A and B and mRNA A and B aims to illustrate the effect of the hijacking. Protein B activates production of Protein A, which reduces the amount of Protein B. This feedback loop ensures that cell division by Protein B remains controlled. With hijacking (b) we see that protein A and B both increase, which causes uncontrolled cell division.
 
 Figure 3 shows the Time Evolution of the Protein and mRNA concentrations. In a healthy state the increase in Protein B causes a slightly delayed increase in Protein A (seen by the shift of the peak to the right), which then stops mRNA B production and decreases Protein B concentration.
 
 In the Hijacked state the concentrations both reach their steady state equillibrium at circa 2.3 molar.
 
-Figure 3 shows the Translation and Transcription rates. These follow a very similar shape to Figure 2 as they are the first derivative of Figure 2.
+Figure 4 shows the Translation and Transcription rates. These follow a very similar shape to Figure 2 as they are the first derivative of Figure 2.
 
 Healthy states results were validated against Polynikis A, Hogan SJ, di Bernardo M. Comparing different ODE modelling approaches for gene regulatory networks. *J Theor Biol*. 2009;261(4):511-530. doi:10.1016/j.jtbi.2009.07.040
 

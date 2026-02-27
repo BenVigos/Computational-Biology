@@ -90,7 +90,7 @@ Table: Backpointer indices for Patient Beta's observed sequence AUUAU, where E=E
 \begin{figure}[H]
 \centering
 \includegraphics[height=0.8\textwidth]{plots/sdevelo_concentrations_over_time.png}
-\caption{Comparison of the (average) concentration of protein over time from ODE versus 10 SDEVelo simulations with 95\% confidence interval}
+\caption{Average concentration of unspliced and spliced RNA and protein from Gene A and B over time from SDEVelo simulations ($n=10$) with 95\% confidence interval}
 \end{figure}
 
 \begin{figure}[H]

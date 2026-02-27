@@ -140,8 +140,8 @@ def concentration_overtime(sol, t, hijack=False):
     plt.plot(t, pB, label='Protein B', color = "tab:red", linewidth=1.5)
     plt.plot(t, ra, label='mRNA A',linewidth=1.5, color = "tab:blue", linestyle="--")
     plt.plot(t, rb, label='mRNA B', linewidth=1.5, color = "tab:red", linestyle="--")
-    plt.xlabel("Time [s]", fontsize=12)
-    plt.ylabel("Concentration [M]", fontsize=12)
+    plt.xlabel("Time (s)", fontsize=12)
+    plt.ylabel("Concentration (M)", fontsize=12)
     plt.title("Time Evolution of Protein and mRNA Concentrations", fontsize=14)
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -166,8 +166,8 @@ def phase_plots(sol, t, hijack=False):
 
     plt.plot(ra, rb, color="tab:blue", linewidth=2, label="mRNA Trajectory", alpha = 0.6)
     plt.scatter([ra[0]], [rb[0]], color="tab:blue", zorder=5, label="Start mRNA (t=0)")
-    plt.xlabel("$P_a, r_a$ Concentration [M]", fontsize=12)
-    plt.ylabel("$P_b, r_b$ Concentration [M]", fontsize=12)
+    plt.xlabel("$P_a, r_a$ Concentration (M)", fontsize=12)
+    plt.ylabel("$P_b, r_b$ Concentration (M)", fontsize=12)
     plt.title("Phase Space: Protein A vs Protein B and mRNA A vs mRNA B", fontsize=14)
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -231,7 +231,7 @@ def hill_plots(sol, t, hijack=False):
             linewidth=2,
         )
     plt.axvline(x=theta_a, color="grey", linestyle=":", label="Threshold ($\\theta$)")
-    plt.xlabel("Regulator Protein Concentration [M]", fontsize=12)
+    plt.xlabel("Regulator Protein Concentration (M)", fontsize=12)
     plt.ylabel("Hill Function", fontsize=12)
     plt.title("Hill Functions for Activation & Inhibition", fontsize=14)
     plt.legend()
@@ -263,8 +263,8 @@ def plot_rates(sol, t, hijack=False):
     plt.plot(t, transcription_rate_B, label='Gene B Transcription Rate', linewidth=1.5, color ="tab:red", linestyle ='--')
     plt.plot(t, translation_rate_A, label='Protein A Translation Rate', linewidth=1.5, color="tab:blue")
     plt.plot(t, translation_rate_B, label='Protein B Translation Rate', linewidth=1.5, color="tab:red")
-    plt.xlabel("Time [s]", fontsize=12)
-    plt.ylabel("Rate [M/s]", fontsize=12)
+    plt.xlabel("Time (s)", fontsize=12)
+    plt.ylabel("Rate (M/s)", fontsize=12)
     plt.title("Transcription and Translation Rates Over Time", fontsize=14)
     plt.legend()
     plt.grid(True, alpha=0.3)
@@ -401,8 +401,8 @@ def sdevelo_phase_portrait(
     ax.plot(pA_sde, pB_sde, label=label_sde, color="tab:purple", zorder=4, alpha=0.6)
     ax.scatter(pA_sde[0], pB_sde[0], color="tab:purple", marker="o", zorder=5, label="Initial state (SDE)")
 
-    ax.set_xlabel("Protein A Concentration [M]")
-    ax.set_ylabel("Protein B Concentration [M]")
+    ax.set_xlabel("Protein A Concentration (M)")
+    ax.set_ylabel("Protein B Concentration (M)")
     ax.grid(True, alpha=0.3)
 
     handles, labels = ax.get_legend_handles_labels()
@@ -476,8 +476,8 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
         borderaxespad=0.0,
     )
     plt.title(f"{title} ($n_{{\\text{{SDEVelo}}}}={n_runs}$)")
-    plt.xlabel("Time [s]")
-    plt.ylabel("Concentration [M]")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Concentration (M)")
     plt.grid(True, alpha=0.3)
 
     if savefig is not None:
@@ -585,8 +585,8 @@ def plot_sdevelo_concentrations(
         # borderaxespad=0.0,
     )
 
-    plt.xlabel("Time [s]")
-    plt.ylabel("Concentration [M]")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Concentration (M)")
     plt.title(rf"{title} ($n={n_runs})$")
     plt.grid(True, alpha=0.3)
 
@@ -905,6 +905,6 @@ if __name__ == "__main__":
                              figsize=(6, 6),
                              fontsize=12,
                              streamplot_kwargs={'density': 1.5, 'color': 'gray'},
-                             xlabel="R",
-                             ylabel="E")
+                             xlabel="R [ML-3]",
+                             ylabel="E [ML-3]")
     plt.savefig("plots/bonus_phase_portrait.png", dpi=300)

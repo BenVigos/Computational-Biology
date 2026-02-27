@@ -207,7 +207,7 @@ def hill_plots(sol, t, hijack=False):
     act = hill_activation(P_vals, theta_a, n_a)
     inh = hill_inhibition(P_vals, theta_a, n_a)
 
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 6))
     plt.plot(
         P_vals,
         act,

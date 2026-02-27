@@ -45,4 +45,4 @@ header-includes:
 
 <!-- ![Average concentration of (un)spliced RNA and protein over time from 10 SDEVelo simulations with 95% confidence interval](plots/sdevelo_versus_ode.png) -->
 
-![Stream plot with equilibrium point and nullclines for interaction between metabolite R, and gorwth-promoting enzyme E](C:\Users\annad\Documents\UvAnna x VU\Computational Biology\Computational-Biology\plots\bonus_phase_portrait.png) 
+![Stream plot with equilibrium point and nullclines for interaction between metabolite R, and gorwth-promoting enzyme E](plots\bonus_phase_portrait.png) 

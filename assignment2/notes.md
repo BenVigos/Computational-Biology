@@ -30,6 +30,7 @@ In the Hijacked state the concentrations both reach their steady state equillibr
 
 Figure 3 shows the Translation and Transcription rates. These follow a very similar shape to Figure 2 as they are the first derivative of Figure 2.
 
+Healthy states results were validated against Polynikis A, Hogan SJ, di Bernardo M. Comparing different ODE modelling approaches for gene regulatory networks. *J Theor Biol*. 2009;261(4):511-530. doi:10.1016/j.jtbi.2009.07.040
 
 
 Figure 5. Aims to illustrate the behaviour of Mechanism II, modelled using SDEVelo, compared to the healthy state, modelled using ODE. The SDE has clear stochastic behaviour but follows a somewhat similar trajectory to the Healthy ODE.

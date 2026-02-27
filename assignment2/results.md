@@ -12,6 +12,27 @@ header-includes:
 
 ## Patient Alpha
 
+Most likely sequence of hidden states for AGCGC: ['?', 'E', 'E', 'E', 'E']
+
+### Viterbi Matrix (probabilities)
+
+Table: Viterbi probabilities for Patient Alpha's observed sequence AGCGC, where E=Exon and I=Intron
+
+|         | t=0     | t=1      | t=2      | t=3      |          t=4 |
+|---------|--------:|---------:|---------:|---------:|-------------:|
+| Exon    | 0.125   | 0.028125 | 0.006328 | 0.001424 | **0.000320** |
+| Intron  | 0.200   | 0.008000 | 0.000960 | 0.000038 |     0.000021 |
+
+### Backpointer Matrix (state indices)
+
+Table: Backpointer indices for Patient Alpha's observed sequence AGCGC, where E=Exon and I=Intron
+
+|         | t=0 | t=1 | t=2 | t=3 | t=4 |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| Exon    |  ?  |  **E**  |  **E**  |  **E** |  **E** |
+| Intron  |  ?  |  I  |  I  |  I  |  E  |
+
+### Figures
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{plots/alpha_4_hill_functions.png}
@@ -45,6 +66,27 @@ header-includes:
 \newpage
 ## Patient Beta
 
+Most likely sequence of hidden states for AUUAU: ['?', 'I', 'I', 'I', 'I']
+
+### Viterbi Matrix (probabilities)
+
+Table: Viterbi probabilities for Patient Beta's observed sequence AUUAU, where E=Exon and I=Intron
+
+|         | t=0     | t=1      | t=2      | t=3      |          t=4 |
+|---------|--------:|---------:|---------:|---------:|-------------:|
+| Exon    | 0.125   | 0.028125 | 0.006328 | 0.001424 |     0.000328 |
+| Intron  | 0.200   | 0.064000 | 0.020480 | 0.006554 | **0.002097** |
+
+### Backpointer Matrix (state indices)
+
+Table: Backpointer indices for Patient Beta's observed sequence AUUAU, where E=Exon and I=Intron
+
+|         | t=0 | t=1 | t=2 | t=3 | t=4 |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| Exon    |  ?  |  E  |  E  |  E  |  I  |
+| Intron  |  ?  | **I** | **I** | **I** | **I** |
+
+### Figures
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.8\textwidth]{plots/sdevelo_phase_portrait.png}

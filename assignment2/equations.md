@@ -53,6 +53,8 @@ $$
 
 When transcriptional hijack, $h^-(P_a, \theta_a, n_a) = 1$
 
+Table: Definitions of the parameters used in the ODEs
+
 | Parameter | Definition |
 | :--- | :--- |
 | $dr_i$ | Change in concentration of transcribed mRNA A or B. |

@@ -59,6 +59,10 @@ Table: Backpointer indices for Patient Alpha's observed sequence AGCGC, where E=
 \caption{Translation and Transcription Rates overtime for Patient Alpha}
 \end{figure}
 
+\textit{Healthy states results were validated against the approach outlined in} Polynikis, A., Hogan, S.J., 
+and di Bernardo, M., \textit{"Comparing different ODE modelling approaches for gene 
+regulatory networks"}.
+
 \newpage
 ## Patient Beta
 

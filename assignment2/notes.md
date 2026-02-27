@@ -35,9 +35,9 @@ Healthy states results were validated against Polynikis A, Hogan SJ, di Bernardo
 
 Figure 5. Aims to illustrate the behaviour of Mechanism II, modelled using SDEVelo, compared to the healthy state, modelled using ODE. The SDE has clear stochastic behaviour but follows a somewhat similar trajectory to the Healthy ODE.
 
-Figure 6. Aims to show the effect of Mechanism II, by showing the concentrations of (un)spliced RNA and protein over time. This shows that, as we saw in Figure 5, the concentration of Gene B is kept below 0.5 molar. However, we can see a massive buildup of unspliced RNA for Gene B.
+Figure 6. Aims to show the effect of Mechanism II, by showing the concentrations of (un)spliced RNA and protein over time. This shows that, as we saw in Figure 5, the concentration of Protein B is kept below 0.5 molar. However, we can see a massive buildup of unspliced RNA for Gene B.
 
-Figure 7 shows the Phase Portrait with two distinct fixed points. At (0,0) we have a saddle point that is attractive in the E direction, but repulsive in the R direction. Around (1.1, 1.8) we see a stable fixed point: a stable spiral. 
+Figure 7 shows the Phase Portrait with two distinct fixed points. At (0,0) we have a saddle point that is attractive in the E direction, but repulsive in the R direction. Around (1.1, 1.8) we see a stable fixed point: a stable spiral. Nullclines at dE/dt and dR/dt show no change in that axis.
 
 
 ## Results and implications

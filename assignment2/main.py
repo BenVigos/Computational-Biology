@@ -906,5 +906,6 @@ if __name__ == "__main__":
                              fontsize=12,
                              streamplot_kwargs={'density': 1.5, 'color': 'gray'},
                              xlabel="R [ML-3]",
-                             ylabel="E [ML-3]")
+                             ylabel="E [ML-3]",
+                             nullcline_labels=("dR/dt", "dE/dt"))
     plt.savefig("plots/bonus_phase_portrait.png", dpi=300)

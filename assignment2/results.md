@@ -8,6 +8,8 @@ header-includes:
 
 # Assignment 2: Figures and tables
 
+## Patient Alpha
+
 ![Hill Activation, Inhibition and Hijacked Functions](plots/alpha_4_hill_functions.png)
 
 | Healthy State | Hijacked State |
@@ -15,6 +17,8 @@ header-includes:
 | ![Phase Portrait Healthy](plots/alpha_3_phase_space.png) | ![Phase Portrait Hijacked](plots/alpha_3_phase_space_hijack.png) |
 | ![Concentration Healthy](plots/alpha_1_proteins_mrna_time.png) | ![Concentration Hijacked](plots/alpha_1_proteins_mrna_time_hijack.png) |
 | ![Rates Healthy](plots/alpha_5_rates.png) | ![Rates Hijacked](plots/alpha_5_rates_hijack.png) |
+
+## Patient Beta
 
 ![Phase Portrait of the Protein concentrations of Patient Beta](plots/sdevelo_phase_portrait.png)
 

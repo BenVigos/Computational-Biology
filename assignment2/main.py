@@ -287,9 +287,9 @@ def solve_sde_velo(dt, steps):
     t = np.linspace(0, steps * dt, steps)
 
     # empty arrays:
-    u = np.zeros((2, steps))
-    s = np.zeros((2, steps))
-    p = np.zeros((2, steps))
+    u = np.zeros((2, steps)) # unspliced mRNA for gene A and B
+    s = np.zeros((2, steps)) # spliced mRNA for gene A and B
+    p = np.zeros((2, steps)) # protein for gene A and B
 
     # initial concentrations:
     u[:, 0] = 0.8
@@ -491,7 +491,13 @@ def sdevelo_multiplot(n_runs, dt, steps, sol_ode, title="", savefig=None):
 def plot_sdevelo_concentrations(
     n_runs: int, dt: float, steps: int, title: str = "", savefig=None
 ):
-    """Run multiple simulations of the SDEVelo model, calculate mean and confidence intervals for U, S, P, and plot them."""
+    """Run multiple simulations of the SDEVelo model, calculate mean and confidence intervals for U, S, P, and plot them.
+    :param n_runs: Number of independent SDEVelo simulations to run.
+    :param dt: Time step for each simulation.
+    :param steps: Number of time steps to simulate.
+    :param title: Title for the plot.
+    :param savefig: Filename to save the plot, if not None.
+    """
     all_u = np.zeros((n_runs, 2, steps))
     all_s = np.zeros((n_runs, 2, steps))
     all_p = np.zeros((n_runs, 2, steps))

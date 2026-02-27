@@ -1,5 +1,17 @@
 # Notes
 
+## Ben Notes (not sure where they go yet, but here for now):
+In mechanism 2 we have a lot of misfolded proteins (which we don't model) 
+and a lot of unspliced RNA (which we do model) because of the large amount of unspliced mRNA. 
+ Even though we don't model the misfolded proteins directly, we can infer that they contribute to the 
+aggressive phenotype observed in Patient Beta.)
+
+In Viterbi algorithm the 1st state is uncertain. If we wanted to be more rigorous, we could run the algorithm multiple times with 
+different initial states (stochastic) and see if we consistently get the same final state sequence. 
+However, given the clear dominance of exons in Patient Alpha and introns in Patient Beta, we can be reasonably confident in our 
+conclusions about the underlying mechanisms. Another option would be to use the reverse Viterbi algorithm, which starts from the end 
+of the sequence and works backward, to see if it converges on the same state sequence.
+
 ## Equations and Model
 
 ## Figures and tables

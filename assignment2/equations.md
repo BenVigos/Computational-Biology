@@ -41,8 +41,8 @@ $$
 
 $$
 \begin{align}
-\frac{dr_a}{dt} &= m_a \times h^+(P_b, \theta_b, n_b) + \gamma_a \times r_a \\
-\frac{dr_b}{dt} &= m_b \times h^-(P_a, \theta_a, n_a) + \gamma_b \times r_b \\
+\frac{dr_a}{dt} &= m_a \times h^+(P_b, \theta_b, n_b) - \gamma_a \times r_a \\
+\frac{dr_b}{dt} &= m_b \times h^-(P_a, \theta_a, n_a) - \gamma_b \times r_b \\
 \frac{dP_a}{dt} &= k_{Pa} \times r_a - \delta_{Pa} \times P_a \\  
 \frac{dP_b}{dt} &= k_{Pb} \times r_b - \delta_{Pb} \times P_b
 \end{align}
@@ -149,7 +149,9 @@ and solving for R and E. This yields the fixed points:
 2. $(R^*, E^*) = \left(\frac{\gamma}{\delta}, \frac{\alpha}{\beta}\right)$
 
 The jacobian matrix for this system is given by:
-$$J = \begin{pmatrix}
+$$
+\begin{align}
+J = \begin{pmatrix}
 \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ 
 \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} 
 \end{pmatrix}
@@ -157,7 +159,9 @@ $$J = \begin{pmatrix}
 \begin{bmatrix}
 \alpha - \beta E & -\beta R \\
 \delta E & -\gamma + \delta R
-\end{bmatrix}$$
+\end{bmatrix}
+\end{align}
+$$
 
 The stability of the fixed points can be determined by evaluating the eigenvalues of the jacobian matrix at each fixed point.
 

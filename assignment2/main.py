@@ -758,7 +758,7 @@ if __name__ == "__main__":
     path, V, backpointer = viterbi_algorithm(sequence, A, B, P)
     print("For patient Alpha:")
     print(f"Most likely sequence of hidden states for {sequence}:", path)
-    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
+    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]).map(lambda x: f"{x:.6f}"))
     print("Backpointer Matrix (state indices):\n", pd.DataFrame(backpointer, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
     print("\n")
 
@@ -813,7 +813,7 @@ if __name__ == "__main__":
     path, V, backpointer = viterbi_algorithm(sequence, A, B, P)
     print("For patient Beta:")
     print(f"Most likely sequence of hidden states for {sequence}:", path)
-    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
+    print("Viterbi Matrix (probabilities):\n", pd.DataFrame(V, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]).map(lambda x: f"{x:.6f}"))
     print("Backpointer Matrix (state indices):\n", pd.DataFrame(backpointer, index=["Exon", "Intron"], columns=[f"t={i}" for i in range(len(sequence))]))
 
     a = np.array([1.0, 0.25])

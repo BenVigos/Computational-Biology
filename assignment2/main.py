@@ -560,14 +560,14 @@ def plot_sdevelo_concentrations(
     ]
 
     # Adjust layout and add legends
-    plt.subplots_adjust(right=0.75)
+    # plt.subplots_adjust(right=0.75)
 
     leg_genes = ax.legend(
         handles=gene_handles,
         title="Gene",
-        loc="upper left",
-        bbox_to_anchor=(1.02, 1.00),
-        borderaxespad=0.0,
+        loc="upper center",
+        # bbox_to_anchor=(1.02, 1.00),
+        # borderaxespad=0.0,
     )
     ax.add_artist(leg_genes)
 
@@ -575,8 +575,8 @@ def plot_sdevelo_concentrations(
         handles=molecule_handles,
         title="Molecule Type",
         loc="upper left",
-        bbox_to_anchor=(1.02, 0.75),
-        borderaxespad=0.0,
+        # bbox_to_anchor=(1.02, 0.75),
+        # borderaxespad=0.0,
     )
 
     plt.xlabel("Time [s]")

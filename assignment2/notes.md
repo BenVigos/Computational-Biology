@@ -14,6 +14,136 @@ of the sequence and works backward, to see if it converges on the same state seq
 
 ## Equations and Model
 
+### 1. Biological System Overview
+
+- Two-gene regulatory network:
+  - Gene A → tumor suppressor
+  - Gene B → oncogene
+- Proteins mutually regulate each other.
+- Cancer disrupts this regulation via:
+  - Mechanism I: Transcriptional Hijack
+  - Mechanism II: Splicing Sabotage
+
+Goal:
+Identify mechanism from RNA data and model resulting dynamics.
+
+---
+
+### 2. Mechanism Identification – Hidden Markov Model
+
+Why HMM?
+- Observed: RNA sequences
+- Hidden: Regulatory mechanism
+- Need probabilistic classification framework
+
+We apply the Viterbi algorithm to:
+- Compute most likely hidden state sequence
+- Infer which disruption mechanism is active
+
+Assumptions:
+- The system transitions between discrete regulatory states
+- Emission probabilities correctly represent sequence likelihood
+- Observations are conditionally independent given the state
+
+Modeling decision:
+Mechanism classification must precede dynamic modeling.
+
+---
+
+### 3. Mechanism I → Deterministic ODE Model
+
+Biology:
+- Protein A loses transcriptional repression of Gene B
+- No defect in splicing
+- mRNA fully processed
+
+Why ODEs?
+- Dynamics are continuous
+- Molecular noise is not dominant
+- System approximated by average concentrations
+
+Core structure:
+- mRNA production - degradation
+- Protein translation - degradation
+- Regulation via Hill functions (nonlinear threshold behavior)
+
+Key assumption:
+- Concentrations are large enough for deterministic approximation
+- Binding interactions reach quasi-steady-state
+- Splicing is efficient and not rate-limiting
+- Transcriptional repression is completely disabled under hijack
+
+Interpretation:
+Predict steady-state shifts toward oncogene dominance.
+
+---
+
+### 4. Mechanism II → Stochastic SDEVelo Model
+
+Biology:
+- Protein A disrupts splicing
+- Pre-mRNA accumulates
+- Aggressive tumor phenotype
+
+Why SDE model?
+- Splicing is stochastic
+- High transcriptional variability
+- Need to track:
+  - Unspliced RNA (U)
+  - Spliced RNA (S)
+  - Protein (P)
+
+Structure:
+- Transcription - regulated splicing + noise
+- Translation - degradation
+
+Noise modeled via Wiener processes.
+
+Key assumptions:
+- Splicing rate depends on protein concentration
+- Transcription occurs in bursts (sigmoidal activation)
+- Molecular fluctuations significantly affect dynamics
+- Noise is Gaussian and temporally uncorrelated
+
+Interpretation:
+System may exhibit variability-driven instability and rapid shifts.
+
+---
+
+### 5. Downstream Metabolic Model
+
+Equations describe:
+- Resource growth and consumption
+- Enzyme decay and activation
+
+Why include it?
+- Connect molecular dysregulation to cellular phenotype
+- Study long-term stability
+
+Assumptions:
+- Resource-enzyme interaction follows mass-action kinetics
+- Parameters remain constant over time
+- No external resource input beyond modeled growth term
+
+Stability analysis shows:
+- One unstable saddle
+- One oscillatory center
+- Suggests persistent metabolic cycling
+
+---
+
+### 6. Overall Modeling Logic
+
+1. Classify mechanism using HMM.
+2. Choose framework based on biology and noise dominance:
+   - ODE → deterministic transcription defect
+   - SDE → stochastic splicing defect
+3. Use Hill functions for nonlinear regulation.
+4. Analyze stability to predict long-term cell fate.
+
+Next video:
+Parameter tables, simulations, and phase portraits.
+
 ## Figures and tables
 
 Table 1: Viterbi probabilities, most likely sequence is all exons.

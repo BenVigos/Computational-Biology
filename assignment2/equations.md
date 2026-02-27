@@ -72,48 +72,18 @@ Table: Definitions of the parameters used in the SDEVelo equations
 | $k_{Pi}$ | Translation rate of Protein A or Protein B ($s^{-1}$). |
 | $\delta_{Pi}$ | Degradation rate of Protein A or Protein B ($s^{-1}$). |
 
-## Question 2
-
-$$\begin{align}
-\frac{dR}{dt} &= \alpha R - \beta RE \\
-\frac{dE}{dt} &= -\gamma E + \delta RE\\
-\end{align}$$
-
-where:
-* $\alpha R$:
-* $-\beta RE$:
-* $−\gamma E$:
-* $\delta RE$:
-
-We use  $\alpha = 2, \beta = 1.1, \gamma = 1$ and $\delta = 0.9$.
-
-For stability analysis, first we find stationary points as: 
-$\frac{dR}{dt} = R(\alpha - \beta E) = 0$ and
-$\frac{dE}{dt} = E(-\gamma + \delta R) = 0$
-obtaining:
-* $R_1^* = 0$, $E_1^* = 0$
-* $R_2^* = \frac{\gamma}{\delta} = \frac{1}{0.9} \approx 1.11$,  $E_2^* = \frac{\alpha}{\beta} = \frac{2}{1.1} \approx 1.81$
-
-Then, Jacobian is:
-$$ J = \begin{pmatrix} \frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ \frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} \end{pmatrix} = \begin{pmatrix} \alpha - \beta E & -\beta R \\ \delta E & -\gamma + \delta R \end{pmatrix}$$
-
-At point $R=0, E=0$: $$J(0,0) = \begin{pmatrix} 2 & 0 \\ 0 & -1 \end{pmatrix}$$
-
-So that $\lambda_1 = 2$ e $\lambda_2 = -1$, then $(0,0)$ is point of saddle (unstable).
-
-At point, $(R = 1.11, E = 1.81)$, $$J(R^*,E^*) = \begin{pmatrix} 0 & -1.22 \\ 1.63 & 0 \end{pmatrix}$$.
-
-Using $\lambda^2 - \text{trace}(J)\lambda + \text{det}(J) = 0$, with $\text{det}(J) \approx 2$, then  $\lambda^2 + 2 = 0$, from which: $\lambda_{1,2} = \pm i \sqrt{2}$. Since eigenvalues are purely imaginary, the equilibrium is a center: stable, not asymptotically stable.
-
-## Statistical measures
-
-
 
 ## Downstream metabolic effects
 $$\begin{align}
 \frac{dR}{dt} = \alpha R - \beta R E\\
 \frac{dE}{dt} = -\gamma E + \delta E R
 \end{align}$$
+
+where:
+* $\alpha R$: the growth of the resource R, which is proportional to its current amount. This term represents the natural growth or replenishment of the resource in the absence of any interactions with the enzyme E.
+* $-\beta RE$: the consumption of the resource R by the enzyme E. This term represents the rate at which the enzyme E utilizes the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
+* $−\gamma E$: the natural decay or degradation of the enzyme E. This term represents the rate at which the enzyme E is lost or deactivated over time, independent of its interaction with the resource R.
+* $\delta RE$: the production or activation of the enzyme E by the resource R. This term represents the rate at which the enzyme E is generated or activated in response to the presence of the resource R, and it is proportional to both the amount of resource R and the amount of enzyme E.
 
 with $\alpha=2$, $\beta=1.1$, $\gamma=1$, $delta=0.9$, $R(0)=1$ and $E(0)=0.5$
 
@@ -128,7 +98,12 @@ and solving for R and E. This yields the fixed points:
 2. $(R^*, E^*) = \left(\frac{\gamma}{\delta}, \frac{\alpha}{\beta}\right)$
 
 The jacobian matrix for this system is given by:
-$$J = \begin{bmatrix}
+$$J = \begin{pmatrix}
+\frac{\partial \dot{R}}{\partial R} & \frac{\partial \dot{R}}{\partial E} \\ 
+\frac{\partial \dot{E}}{\partial R} & \frac{\partial \dot{E}}{\partial E} 
+\end{pmatrix}
+=
+\begin{bmatrix}
 \alpha - \beta E & -\beta R \\
 \delta E & -\gamma + \delta R
 \end{bmatrix}$$
@@ -136,5 +111,17 @@ $$J = \begin{bmatrix}
 The stability of the fixed points can be determined by evaluating the eigenvalues of the jacobian matrix at each fixed point.
 
 The eigenvalues at the first fixed point $(0, 0)$ are:
-$$\lambda_1 = \alpha = 2$$
-$$\lambda_2 = -\gamma = -1$$
+
+$$det(J-\lambda I) = 0 \implies (\alpha - \lambda)(-\gamma - \lambda) = 0$$
+$$\implies \lambda_1 = \alpha = 2, \quad \lambda_2 = -\gamma = -1$$
+
+This indicates that the first fixed point is a saddle point, which is unstable.
+
+The eigenvalues at the second fixed point $\left(\frac{\gamma}{\delta}, \frac{\alpha}{\beta}\right)$ are:
+
+$$det(J-\lambda I) = 0 \implies (\alpha - \beta \frac{\alpha}{\beta} - \lambda)(-\gamma + \delta \frac{\gamma}{\delta} - \lambda) - (-\beta \frac{\gamma}{\delta})(\delta \frac{\alpha}{\beta}) = 0$$
+$$\implies (-\lambda)(-\lambda) - (-\beta \frac{\gamma}{\delta})(\delta \frac{\alpha}{\beta}) = 0$$
+$$\implies \lambda^2 + \alpha \gamma = 0$$
+$$\implies \lambda = \pm i \sqrt{\alpha \gamma} = \pm i \sqrt{2}$$
+
+Since the eigenvalues are purely imaginary, the second fixed point is a center, which is stable but not asymptotically stable. This means that the system will exhibit oscillatory behavior around this fixed point.

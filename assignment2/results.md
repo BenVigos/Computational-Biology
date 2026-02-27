@@ -18,8 +18,8 @@ Table: Viterbi probabilities for Patient Alpha's observed sequence AGCGC, where 
 
 |         | t=0     | t=1      | t=2      | t=3      |          t=4 |
 |---------|--------:|---------:|---------:|---------:|-------------:|
-| Exon    | 0.125   | 0.028125 | 0.006328 | 0.001424 | **0.000320** |
-| Intron  | 0.200   | 0.008000 | 0.000960 | 0.000038 |     0.000021 |
+| Exon    | 0.125000   | 0.028125 | 0.006328 | 0.001424 | **0.000320** |
+| Intron  | 0.200000   | 0.008000 | 0.000960 | 0.000038 |     0.000021 |
 
 
 Table: Backpointer indices for Patient Alpha's observed sequence AGCGC, where E=Exon and I=Intron
@@ -59,6 +59,8 @@ Table: Backpointer indices for Patient Alpha's observed sequence AGCGC, where E=
 \caption{Translation and Transcription Rates overtime for Patient Alpha}
 \end{figure}
 
+Healthy states results were validated against Polynikis A, Hogan SJ, di Bernardo M. Comparing different ODE modelling approaches for gene regulatory networks. *J Theor Biol*. 2009;261(4):511-530. doi:10.1016/j.jtbi.2009.07.040
+
 \newpage
 ## Patient Beta
 
@@ -68,8 +70,8 @@ Table: Viterbi probabilities for Patient Beta's observed sequence AUUAU, where E
 
 |         | t=0     | t=1      | t=2      | t=3      |          t=4 |
 |---------|--------:|---------:|---------:|---------:|-------------:|
-| Exon    | 0.125   | 0.028125 | 0.006328 | 0.001424 |     0.000328 |
-| Intron  | 0.200   | 0.064000 | 0.020480 | 0.006554 | **0.002097** |
+| Exon    | 0.125000   | 0.028125 | 0.006328 | 0.001424 |     0.000328 |
+| Intron  | 0.200000   | 0.064000 | 0.020480 | 0.006554 | **0.002097** |
 
 
 Table: Backpointer indices for Patient Beta's observed sequence AUUAU, where E=Exon and I=Intron

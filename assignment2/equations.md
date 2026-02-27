@@ -29,15 +29,23 @@ and $\psi_t(s)$ is the state at time t-1 that maximizes the probability of being
 
 ## Question 1
 
+$$
+\begin{align}
+h^+(P_i, \theta_i, n_i) &= \frac{P_i^n}{\theta_i^n + P_i^n} \\
+h^-(P_i, \theta_i, n_i) &= 1 - h^+(P_i, \theta_i, n_i) \\
+&= \frac{\theta_i^n}{\theta_i^n + P_i^n}
+\end{align}
+$$
+
 ### ODEs - Mechanism I: Transcriptional Hijack
 
 $$
-\begin{aligned}
+\begin{align}
 \frac{dr_a}{dt} &= m_a \times h^+(P_b, \theta_b, n_b) + \gamma_a \times r_a \\
 \frac{dr_b}{dt} &= m_b \times h^-(P_a, \theta_a, n_a) + \gamma_b \times r_b \\
 \frac{dP_a}{dt} &= k_{Pa} \times r_a - \delta_{Pa} \times P_a \\  
 \frac{dP_b}{dt} &= k_{Pb} \times r_b - \delta_{Pb} \times P_b
-\end{aligned}
+\end{align}
 $$
 
 When transcriptional hijack, $h^-(P_a, \theta_a, n_a) = 1$
@@ -63,23 +71,23 @@ Table: Definitions of the parameters used in the ODEs
 ### SDEVelo - Mechanism II: Splicing Sabotage
 
 $$
-\begin{aligned}
+\begin{align}
 \alpha_A(t) &= \frac{c_A}{1+\exp b_A(t-a_A)} \\
 \beta_A^* &= \beta_A h^+(P_B, \theta_B, n_B) \\
 dU_A &= (\alpha_A(t) - \beta_A^* U_A(t))dt + \sigma_{1A}dW_{1A} \\
 dS_A &= (\beta_A^* U_A(t) - \gamma_A S_A(t))dt + \sigma_{2A}dW_{2A} \\
 dP_A &= (k_{PA} S_A(t) - \delta_{PA} P_A(t))dt \\
-\end{aligned}
+\end{align}
 $$
 
 $$
-\begin{aligned}
+\begin{align}
 \alpha_B(t) &= \frac{c_B}{1+\exp b_B(t-a_B)} \\
 \beta_B^* &= \beta_B h^-(P_A, \theta_A, n_A) \\
 dU_B &= (\alpha_B(t) - \beta_B^* U_B(t))dt + \sigma_{1B}dW_{1B} \\
 dS_B &= (\beta_B^* U_B(t) - \gamma_B S_B(t))dt + \sigma_{2B}dW_{2B} \\
 dP_B &= (k_{PB} S_B(t) - \delta_{PB} P_B(t))dt \\
-\end{aligned}
+\end{align}
 $$
 
 Table: Definitions of the parameters used in the SDEVelo equations
@@ -113,10 +121,10 @@ Table: Definitions of the parameters used in the SDEVelo equations
 
 ## Downstream metabolic effects
 $$
-\begin{aligned}
-\frac{dR}{dt} &= \alpha R - \beta R E \\
-\frac{dE}{dt} &= -\gamma E + \delta R E
-\end{aligned}
+\begin{align}
+\frac{dR}{dt} &= \alpha R - \beta RE \\
+\frac{dE}{dt} &= -\gamma E + \delta RE
+\end{align}
 $$
 
 Where:
@@ -130,10 +138,10 @@ with $\alpha=2\;[\mathrm{T^{-1}}]$, $\beta=1.1\;[\mathrm{M^{-1} L^{3} T^{-1}}]$,
 
 The fixed points of this system can be found by setting the derivatives to zero:
 $$
-\begin{aligned}
+\begin{align}
 0 &= \alpha R - \beta R E \\
 0 &= -\gamma E + \delta E R
-\end{aligned}
+\end{align}
 $$
 
 and solving for R and E. This yields the fixed points:
@@ -168,5 +176,3 @@ $$\implies \lambda^2 + \alpha \gamma = 0$$
 $$\implies \lambda = \pm i \sqrt{\alpha \gamma} = \pm i \sqrt{2}$$
 
 Since the eigenvalues are purely imaginary, the second fixed point is a center, which is stable but not asymptotically stable. This means that the system will exhibit oscillatory behavior around this fixed point.
-
-

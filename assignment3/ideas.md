@@ -1,6 +1,6 @@
 # Spatiotemporal Modelling of Hydrothermal Vents
 
-### Part 1: The Extracellular Environment (Coupled PDEs)
+## Part 1: The Extracellular Environment (Coupled PDEs)
 
 **Description:** This part models the 2D spatial environment (the vent pore) using spatiotemporal dynamics and reaction-diffusion. It tracks two interacting chemicals: a Nutrient ($N$) and a Waste/Stress molecule ($W$). They are "coupled" because the Waste chemically degrades the Nutrient in the open environment. The cells act as discrete sinks (absorbing $N$) and sources (secreting $W$).
 
@@ -20,7 +20,7 @@ $$\frac{\partial W}{\partial t} = D_W \nabla^2 W - k_{decay} W + \sum_{i=1}^{n} 
 
 ---
 
-### Part 2: Cell-Environment Interface (Metabolic Uptake)
+## Part 2: Cell-Environment Interface (Metabolic Uptake)
 
 **Description:** Before the Gene Regulatory Network can act, the discrete cell agents must physically absorb the nutrients from the PDE grid. Because early protocells lacked complex protein pumps, this is modeled as passive diffusion across a permeable fatty acid membrane based on the surface area ($A$) of the cell.
 
@@ -37,7 +37,7 @@ $$U_{N,i} = P_N \cdot A_i \cdot (N_{ext}(x_i, y_i) - N_{int,i})$$
 
 ---
 
-### Part 3: Intracellular GRN & Enzyme Kinetics (ODEs)
+## Part 3: Intracellular GRN & Enzyme Kinetics (ODEs)
 
 **Description:** Once inside the cell, an RNA-based Gene Regulatory Network controls metabolism. This hits both your *enzyme kinetics* and *GRN* requirements.
 Ribozyme A ($R_A$) acts as a metabolic enzyme that consumes internal nutrients to produce cell biomass. It follows standard **Michaelis-Menten kinetics**. However, if internal waste ($W_{int}$) accumulates, it triggers the production of Ribozyme B ($R_B$), which acts as a repressor. The repression of $R_A$ by $R_B$ is modeled using a **Hill equation**.
@@ -58,7 +58,7 @@ $$\frac{d R_B}{dt} = k_{stress} W_{int} - \gamma_B R_B$$
 
 ---
 
-### Part 4: Cellular Dynamics (Agent-Based Growth & Division)
+## Part 4: Cellular Dynamics (Agent-Based Growth & Division)
 
 **Description:** The final step bridges the internal biochemistry back to physical cellular dynamics. As the metabolic ribozyme ($R_A$) processes nutrients, it produces lipids that increase the cell's surface area ($A$). When the area hits a critical physical instability threshold, the cell-based agent undergoes binary fission, splitting into two cells on the spatial grid.
 
@@ -77,9 +77,3 @@ If $A_i > A_{crit}$, then the cell divides:
 * **$A_{crit}$**: The critical surface area threshold that triggers division.
 
 > **Citation:** Zhu, T. F., & Szostak, J. W. (2009). "Coupled Growth and Division of Model Protocell Membranes." *Journal of the American Chemical Society*. (Provides the mathematical and physical justification for linking internal volume/area growth to a critical division threshold $A_{crit}$).
-
----
-
-This gives you a rock-solid, fully cited mathematical foundation that ticks every box on your rubric.
-
-Would you like me to draft the Python code structure to show how you can practically connect the PDE grid (using `numpy`) to the discrete cells (using an Object-Oriented `class Protocell:` approach)?

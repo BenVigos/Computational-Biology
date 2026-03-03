@@ -32,6 +32,7 @@ $$\frac{dP}{dt} = \alpha \frac{[BDNF]^n}{K_d^n + [BDNF]^n} - \gamma P$$
 
 * **$\alpha \frac{[BDNF]^n}{K_d^n + [BDNF]^n}$**: An activating Hill function. The local $[BDNF]$ acts as the transcription factor. If $[BDNF]$ crosses the threshold $K_d$, the synthesis of structural protein $P$ spikes.
 * **$\gamma P$**: The natural degradation rate of the structural protein.
+* Add proBDNF or MMP9 enzyme
 
 ### Module C: Spatial Morphology (Cell-Based / Ising Model)
 
@@ -75,3 +76,9 @@ The final deliverable will feature a side-by-side visual simulation:
 2. **A Cellular Automata Grid:** Showing the neural network physically rewiring itself, breaking old connections in low-BDNF zones, and forming dense new clusters in high-BDNF zones.
 3. **Phase Plane / Time Series Plots:** Showing the internal ODE dynamics of a selected single cell as it makes the "decision" to grow or shrink.
 
+## References
+
+*   **Solinas, S. M. G., Edelmann, E., Leßmann, V., & Migliore, M. (2019).** A kinetic model for Brain-Derived Neurotrophic Factor mediated spike timing-dependent LTP. *PLoS Computational Biology*, 15(4): e1006975. doi: 10.1371/journal.pcbi.1006975.
+*   **Nishiyama, J., & Yasuda, R. (2015).** Biochemical Computation for Spine Structural Plasticity. *Neuron*, 87(1): 63-75. doi: 10.1016/j.neuron.2015.05.043.
+*   **Kirchner, J. H., Euler, L., Fritz, I., Ferreira Castro, A., & Gjorgjieva, J. (2025).** Dendritic growth and synaptic organization from activity-independent cues and local activity-dependent plasticity. *eLife*, 12:RP87527. doi: 10.7554/eLife.87527.
+*   **Kirchner, J. H., & Gjorgjieva, J. (2021).** Emergence of local and global synaptic organization on cortical dendrites. *Nature Communications*, 12: 4005. doi: 10.1038/s41467-021-23557-3.

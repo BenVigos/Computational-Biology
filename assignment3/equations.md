@@ -34,11 +34,11 @@ The neuron network consists of neurons (nodes) in a lattice of a grid. They are 
 
 The voltage is the following:
 
-$$v_{x,y}(t)=\sum_{i,j}W_{(i,j)\rightarrow(x,y)}(t)\cdot S_{i,j}(t)$$
+$$v_{x,y}(t)=\sum_{i,j}W_{(i,j)\rightarrow(x,y)}(t)\cdot(S_{i,j}(t)-\theta_e)$$
 
-$$P(S_{x,y}(t+1)=1)=\frac{v_{x,y}(t)^n}{\theta_e^n+v_{x,y}(t)^n}$$
+$$P(S_{x,y}(t+1)=1)=\frac{v_{x,y}(t)^n}{\theta_a^n+v_{x,y}(t)^n}$$
 
-- $\theta_e$: The half-activation threshold. This is the input current required for the neuron to have exactly a 50% chance of firing.
+- $\theta_a$: The half-activation threshold. This is the input current required for the neuron to have exactly a 50% chance of firing.
 - $n$: The Hill coefficient. This controls the "steepness" of the probability curve. If n=1, it's a very gradual, leaky response. As n gets larger (e.g., n=4 or 5), the curve becomes a sharp, sigmoidal step, mimicking the sudden opening of voltage-gated sodium channels.
 
 ### Spatio-Temporal Plasticity

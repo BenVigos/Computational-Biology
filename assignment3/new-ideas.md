@@ -1,4 +1,8 @@
-# New Ideas
+---
+geometry:
+- margin=1in
+---
+# Simulating Neuralplasticity using Multiscale Modelling
 
 ## Idea and Equations
 

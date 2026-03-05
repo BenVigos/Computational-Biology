@@ -35,7 +35,7 @@ $$
 | :--- | :--- |
 |$\mu$|The degree of chemotactic response of the specific cell.|
 |$V(\vec{i})$| The concentration of the VEGF-A field at a given target or source voxel.|
-|$V_{0}|: The threshold value of VEGF-A required to activate inactive neovascular cells.|
+|$V_{0}$| The threshold value of VEGF-A required to activate inactive neovascular cells.|
 |$s$| A positive scaling constant that scales the VEGF-A concentration field relative to the neovascular activation threshold.|
 
 Then, the total Effective Energy: 
@@ -85,9 +85,9 @@ $$\begin{align}
 | Parameter | Definition |
 | :--- | :--- |
 |$dV_{t}(tumor)/dt$| The rate of increase of the target volume of the normal and hypoxic tumor cells.|
-|$G_{m}$: The maximum growth rate of the tumor cell.|
-|$pO_{2}(\vec{i})$: The partial pressure of oxygen specifically at the center-of-mass of the cell.|
-|$O_{0}$: The Michaelis-Menten constant.|
+|$G_{m}$| The maximum growth rate of the tumor cell.|
+|$pO_{2}(\vec{i})$| The partial pressure of oxygen specifically at the center-of-mass of the cell.|
+|$O_{0}$| The Michaelis-Menten constant.|
 
 ### 2. Neovascular Cell Proliferation
 
@@ -103,13 +103,19 @@ $$\begin{align}
 
 ### The Gene Regulatory Network HIF - 1 $\alpha$ Dynamics
 Added to model if tumoral cell becomes hypoxic.  If oxygen drops (hypoxia), the the constant production ($\alpha_H$) allows to accumulate $H$ inside the cell.
+
+
 $$\begin{align}
 \frac{dH}{dt} = \alpha_H - \beta_H \cdot P \cdot H
-\end{align}
-$$
+\end{align}$$
 
 | Parameter | Definition |
 | :--- | :--- |
+|$\alpha_H$ | Constant production rate at which the cell continuously produces the HIF - 1 $\alpha$ protein.|
+|$\beta_H$| The degradation rate constant.|
+|$P$| The local oxygen concentration.|
+|$H$| The current concentration of HIF - 1 $\alpha$.|
+
 
 
 

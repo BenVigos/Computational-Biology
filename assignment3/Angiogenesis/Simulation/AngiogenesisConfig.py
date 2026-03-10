@@ -36,7 +36,7 @@ class ModelConfig:
 
     # Mechanics
     default_target_volume: float = 25.0
-    default_lambda_volume: float = 2.0
+    default_lambda_volume: float = 20
     blood_vessel_lambda_volume: float = 8.0
     endothelial_lambda_volume: float = 3.0
 

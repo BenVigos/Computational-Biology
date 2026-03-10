@@ -52,6 +52,30 @@ Current sampled metrics include:
 When CSV output is enabled, the file is written to:
 - `assignment3/Angiogenesis/results/angiogenesis_metrics.csv`
 
+## Plotting the monitoring CSV
+A helper script is available at `assignment3/scripts/plot_angiogenesis_metrics.py`.
+It reads a monitoring CSV such as `results/angiogenesis_metrics.csv` and creates
+summary plots automatically.
+
+Example:
+- `python assignment3/scripts/plot_angiogenesis_metrics.py --input assignment3/Angiogenesis/results/angiogenesis_metrics.csv`
+
+By default, figures are written to:
+- `assignment3/Angiogenesis/results/plots/`
+
+Generated plot groups include:
+- cell counts and hypoxic fraction
+- tumor volume / target volume / HIF
+- growth rates
+- tumor and endothelial field means
+- endothelial metrics
+
+Useful options:
+- `--output-dir <dir>` to choose a different output folder
+- `--prefix run1` to change output filenames
+- `--format png|pdf|svg`
+- `--show` to display figures interactively
+
 ## Suggested validation order
 1. `mvp`: check oxygen stays highest near the vessel and hypoxia appears in the tumor core.
 2. `hypoxia_hif`: verify `mean_HIF` increases in the log when oxygen is low.

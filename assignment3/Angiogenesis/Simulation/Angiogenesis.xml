@@ -1,7 +1,7 @@
 <CompuCell3D Revision="5" Version="4.7.0">
    <Metadata>
       <NumberOfProcessors>1</NumberOfProcessors>
-      <DebugOutputFrequency>10</DebugOutputFrequency>
+      <DebugOutputFrequency>50</DebugOutputFrequency>
       <MCSConversionFactor DisplayName="No conversion" Units="-">1.0</MCSConversionFactor>
       <VoxelConversionFactor DisplayName="No conversion" Units="-">1.0</VoxelConversionFactor>
    </Metadata>

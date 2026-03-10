@@ -50,7 +50,7 @@ $$
 ###  1. VEGF-A Field ($V$)
 $$
 \begin{align} 
-\frac{V}{\partial t}=-\epsilon_{V}V+\delta_{hypoxic}x_{V}V+D_{V}\nabla^{2}V
+\frac{\partial V}{\partial t}=-\epsilon_{V}V+\delta_{hypoxic}x_{V}V+D_{V}\nabla^{2}V
 \end{align}
 $$
 | Parameter | Definition |
@@ -115,6 +115,7 @@ $$\begin{align}
 |$\beta_H$| The degradation rate constant.|
 |$P$| The local oxygen concentration.|
 |$H$| The current concentration of HIF - 1 $\alpha$.|
+
 
 
 

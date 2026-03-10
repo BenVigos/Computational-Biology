@@ -1,62 +1,77 @@
 <CompuCell3D Revision="5" Version="4.7.0">
-   
    <Metadata>
-      
-      <!-- Basic properties simulation -->
       <NumberOfProcessors>1</NumberOfProcessors>
       <DebugOutputFrequency>10</DebugOutputFrequency>
-      <!-- <NonParallelModule Name="Potts"/> -->
       <MCSConversionFactor DisplayName="No conversion" Units="-">1.0</MCSConversionFactor>
       <VoxelConversionFactor DisplayName="No conversion" Units="-">1.0</VoxelConversionFactor>
    </Metadata>
-   
+
    <Potts>
-      
-      <!-- Basic properties of CPM (GGH) algorithm -->
-      <Dimensions x="100" y="100" z="1"/>
-      <Steps>10000</Steps>
+      <Dimensions x="160" y="160" z="1"/>
+      <Steps>5000</Steps>
       <Temperature>10.0</Temperature>
-      <NeighborOrder>1</NeighborOrder>
+      <NeighborOrder>2</NeighborOrder>
    </Potts>
-   
+
    <Plugin Name="CellType">
-      
-      <!-- Listing all cell types in the simulation -->
       <CellType TypeId="0" TypeName="Medium"/>
-      <CellType TypeId="1" TypeName="TumorCell"/>
-      <CellType TypeId="2" TypeName="BloodVessel"/>
+      <CellType TypeId="1" TypeName="Tumor"/>
+      <CellType TypeId="2" TypeName="Hypoxic"/>
+      <CellType TypeId="3" TypeName="Endothelial"/>
+      <CellType TypeId="4" TypeName="BloodVessel" Freeze=""/>
    </Plugin>
-   
-   <Plugin Name="CenterOfMass">
-      
-      <!-- Module tracking center of mass of each cell -->
+
+   <Plugin Name="CenterOfMass"/>
+   <Plugin Name="NeighborTracker"/>
+   <Plugin Name="PixelTracker"/>
+
+   <Plugin Name="Volume">
+      <VolumeEnergyParameters CellType="Tumor" LambdaVolume="2.0" TargetVolume="25"/>
+      <VolumeEnergyParameters CellType="Hypoxic" LambdaVolume="2.0" TargetVolume="25"/>
+      <VolumeEnergyParameters CellType="Endothelial" LambdaVolume="3.0" TargetVolume="25"/>
+      <VolumeEnergyParameters CellType="BloodVessel" LambdaVolume="8.0" TargetVolume="25"/>
    </Plugin>
-   
-   <Plugin Name="NeighborTracker">
-      
-      <!-- Module tracking neighboring cells of each cell -->
-   </Plugin>
-   
+
    <Plugin Name="Contact">
-      <!-- Specification of adhesion energies -->
       <Energy Type1="Medium" Type2="Medium">10.0</Energy>
-      <Energy Type1="Medium" Type2="TumorCell">10.0</Energy>
-      <Energy Type1="Medium" Type2="BloodVessel">10.0</Energy>
-      <Energy Type1="TumorCell" Type2="TumorCell">10.0</Energy>
-      <Energy Type1="TumorCell" Type2="BloodVessel">10.0</Energy>
-      <Energy Type1="BloodVessel" Type2="BloodVessel">10.0</Energy>
-      <NeighborOrder>4</NeighborOrder>
+      <Energy Type1="Medium" Type2="Tumor">16.0</Energy>
+      <Energy Type1="Medium" Type2="Hypoxic">16.0</Energy>
+      <Energy Type1="Medium" Type2="Endothelial">12.0</Energy>
+      <Energy Type1="Medium" Type2="BloodVessel">8.0</Energy>
+      <Energy Type1="Tumor" Type2="Tumor">4.0</Energy>
+      <Energy Type1="Tumor" Type2="Hypoxic">6.0</Energy>
+      <Energy Type1="Tumor" Type2="Endothelial">14.0</Energy>
+      <Energy Type1="Tumor" Type2="BloodVessel">18.0</Energy>
+      <Energy Type1="Hypoxic" Type2="Hypoxic">4.0</Energy>
+      <Energy Type1="Hypoxic" Type2="Endothelial">14.0</Energy>
+      <Energy Type1="Hypoxic" Type2="BloodVessel">18.0</Energy>
+      <Energy Type1="Endothelial" Type2="Endothelial">6.0</Energy>
+      <Energy Type1="Endothelial" Type2="BloodVessel">4.0</Energy>
+      <Energy Type1="BloodVessel" Type2="BloodVessel">4.0</Energy>
+      <NeighborOrder>2</NeighborOrder>
    </Plugin>
-   
-   <Steppable Type="UniformInitializer">
-      
-      <!-- Initial layout of cells in the form of rectangular slab -->
-      <Region>
-         <BoxMin x="20" y="20" z="0"/>
-         <BoxMax x="80" y="80" z="1"/>
-         <Gap>0</Gap>
-         <Width>7</Width>
-         <Types>TumorCell,BloodVessel</Types>
-      </Region>
+
+   <Plugin Name="Chemotaxis">
+      <ChemicalField Name="VEGF" Source="DiffusionSolverFE">
+         <ChemotaxisByType ChemotactTo="Medium" Lambda="0.0" Type="Endothelial"/>
+      </ChemicalField>
+   </Plugin>
+
+   <Steppable Type="DiffusionSolverFE">
+      <DiffusionField Name="Oxygen">
+         <DiffusionData>
+            <FieldName>Oxygen</FieldName>
+            <GlobalDiffusionConstant>0.20</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.001</GlobalDecayConstant>
+         </DiffusionData>
+      </DiffusionField>
+
+      <DiffusionField Name="VEGF">
+         <DiffusionData>
+            <FieldName>VEGF</FieldName>
+            <GlobalDiffusionConstant>0.10</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.010</GlobalDecayConstant>
+         </DiffusionData>
+      </DiffusionField>
    </Steppable>
 </CompuCell3D>

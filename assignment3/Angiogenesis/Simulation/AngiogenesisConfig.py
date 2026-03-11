@@ -1,11 +1,14 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
 class ModelConfig:
-    preset_name: str = "paper_2d"
+    preset_name: str = "paper_full"
 
     # Runtime toggles
+    enable_initial_vascular_strip: bool = True
+    enable_initial_sprouts: bool = True
+    enable_initial_tumor_mass: bool = True
     enable_type_switching: bool = True
     enable_tumor_growth: bool = True
     enable_vascular_growth: bool = True
@@ -13,22 +16,22 @@ class ModelConfig:
     enable_python_monitoring: bool = True
 
     # 2D lattice / initialization
-    lattice_x: int = 180
-    lattice_y: int = 180
-    steps: int = 5000
-    vessel_x_min: int = 18
-    vessel_x_max: int = 28
-    vessel_y_min: int = 24
-    vessel_y_max: int = 156
-    tip_cell_x_min: int = 28
-    tip_cell_x_max: int = 36
-    tip_cell_y_values: tuple[int, ...] = (42, 90, 138)
-    tip_cell_height: int = 10
-    tumor_x_min: int = 72
-    tumor_x_max: int = 108
-    tumor_y_min: int = 72
-    tumor_y_max: int = 108
-    tumor_seed_size: int = 6
+    lattice_x: int = 100
+    lattice_y: int = 100
+    steps: int = 3000
+    vessel_x_min: int = 8
+    vessel_x_max: int = 14
+    vessel_y_min: int = 12
+    vessel_y_max: int = 88
+    tip_cell_x_min: int = 14
+    tip_cell_x_max: int = 20
+    tip_cell_y_values: tuple[int, ...] = (22, 48, 74)
+    tip_cell_height: int = 6
+    tumor_x_min: int = 40
+    tumor_x_max: int = 62
+    tumor_y_min: int = 40
+    tumor_y_max: int = 62
+    tumor_seed_size: int = 4
 
     # Paper-derived phenotype thresholds and timing
     area_thresh: float = 1.0
@@ -77,4 +80,45 @@ class ModelConfig:
     monitor_output_filename: str = "angiogenesis_metrics.csv"
 
 
-CONFIG = ModelConfig()
+BASE_CONFIG = ModelConfig()
+
+PRESETS = {
+    "paper_mvp": replace(
+        BASE_CONFIG,
+        preset_name="paper_mvp",
+        enable_initial_sprouts=False,
+        enable_type_switching=False,
+        enable_tumor_growth=False,
+        enable_vascular_growth=False,
+        enable_mitosis=False,
+        monitor_include_growth_rates=False,
+        monitor_include_vascular_metrics=False,
+    ),
+    "paper_hypoxia": replace(
+        BASE_CONFIG,
+        preset_name="paper_hypoxia",
+        enable_initial_sprouts=False,
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_vascular_growth=False,
+        enable_mitosis=False,
+        monitor_include_vascular_metrics=False,
+    ),
+    "paper_sprouting": replace(
+        BASE_CONFIG,
+        preset_name="paper_sprouting",
+        enable_initial_sprouts=True,
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_vascular_growth=True,
+        enable_mitosis=False,
+    ),
+    "paper_full": replace(
+        BASE_CONFIG,
+        preset_name="paper_full",
+    ),
+}
+
+# Change this string to step through the model from simple to complex.
+SELECTED_PRESET = "paper_sprouting"
+CONFIG = PRESETS[SELECTED_PRESET]

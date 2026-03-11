@@ -82,34 +82,37 @@ class BaseModelSteppable(SteppableBasePy):
 
 class ConstraintInitializerSteppable(BaseModelSteppable):
     def start(self):
-        vessel = self.new_cell(self.VASCULAR)
-        self.cell_field[
-            CONFIG.vessel_x_min:CONFIG.vessel_x_max,
-            CONFIG.vessel_y_min:CONFIG.vessel_y_max,
-            0,
-        ] = vessel
-        self._apply_paper_mechanics(vessel)
-
-        for y_min in CONFIG.tip_cell_y_values:
-            tip = self.new_cell(self.INACTIVENEOVASCULAR)
+        if CONFIG.enable_initial_vascular_strip:
+            vessel = self.new_cell(self.VASCULAR)
             self.cell_field[
-                CONFIG.tip_cell_x_min:CONFIG.tip_cell_x_max,
-                y_min:y_min + CONFIG.tip_cell_height,
+                CONFIG.vessel_x_min:CONFIG.vessel_x_max,
+                CONFIG.vessel_y_min:CONFIG.vessel_y_max,
                 0,
-            ] = tip
-            self._apply_paper_mechanics(tip)
+            ] = vessel
+            self._apply_paper_mechanics(vessel)
 
-        for x_min in range(CONFIG.tumor_x_min, CONFIG.tumor_x_max, CONFIG.tumor_seed_size):
-            for y_min in range(CONFIG.tumor_y_min, CONFIG.tumor_y_max, CONFIG.tumor_seed_size):
-                tumor = self.new_cell(self.NORMAL)
+        if CONFIG.enable_initial_sprouts:
+            for y_min in CONFIG.tip_cell_y_values:
+                tip = self.new_cell(self.INACTIVENEOVASCULAR)
                 self.cell_field[
-                    x_min:min(x_min + CONFIG.tumor_seed_size, CONFIG.tumor_x_max),
-                    y_min:min(y_min + CONFIG.tumor_seed_size, CONFIG.tumor_y_max),
+                    CONFIG.tip_cell_x_min:CONFIG.tip_cell_x_max,
+                    y_min:y_min + CONFIG.tip_cell_height,
                     0,
-                ] = tumor
-                self._apply_paper_mechanics(tumor)
+                ] = tip
+                self._apply_paper_mechanics(tip)
 
-        print("[Angiogenesis] Initialised paper-aligned 2D geometry.")
+        if CONFIG.enable_initial_tumor_mass:
+            for x_min in range(CONFIG.tumor_x_min, CONFIG.tumor_x_max, CONFIG.tumor_seed_size):
+                for y_min in range(CONFIG.tumor_y_min, CONFIG.tumor_y_max, CONFIG.tumor_seed_size):
+                    tumor = self.new_cell(self.NORMAL)
+                    self.cell_field[
+                        x_min:min(x_min + CONFIG.tumor_seed_size, CONFIG.tumor_x_max),
+                        y_min:min(y_min + CONFIG.tumor_seed_size, CONFIG.tumor_y_max),
+                        0,
+                    ] = tumor
+                    self._apply_paper_mechanics(tumor)
+
+        print(f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}' on a {CONFIG.lattice_x}x{CONFIG.lattice_y} grid.")
 
 
 class GrowthSteppable(BaseModelSteppable):
@@ -143,14 +146,12 @@ class GrowthSteppable(BaseModelSteppable):
         )
 
     def _tumor_growth_step(self, cell, local_oxygen, mcs):
-        if not CONFIG.enable_type_switching:
-            return
+        if CONFIG.enable_type_switching:
+            if local_oxygen < CONFIG.nutrient_thresh and mcs > CONFIG.tumor_growth_start_mcs:
+                cell.type = self.HYPOXIC
 
-        if local_oxygen < CONFIG.nutrient_thresh and mcs > CONFIG.tumor_growth_start_mcs:
-            cell.type = self.HYPOXIC
-
-        if local_oxygen < CONFIG.necrotic_thresh and mcs > CONFIG.tumor_growth_start_mcs:
-            cell.type = self.NECROTIC
+            if local_oxygen < CONFIG.necrotic_thresh and mcs > CONFIG.tumor_growth_start_mcs:
+                cell.type = self.NECROTIC
 
         if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type in self._growing_tumor_type_ids():
             cell.targetVolume += (
@@ -260,6 +261,13 @@ class MitosisSteppable(MitosisSteppableBase):
 
 
 class MonitoringSteppable(BaseModelSteppable):
+    NORMAL: int
+    HYPOXIC: int
+    NECROTIC: int
+    ACTIVENEOVASCULAR: int
+    VASCULAR: int
+    INACTIVENEOVASCULAR: int
+
     def __init__(self, frequency=1):
         super().__init__(frequency)
         self.metric_history = []
@@ -461,6 +469,13 @@ class MonitoringSteppable(BaseModelSteppable):
 
 
 class ReporterSteppable(BaseModelSteppable):
+    NORMAL: int
+    HYPOXIC: int
+    NECROTIC: int
+    ACTIVENEOVASCULAR: int
+    VASCULAR: int
+    INACTIVENEOVASCULAR: int
+
     def step(self, mcs):
         if mcs % CONFIG.report_frequency != 0:
             return

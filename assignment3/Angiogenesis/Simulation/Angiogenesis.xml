@@ -7,53 +7,70 @@
    </Metadata>
 
    <Potts>
-      <Dimensions x="160" y="160" z="1"/>
+      <Dimensions x="180" y="180" z="1"/>
       <Steps>5000</Steps>
       <Temperature>10.0</Temperature>
-      <NeighborOrder>2</NeighborOrder>
+      <Flip2DimRatio>1</Flip2DimRatio>
+      <NeighborOrder>3</NeighborOrder>
    </Potts>
 
    <Plugin Name="CellType">
       <CellType TypeId="0" TypeName="Medium"/>
-      <CellType TypeId="1" TypeName="Tumor"/>
+      <CellType TypeId="1" TypeName="Normal"/>
       <CellType TypeId="2" TypeName="Hypoxic"/>
-      <CellType TypeId="3" TypeName="Endothelial"/>
-      <CellType TypeId="4" TypeName="BloodVessel" Freeze=""/>
+      <CellType TypeId="3" TypeName="Necrotic"/>
+      <CellType TypeId="4" TypeName="ActiveNeovascular"/>
+      <CellType TypeId="5" TypeName="Vascular" Freeze=""/>
+      <CellType TypeId="6" TypeName="InactiveNeovascular"/>
    </Plugin>
 
    <Plugin Name="CenterOfMass"/>
    <Plugin Name="NeighborTracker"/>
    <Plugin Name="PixelTracker"/>
-
-   <Plugin Name="Volume">
-      <VolumeEnergyParameters CellType="Tumor" LambdaVolume="2.0" TargetVolume="25"/>
-      <VolumeEnergyParameters CellType="Hypoxic" LambdaVolume="2.0" TargetVolume="25"/>
-      <VolumeEnergyParameters CellType="Endothelial" LambdaVolume="3.0" TargetVolume="25"/>
-      <VolumeEnergyParameters CellType="BloodVessel" LambdaVolume="8.0" TargetVolume="25"/>
-   </Plugin>
+   <Plugin Name="Volume"/>
+   <Plugin Name="Surface"/>
 
    <Plugin Name="Contact">
-      <Energy Type1="Medium" Type2="Medium">10.0</Energy>
-      <Energy Type1="Medium" Type2="Tumor">16.0</Energy>
-      <Energy Type1="Medium" Type2="Hypoxic">16.0</Energy>
-      <Energy Type1="Medium" Type2="Endothelial">12.0</Energy>
-      <Energy Type1="Medium" Type2="BloodVessel">8.0</Energy>
-      <Energy Type1="Tumor" Type2="Tumor">4.0</Energy>
-      <Energy Type1="Tumor" Type2="Hypoxic">6.0</Energy>
-      <Energy Type1="Tumor" Type2="Endothelial">14.0</Energy>
-      <Energy Type1="Tumor" Type2="BloodVessel">18.0</Energy>
-      <Energy Type1="Hypoxic" Type2="Hypoxic">4.0</Energy>
-      <Energy Type1="Hypoxic" Type2="Endothelial">14.0</Energy>
-      <Energy Type1="Hypoxic" Type2="BloodVessel">18.0</Energy>
-      <Energy Type1="Endothelial" Type2="Endothelial">6.0</Energy>
-      <Energy Type1="Endothelial" Type2="BloodVessel">4.0</Energy>
-      <Energy Type1="BloodVessel" Type2="BloodVessel">4.0</Energy>
-      <NeighborOrder>2</NeighborOrder>
+      <Energy Type1="Medium" Type2="Medium">0</Energy>
+      <Energy Type1="Normal" Type2="Medium">8</Energy>
+      <Energy Type1="Normal" Type2="Normal">6</Energy>
+      <Energy Type1="Hypoxic" Type2="Medium">8</Energy>
+      <Energy Type1="Hypoxic" Type2="Normal">6</Energy>
+      <Energy Type1="Hypoxic" Type2="Hypoxic">6</Energy>
+      <Energy Type1="Necrotic" Type2="Medium">0</Energy>
+      <Energy Type1="Necrotic" Type2="Normal">0</Energy>
+      <Energy Type1="Necrotic" Type2="Hypoxic">0</Energy>
+      <Energy Type1="Necrotic" Type2="Necrotic">0</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="Medium">13</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="Normal">25</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="Hypoxic">25</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="Necrotic">25</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="ActiveNeovascular">3</Energy>
+      <Energy Type1="Vascular" Type2="Medium">13</Energy>
+      <Energy Type1="Vascular" Type2="Normal">25</Energy>
+      <Energy Type1="Vascular" Type2="Hypoxic">25</Energy>
+      <Energy Type1="Vascular" Type2="Necrotic">25</Energy>
+      <Energy Type1="Vascular" Type2="Vascular">3</Energy>
+      <Energy Type1="Vascular" Type2="ActiveNeovascular">5</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="Medium">13</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="Normal">25</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="Hypoxic">25</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="Necrotic">25</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="Vascular">3</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="InactiveNeovascular">3</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="ActiveNeovascular">3</Energy>
+      <NeighborOrder>5</NeighborOrder>
    </Plugin>
 
    <Plugin Name="Chemotaxis">
-      <ChemicalField Name="VEGF" Source="DiffusionSolverFE">
-         <ChemotaxisByType ChemotactTo="Medium" Lambda="0.0" Type="Endothelial"/>
+      <ChemicalField Name="VEGF1" Source="DiffusionSolverFE">
+         <ChemotaxisByType Type="ActiveNeovascular" Lambda="85" ChemotactTo="Medium,Normal,Hypoxic"/>
+         <ChemotaxisByType Type="Vascular" Lambda="90" ChemotactTo="Medium,Normal,Hypoxic"/>
+         <ChemotaxisByType Type="InactiveNeovascular" Lambda="90" ChemotactTo="Medium,Normal,Hypoxic"/>
+      </ChemicalField>
+      <ChemicalField Name="VEGF2" Source="DiffusionSolverFE">
+         <ChemotaxisByType Type="InactiveNeovascular" Lambda="750" SaturationCoef="1"/>
+         <ChemotaxisByType Type="ActiveNeovascular" Lambda="750" SaturationCoef="1"/>
       </ChemicalField>
    </Plugin>
 
@@ -61,17 +78,47 @@
       <DiffusionField Name="Oxygen">
          <DiffusionData>
             <FieldName>Oxygen</FieldName>
-            <GlobalDiffusionConstant>0.20</GlobalDiffusionConstant>
-            <GlobalDecayConstant>0.001</GlobalDecayConstant>
+            <GlobalDiffusionConstant>3440</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.0</GlobalDecayConstant>
+            <DeltaT>1</DeltaT>
+            <DeltaX>1.0</DeltaX>
          </DiffusionData>
+         <SecretionData>
+            <Uptake Type="Medium" MaxUptake="0.8" RelativeUptakeRate="0.99"/>
+            <Uptake Type="Hypoxic" MaxUptake="24" RelativeUptakeRate="0.99"/>
+            <Uptake Type="Normal" MaxUptake="24" RelativeUptakeRate="0.99"/>
+            <Uptake Type="Necrotic" MaxUptake="0.0001" RelativeUptakeRate="0.99"/>
+            <ConstantConcentration Type="Vascular">90</ConstantConcentration>
+            <ConstantConcentration Type="ActiveNeovascular">50</ConstantConcentration>
+         </SecretionData>
       </DiffusionField>
 
-      <DiffusionField Name="VEGF">
+      <DiffusionField Name="VEGF1">
          <DiffusionData>
-            <FieldName>VEGF</FieldName>
-            <GlobalDiffusionConstant>0.10</GlobalDiffusionConstant>
-            <GlobalDecayConstant>0.010</GlobalDecayConstant>
+            <FieldName>VEGF1</FieldName>
+            <GlobalDiffusionConstant>0.14</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.065</GlobalDecayConstant>
+            <DeltaT>1</DeltaT>
+            <DeltaX>1.0</DeltaX>
          </DiffusionData>
+         <SecretionData>
+            <Secretion Type="ActiveNeovascular">1</Secretion>
+            <Secretion Type="InactiveNeovascular">1</Secretion>
+            <Secretion Type="Vascular">1</Secretion>
+         </SecretionData>
+      </DiffusionField>
+
+      <DiffusionField Name="VEGF2">
+         <DiffusionData>
+            <FieldName>VEGF2</FieldName>
+            <GlobalDiffusionConstant>38</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.01</GlobalDecayConstant>
+            <DeltaT>1</DeltaT>
+            <DeltaX>1.0</DeltaX>
+         </DiffusionData>
+         <SecretionData>
+            <Secretion Type="Hypoxic">1</Secretion>
+         </SecretionData>
       </DiffusionField>
    </Steppable>
 </CompuCell3D>

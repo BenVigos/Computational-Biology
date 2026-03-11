@@ -99,9 +99,20 @@ def save_figure(fig: plt.Figure, output_dir: Path, prefix: str, stem: str, fmt: 
 def plot_counts_and_fraction(df: pd.DataFrame) -> plt.Figure | None:
     count_columns = available_columns(
         df,
-        ["tumor_cells", "hypoxic_cells", "tumor_like_cells", "endothelial_cells"],
+        [
+            "tumor_cells",
+            "normal_cells",
+            "hypoxic_cells",
+            "necrotic_cells",
+            "tumor_like_cells",
+            "endothelial_cells",
+            "vascular_like_cells",
+            "active_neovascular_cells",
+            "vascular_cells",
+            "inactive_neovascular_cells",
+        ],
     )
-    fraction_columns = available_columns(df, ["hypoxic_fraction"])
+    fraction_columns = available_columns(df, ["hypoxic_fraction", "necrotic_fraction"])
     if not count_columns and not fraction_columns:
         return None
 
@@ -117,10 +128,11 @@ def plot_counts_and_fraction(df: pd.DataFrame) -> plt.Figure | None:
         axes[0].set_visible(False)
 
     if fraction_columns:
-        axes[1].plot(df["mcs"], df["hypoxic_fraction"], color="tab:red", label="hypoxic fraction")
+        for column in fraction_columns:
+            axes[1].plot(df["mcs"], df[column], label=column.replace("_", " "))
         axes[1].set_ylabel("Fraction")
         axes[1].set_xlabel("MCS")
-        axes[1].set_title("Hypoxic fraction over time")
+        axes[1].set_title("Tumor phenotype fractions over time")
         axes[1].grid(alpha=0.3)
         axes[1].legend()
     else:
@@ -132,14 +144,30 @@ def plot_counts_and_fraction(df: pd.DataFrame) -> plt.Figure | None:
 def plot_tumor_volume(df: pd.DataFrame) -> plt.Figure | None:
     columns = available_columns(
         df,
-        ["avg_tumor_volume", "total_tumor_volume", "avg_tumor_target_volume", "mean_hif"],
+        [
+            "avg_tumor_volume",
+            "total_tumor_volume",
+            "avg_tumor_target_volume",
+            "avg_vascular_volume",
+            "avg_endothelial_volume",
+            "mean_hif",
+        ],
     )
     if not columns:
         return None
 
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-    upper_columns = available_columns(df, ["avg_tumor_volume", "avg_tumor_target_volume", "total_tumor_volume"])
+    upper_columns = available_columns(
+        df,
+        [
+            "avg_tumor_volume",
+            "avg_tumor_target_volume",
+            "total_tumor_volume",
+            "avg_vascular_volume",
+            "avg_endothelial_volume",
+        ],
+    )
     for column in upper_columns:
         axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
     axes[0].set_ylabel("Volume")
@@ -169,6 +197,7 @@ def plot_growth_rates(df: pd.DataFrame) -> plt.Figure | None:
             "avg_tumor_target_growth_rate",
             "total_tumor_volume_growth_rate",
             "avg_endothelial_volume_growth_rate",
+            "avg_vascular_volume_growth_rate",
         ],
     )
     if not columns:
@@ -187,8 +216,17 @@ def plot_growth_rates(df: pd.DataFrame) -> plt.Figure | None:
 
 
 def plot_field_means(df: pd.DataFrame) -> plt.Figure | None:
-    tumor_field_columns = available_columns(df, ["mean_tumor_oxygen", "mean_tumor_vegf"])
-    endothelial_field_columns = available_columns(df, ["mean_endothelial_oxygen", "mean_endothelial_vegf"])
+    tumor_field_columns = available_columns(df, ["mean_tumor_oxygen", "mean_tumor_vegf", "mean_tumor_vegf1", "mean_tumor_vegf2"])
+    endothelial_field_columns = available_columns(
+        df,
+        [
+            "mean_endothelial_oxygen",
+            "mean_endothelial_vegf",
+            "mean_vascular_oxygen",
+            "mean_vascular_vegf1",
+            "mean_vascular_vegf2",
+        ],
+    )
     if not tumor_field_columns and not endothelial_field_columns:
         return None
 
@@ -219,26 +257,44 @@ def plot_field_means(df: pd.DataFrame) -> plt.Figure | None:
 
 
 def plot_endothelial_metrics(df: pd.DataFrame) -> plt.Figure | None:
-    columns = available_columns(df, ["endothelial_cells", "avg_endothelial_volume"])
+    columns = available_columns(
+        df,
+        [
+            "endothelial_cells",
+            "vascular_like_cells",
+            "active_neovascular_cells",
+            "vascular_cells",
+            "inactive_neovascular_cells",
+            "avg_endothelial_volume",
+            "avg_vascular_volume",
+        ],
+    )
     if not columns:
         return None
 
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
 
-    if "endothelial_cells" in df.columns:
-        axes[0].plot(df["mcs"], df["endothelial_cells"], color="tab:green", label="endothelial cells")
+    population_columns = available_columns(
+        df,
+        ["endothelial_cells", "vascular_like_cells", "active_neovascular_cells", "vascular_cells", "inactive_neovascular_cells"],
+    )
+    if population_columns:
+        for column in population_columns:
+            axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
         axes[0].set_ylabel("Cell count")
-        axes[0].set_title("Endothelial population")
+        axes[0].set_title("Vascular / neovascular populations")
         axes[0].grid(alpha=0.3)
         axes[0].legend()
     else:
         axes[0].set_visible(False)
 
-    if "avg_endothelial_volume" in df.columns:
-        axes[1].plot(df["mcs"], df["avg_endothelial_volume"], color="tab:olive", label="avg endothelial volume")
+    size_columns = available_columns(df, ["avg_endothelial_volume", "avg_vascular_volume"])
+    if size_columns:
+        for column in size_columns:
+            axes[1].plot(df["mcs"], df[column], label=column.replace("_", " "))
         axes[1].set_xlabel("MCS")
         axes[1].set_ylabel("Volume")
-        axes[1].set_title("Endothelial size")
+        axes[1].set_title("Vascular / neovascular size")
         axes[1].grid(alpha=0.3)
         axes[1].legend()
     else:

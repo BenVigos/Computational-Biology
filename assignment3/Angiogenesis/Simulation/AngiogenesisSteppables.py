@@ -1,9 +1,6 @@
-# High-level steppables for the Angiogenesis simulation.
-# This file contains the runtime steppable classes that control initialization
-# and dynamics of cells and fields (oxygen, VEGF). Do not change how CC3D
-# injects cell type attributes — they come from Angiogenesis.xml (e.g. Medium,
-# Tumor, Hypoxic, Endothelial, BloodVessel) and become available as
-# self.MEDIUM, self.TUMOR, etc. at runtime.
+# Paper-aligned 2D angiogenesis steppables.
+# The mechanics mirror `Paper files/Simulation/TumorVasc3DSteppables.py`
+# while keeping the lattice 2D and the initial geometry programmatic.
 
 import csv
 import pathlib
@@ -13,293 +10,255 @@ from cc3d.core.PySteppables import *
 from AngiogenesisConfig import CONFIG
 
 
-# --- Type hints for editor / linters -------------------------------------------------
-# These are type-only annotations so editors know the expected steppable
-# attributes. They do NOT create runtime attributes that would conflict with
-# CC3D's injection (annotations do not produce class attributes in Python).
-class _CellTypeAttrs:
-    MEDIUM: int
-    TUMOR: int
+class BaseModelSteppable(SteppableBasePy):
+    NORMAL: int
     HYPOXIC: int
-    ENDOTHELIAL: int
-    BLOODVESSEL: int
-
-
-# --- Base steppable -----------------------------------------------------------------
-# BaseModelSteppable contains helper utilities used by the concrete steppables
-# below (e.g., field accessors, pixel iteration utilities and a helper that
-# enables chemotaxis for endothelial cells).
-# Important: cell type IDs (self.TUMOR etc.) are provided by CC3D when the
-# steppables are registered. To move the blood vessel, edit the CONFIG values
-# in AngiogenesisConfig.py (see details below).
-class BaseModelSteppable(_CellTypeAttrs, SteppableBasePy):
-    # Cell type attributes (e.g. self.MEDIUM, self.TUMOR) are injected by CC3D
-    # from Angiogenesis.xml during steppable initialization.
+    NECROTIC: int
+    ACTIVENEOVASCULAR: int
+    VASCULAR: int
+    INACTIVENEOVASCULAR: int
 
     def __init__(self, frequency=1):
-        # frequency controls how often `step` is called (every `frequency` MCS)
         super().__init__(frequency)
-        # internal flag to avoid spamming chemotaxis API warnings
-        self._chemotaxis_api_warning_shown = False
 
     def _clamp(self, value, minimum=0.0, maximum=None):
-        # Small utility to clamp floating values used for fields and targets.
         if maximum is not None and value > maximum:
             return maximum
         if value < minimum:
             return minimum
         return value
 
+    def _cell_com_indices(self, cell):
+        volume = max(float(getattr(cell, "volume", 0.0)), 1e-6)
+        if hasattr(cell, "xCOM"):
+            x = int(round(float(cell.xCOM)))
+            y = int(round(float(cell.yCOM)))
+            z = int(round(float(cell.zCOM)))
+        else:
+            x = int(round(float(cell.xCM) / volume))
+            y = int(round(float(cell.yCM) / volume))
+            z = int(round(float(cell.zCM) / volume))
+
+        dim_x = int(getattr(self.dim, "x"))
+        dim_y = int(getattr(self.dim, "y"))
+        dim_z = int(getattr(self.dim, "z"))
+        return (
+            min(max(x, 0), dim_x - 1),
+            min(max(y, 0), dim_y - 1),
+            min(max(z, 0), dim_z - 1),
+        )
+
     def _field_at_com(self, field, cell):
-        # Return the field value at a cell's center of mass (COM).
-        # We round the COM and clamp to lattice bounds before indexing.
-        x = min(max(int(round(cell.xCOM)), 0), self.dim.x - 1)
-        y = min(max(int(round(cell.yCOM)), 0), self.dim.y - 1)
-        z = min(max(int(round(cell.zCOM)), 0), self.dim.z - 1)
+        x, y, z = self._cell_com_indices(cell)
         return float(field[x, y, z])
 
-    def _iter_cell_pixels(self, cell):
-        # Yield Pixel objects for every pixel belonging to `cell`.
-        for pixel_data in self.get_cell_pixel_list(cell):
-            yield pixel_data.pixel
-
-    def _add_to_cell_field(self, field, cell, delta):
-        # Add `delta` to a field at all pixels occupied by `cell`.
-        # The field values are clamped using CONFIG.field_max_value.
-        for pixel in self._iter_cell_pixels(cell):
-            current_value = float(field[pixel.x, pixel.y, pixel.z])
-            field[pixel.x, pixel.y, pixel.z] = self._clamp(
-                current_value + delta,
-                minimum=0.0,
-                maximum=CONFIG.field_max_value,
-            )
-
-    def _set_endothelial_chemotaxis(self, cell, lambda_value):
-        # Configure chemotaxis for an endothelial cell towards the VEGF field.
-        # This helper uses the CompuCell3D chemotaxis API when available.
-        try:
-            chemotaxis_data = None
-            try:
-                chemotaxis_data = self.chemotaxisPlugin.getChemotaxisData(cell, "VEGF")
-            except Exception:
-                chemotaxis_data = None
-
-            if chemotaxis_data is None:
-                chemotaxis_data = self.chemotaxisPlugin.addChemotaxisData(cell, "VEGF")
-
-            chemotaxis_data.setLambda(lambda_value)
-
-            # `assignChemotactTowardsVectorTypes` accepts a list of cell type
-            # IDs that define where the vector direction points. Medium is used
-            # here as the reference type. This call is best-effort and wrapped
-            # in try/except because older/newer CC3D APIs differ.
-            try:
-                chemotaxis_data.assignChemotactTowardsVectorTypes([self.MEDIUM])
-            except Exception:
-                pass
-        except Exception:
-            if not self._chemotaxis_api_warning_shown:
-                print("[Angiogenesis] Chemotaxis API unavailable; keeping chemotaxis disabled.")
-                self._chemotaxis_api_warning_shown = True
-
     def _mean(self, values):
-        # Safe mean helper for metric aggregation.
         return sum(values) / len(values) if values else 0.0
 
+    def _vascular_type_ids(self):
+        return (self.ACTIVENEOVASCULAR, self.VASCULAR, self.INACTIVENEOVASCULAR)
 
-# --- ConstraintInitializerSteppable -------------------------------------------------
-# Responsible for creating the initial geometry of the simulation:
-# - places a blood vessel region (a rectangular block) defined by
-#   CONFIG.vessel_x_min..vessel_x_max and CONFIG.vessel_y_min..vessel_y_max
-# - seeds endothelial tip cells at positions defined by CONFIG.tip_cell_y_values
-# - seeds tumor cells inside CONFIG tumor rectangle
-# To change the blood vessel location, edit the CONFIG values in
-# `AngiogenesisConfig.py` (see further below for exact names and an example).
+    def _tumor_type_ids(self):
+        return (self.NORMAL, self.HYPOXIC, self.NECROTIC)
+
+    def _growing_tumor_type_ids(self):
+        return (self.NORMAL, self.HYPOXIC)
+
+    def _dividing_type_ids(self):
+        return (self.NORMAL, self.HYPOXIC, self.ACTIVENEOVASCULAR, self.INACTIVENEOVASCULAR)
+
+    def _apply_paper_mechanics(self, cell):
+        if cell.type in self._vascular_type_ids():
+            cell.targetVolume = CONFIG.vascular_target_volume
+            cell.lambdaVolume = CONFIG.vascular_lambda_volume
+            cell.targetSurface = CONFIG.vascular_target_surface
+            cell.lambdaSurface = CONFIG.vascular_lambda_surface
+        else:
+            cell.targetVolume = CONFIG.tumor_target_volume
+            cell.lambdaVolume = CONFIG.tumor_lambda_volume
+            cell.targetSurface = CONFIG.tumor_target_surface
+            cell.lambdaSurface = CONFIG.tumor_lambda_surface
+
+
 class ConstraintInitializerSteppable(BaseModelSteppable):
     def start(self):
-        # Create a blood vessel cell and fill a rectangular region with it.
-        vessel = self.new_cell(self.BLOODVESSEL)
+        vessel = self.new_cell(self.VASCULAR)
         self.cell_field[
             CONFIG.vessel_x_min:CONFIG.vessel_x_max,
             CONFIG.vessel_y_min:CONFIG.vessel_y_max,
             0,
         ] = vessel
-        # Give the vessel a target volume consistent with its area.
-        vessel.targetVolume = (CONFIG.vessel_x_max - CONFIG.vessel_x_min) * (
-            CONFIG.vessel_y_max - CONFIG.vessel_y_min
-        )
-        vessel.lambdaVolume = CONFIG.blood_vessel_lambda_volume
-        vessel.dict["HIF"] = 0.0
+        self._apply_paper_mechanics(vessel)
 
-        # Place endothelial tip cells at configured Y positions. Each tip cell is
-        # a small vertical strip at X between tip_cell_x_min..tip_cell_x_max
         for y_min in CONFIG.tip_cell_y_values:
-            endothelial = self.new_cell(self.ENDOTHELIAL)
+            tip = self.new_cell(self.INACTIVENEOVASCULAR)
             self.cell_field[
                 CONFIG.tip_cell_x_min:CONFIG.tip_cell_x_max,
                 y_min:y_min + CONFIG.tip_cell_height,
                 0,
-            ] = endothelial
-            endothelial.targetVolume = CONFIG.default_target_volume
-            endothelial.lambdaVolume = CONFIG.endothelial_lambda_volume
-            endothelial.dict["HIF"] = 0.0
-            if CONFIG.enable_chemotaxis:
-                # Enable chemotaxis towards VEGF (if the model preset enables it)
-                self._set_endothelial_chemotaxis(endothelial, CONFIG.chemotaxis_lambda)
+            ] = tip
+            self._apply_paper_mechanics(tip)
 
-        # Seed tumor cells inside the configured tumor rectangle.
         for x_min in range(CONFIG.tumor_x_min, CONFIG.tumor_x_max, CONFIG.tumor_seed_size):
             for y_min in range(CONFIG.tumor_y_min, CONFIG.tumor_y_max, CONFIG.tumor_seed_size):
-                tumor = self.new_cell(self.TUMOR)
+                tumor = self.new_cell(self.NORMAL)
                 self.cell_field[
                     x_min:min(x_min + CONFIG.tumor_seed_size, CONFIG.tumor_x_max),
                     y_min:min(y_min + CONFIG.tumor_seed_size, CONFIG.tumor_y_max),
                     0,
                 ] = tumor
-                tumor.targetVolume = CONFIG.default_target_volume
-                tumor.lambdaVolume = CONFIG.default_lambda_volume
-                tumor.dict["HIF"] = 0.0
+                self._apply_paper_mechanics(tumor)
 
-        print(f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}'.")
+        print("[Angiogenesis] Initialised paper-aligned 2D geometry.")
 
 
-# --- FieldDynamicsSteppable ---------------------------------------------------------
-# Handles field updates and cell-level state changes each MCS:
-# - oxygen supply from vessels and oxygen uptake by tumor cells
-# - HIF update and hypoxia switching for tumor cells
-# - VEGF secretion by hypoxic tumor cells
-class FieldDynamicsSteppable(BaseModelSteppable):
-    def step(self, mcs):
-        oxygen_field = self.field.Oxygen
-        vegf_field = self.field.VEGF
-
-        # Add oxygen to the tissue from blood vessels if enabled
-        if CONFIG.enable_oxygen:
-            for vessel in self.cell_list_by_type(self.BLOODVESSEL):
-                self._add_to_cell_field(oxygen_field, vessel, CONFIG.oxygen_supply_rate)
-
-        # Tumor cells (normal or hypoxic) consume oxygen
-        if CONFIG.enable_oxygen_uptake:
-            for tumor_cell in self.cell_list_by_type(self.TUMOR, self.HYPOXIC):
-                for pixel in self._iter_cell_pixels(tumor_cell):
-                    oxygen_value = float(oxygen_field[pixel.x, pixel.y, pixel.z])
-                    oxygen_field[pixel.x, pixel.y, pixel.z] = self._clamp(
-                        oxygen_value - CONFIG.oxygen_uptake_rate * oxygen_value,
-                        minimum=0.0,
-                        maximum=CONFIG.field_max_value,
-                    )
-
-        # Update HIF and hypoxia state, and possibly secrete VEGF
-        for tumor_cell in self.cell_list_by_type(self.TUMOR, self.HYPOXIC):
-            local_oxygen = self._field_at_com(oxygen_field, tumor_cell)
-
-            if CONFIG.enable_hif:
-                # HIF dynamics (if enabled) follow a simple ODE discretisation
-                hif_value = float(tumor_cell.dict.get("HIF", 0.0))
-                tumor_cell.dict["HIF"] = self._clamp(
-                    hif_value + CONFIG.hif_alpha - CONFIG.hif_beta * local_oxygen * hif_value,
-                    minimum=0.0,
-                )
-            else:
-                tumor_cell.dict["HIF"] = 0.0
-
-            # Switch tumor cell phenotype to hypoxic based on oxygen threshold
-            if CONFIG.enable_hypoxia_switch:
-                tumor_cell.type = self.HYPOXIC if local_oxygen < CONFIG.oxygen_hypoxia_threshold else self.TUMOR
-
-            # Hypoxic tumor cells can secrete VEGF
-            if CONFIG.enable_vegf_secretion and tumor_cell.type == self.HYPOXIC:
-                secretion_rate = CONFIG.vegf_secretion_rate
-                if CONFIG.enable_hif:
-                    secretion_rate *= 1.0 + CONFIG.hif_to_vegf_gain * float(tumor_cell.dict.get("HIF", 0.0))
-                self._add_to_cell_field(vegf_field, tumor_cell, secretion_rate)
-
-
-# --- GrowthSteppable ----------------------------------------------------------------
-# Updates cell target volumes (growth) for tumor and endothelial cells and
-# ensures endothelial chemotaxis is set correctly each MCS.
 class GrowthSteppable(BaseModelSteppable):
+    def start(self):
+        for cell in self.cellList:
+            self._apply_paper_mechanics(cell)
+
+    def _vascular_neighbor_area(self, cell):
+        total_area = 0.0
+        for neighbor, common_surface_area in self.get_cell_neighbor_data_list(cell):
+            if neighbor and neighbor.type in self._vascular_type_ids():
+                total_area += float(common_surface_area)
+        return total_area
+
+    def _vascular_growth_step(self, cell, local_vegf2, neighbor_area_limit):
+        if local_vegf2 <= CONFIG.vascular_vegf_activation_threshold:
+            return
+
+        if self._vascular_neighbor_area(cell) >= neighbor_area_limit:
+            return
+
+        cell.targetVolume += (
+            CONFIG.vascular_growth_volume_rate
+            * local_vegf2
+            / (CONFIG.vascular_growth_denominator + local_vegf2)
+        )
+        cell.targetSurface += (
+            CONFIG.vascular_growth_surface_rate
+            * local_vegf2
+            / (CONFIG.vascular_growth_denominator + local_vegf2)
+        )
+
+    def _tumor_growth_step(self, cell, local_oxygen, mcs):
+        if not CONFIG.enable_type_switching:
+            return
+
+        if local_oxygen < CONFIG.nutrient_thresh and mcs > CONFIG.tumor_growth_start_mcs:
+            cell.type = self.HYPOXIC
+
+        if local_oxygen < CONFIG.necrotic_thresh and mcs > CONFIG.tumor_growth_start_mcs:
+            cell.type = self.NECROTIC
+
+        if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type in self._growing_tumor_type_ids():
+            cell.targetVolume += (
+                CONFIG.tumor_growth_volume_rate
+                * local_oxygen
+                / (CONFIG.tumor_growth_denominator + local_oxygen)
+            )
+            cell.targetSurface += (
+                CONFIG.tumor_growth_surface_rate
+                * local_oxygen
+                / (CONFIG.tumor_growth_denominator + local_oxygen)
+            )
+
+    def _hypoxic_adjustments(self, cell, local_oxygen, mcs):
+        if not CONFIG.enable_type_switching:
+            return
+
+        if local_oxygen < CONFIG.necrotic_thresh and mcs > CONFIG.tumor_growth_start_mcs:
+            cell.type = self.NECROTIC
+        elif local_oxygen > CONFIG.nutrient_thresh:
+            cell.type = self.NORMAL
+
+    def _necrotic_adjustments(self, cell):
+        cell.targetVolume = self._clamp(
+            float(cell.targetVolume) - CONFIG.necrotic_volume_loss_rate,
+            minimum=0.0,
+        )
+        cell.lambdaSurface = 0.0
+
     def step(self, mcs):
-        oxygen_field = self.field.Oxygen
-        vegf_field = self.field.VEGF
+        field_neo_vasc = self.field.VEGF2
+        field_malig = self.field.Oxygen
 
-        # Tumor growth depends on local oxygen availability
-        if CONFIG.enable_tumor_growth:
-            for tumor_cell in self.cell_list_by_type(self.TUMOR, self.HYPOXIC):
-                local_oxygen = self._field_at_com(oxygen_field, tumor_cell)
-                growth_rate = CONFIG.tumor_growth_gm * local_oxygen / (
-                    CONFIG.oxygen_mm_constant + local_oxygen + 1e-12
+        for cell in self.cellList:
+            if cell.type == self.INACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
+                self._vascular_growth_step(
+                    cell,
+                    self._field_at_com(field_neo_vasc, cell),
+                    CONFIG.inactive_neighbor_area_limit,
                 )
 
-
-                if CONFIG.enable_apoptosis and local_oxygen < CONFIG.oxygen_death_threshold:
-                    growth_rate -= CONFIG.apoptosis_rate
-
-                tumor_cell.targetVolume = self._clamp(
-                    tumor_cell.targetVolume + growth_rate,
-                    minimum=0.0,
+            if cell.type == self.ACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
+                self._vascular_growth_step(
+                    cell,
+                    self._field_at_com(field_neo_vasc, cell),
+                    CONFIG.active_neighbor_area_limit,
                 )
 
-        # Endothelial growth is triggered by VEGF
-        if CONFIG.enable_endothelial_growth:
-            for endothelial_cell in self.cell_list_by_type(self.ENDOTHELIAL):
-                local_vegf = self._field_at_com(vegf_field, endothelial_cell)
-                if local_vegf < CONFIG.vegf_activation_threshold:
-                    continue
+            if cell.type in self._growing_tumor_type_ids():
+                self._tumor_growth_step(cell, self._field_at_com(field_malig, cell), mcs)
 
-                growth_rate = CONFIG.endothelial_growth_gv * local_vegf / (
-                    CONFIG.vegf_half_max_scale * CONFIG.vegf_activation_threshold + local_vegf + 1e-12
-                )
-                endothelial_cell.targetVolume += growth_rate
+            if cell.type == self.HYPOXIC:
+                self._hypoxic_adjustments(cell, self._field_at_com(field_malig, cell), mcs)
 
-        # Ensure chemotaxis is configured each MCS if enabled
-        chemotaxis_lambda = CONFIG.chemotaxis_lambda if CONFIG.enable_chemotaxis else 0.0
-        for endothelial_cell in self.cell_list_by_type(self.ENDOTHELIAL):
-            self._set_endothelial_chemotaxis(endothelial_cell, chemotaxis_lambda)
+            if cell.type == self.NECROTIC:
+                self._necrotic_adjustments(cell)
 
 
-# --- MitosisSteppable ----------------------------------------------------------------
-# Handles cell division (mitosis) when enabled in CONFIG. Uses dynamic
-# getattr lookups for cell type attributes to avoid static-analysis warnings.
-class MitosisSteppable(_CellTypeAttrs, MitosisSteppableBase):
+class MitosisSteppable(MitosisSteppableBase):
     def __init__(self, frequency=1):
         super().__init__(frequency)
+        self.doubling_volume_dict = {
+            1: CONFIG.tumor_doubling_volume,
+            2: CONFIG.tumor_doubling_volume,
+            4: CONFIG.vascular_doubling_volume,
+            6: CONFIG.vascular_doubling_volume,
+        }
 
     def step(self, mcs):
         if not CONFIG.enable_mitosis:
             return
 
-        # Use getattr so static linters don't complain; at runtime CC3D will
-        # have injected concrete integer IDs for these attributes.
-        tumor_type = getattr(self, "TUMOR")
-        hypoxic_type = getattr(self, "HYPOXIC")
-        endothelial_type = getattr(self, "ENDOTHELIAL")
-
         cells_to_divide = []
-        for cell in self.cell_list_by_type(tumor_type, hypoxic_type, endothelial_type):
-            division_threshold = (
-                CONFIG.endothelial_division_volume
-                if cell.type == endothelial_type
-                else CONFIG.tumor_division_volume
-            )
-            if cell.volume >= division_threshold:
+        for cell in self.cell_list_by_type(*self.doubling_volume_dict.keys()):
+            doubling_volume = self.doubling_volume_dict.get(cell.type)
+            if doubling_volume is not None and cell.volume > doubling_volume:
                 cells_to_divide.append(cell)
 
         for cell in cells_to_divide:
             self.divide_cell_random_orientation(cell)
 
     def update_attributes(self):
-        # Called during mitosis to set attributes for parent & child cells.
-        self.parent_cell.targetVolume /= 2.0
-        self.clone_parent_2_child()
-        self.child_cell.type = self.parent_cell.type
+        parent_cell = getattr(self, "parent_cell", None) or getattr(self, "parentCell")
+        child_cell = getattr(self, "child_cell", None) or getattr(self, "childCell")
+
+        if parent_cell.type in (self.NORMAL, self.HYPOXIC):
+            child_cell.type = self.NORMAL
+            child_cell.targetVolume = CONFIG.tumor_target_volume
+            child_cell.lambdaVolume = CONFIG.tumor_lambda_volume
+            child_cell.targetSurface = CONFIG.tumor_target_surface
+            child_cell.lambdaSurface = CONFIG.tumor_lambda_surface
+            parent_cell.targetVolume = CONFIG.tumor_target_volume
+            parent_cell.lambdaVolume = CONFIG.tumor_lambda_volume
+            parent_cell.targetSurface = CONFIG.tumor_target_surface
+            parent_cell.lambdaSurface = CONFIG.tumor_lambda_surface
+
+        if parent_cell.type in (self.INACTIVENEOVASCULAR, self.ACTIVENEOVASCULAR):
+            child_cell.type = self.ACTIVENEOVASCULAR
+            child_cell.targetVolume = CONFIG.vascular_target_volume
+            child_cell.lambdaVolume = CONFIG.vascular_lambda_volume
+            child_cell.targetSurface = CONFIG.vascular_target_surface
+            child_cell.lambdaSurface = CONFIG.vascular_lambda_surface
+            parent_cell.targetVolume = CONFIG.vascular_target_volume
+            parent_cell.lambdaVolume = CONFIG.vascular_lambda_volume
+            parent_cell.targetSurface = CONFIG.vascular_target_surface
+            parent_cell.lambdaSurface = CONFIG.vascular_lambda_surface
 
 
-# --- MonitoringSteppable -------------------------------------------------------------
-# Samples model-level metrics in Python so you can track how the simulation
-# changes over time without hard-coding analysis outside the CC3D run.
-# Metrics are stored in `self.metric_history`, and can also be printed and/or
-# written to CSV depending on the CONFIG monitoring toggles.
 class MonitoringSteppable(BaseModelSteppable):
     def __init__(self, frequency=1):
         super().__init__(frequency)
@@ -307,7 +266,7 @@ class MonitoringSteppable(BaseModelSteppable):
         self._previous_sample_mcs = None
         self._previous_tumor_volumes = {}
         self._previous_tumor_targets = {}
-        self._previous_endothelial_volumes = {}
+        self._previous_vascular_volumes = {}
         self._csv_path = None
 
     def start(self):
@@ -317,9 +276,6 @@ class MonitoringSteppable(BaseModelSteppable):
         output_dir = pathlib.Path(__file__).resolve().parents[1] / CONFIG.monitor_output_dir
         output_dir.mkdir(parents=True, exist_ok=True)
         self._csv_path = output_dir / CONFIG.monitor_output_filename
-
-        # Truncate the file at the beginning of each run so the CSV matches the
-        # current simulation configuration.
         self._csv_path.write_text("", encoding="utf-8")
         print(f"[Angiogenesis] Monitoring CSV -> {self._csv_path}")
 
@@ -327,9 +283,8 @@ class MonitoringSteppable(BaseModelSteppable):
         value_map = {}
         for cell in cells:
             cell_id = getattr(cell, "id", None)
-            if cell_id is None:
-                continue
-            value_map[cell_id] = float(getattr(cell, attribute_name))
+            if cell_id is not None:
+                value_map[cell_id] = float(getattr(cell, attribute_name))
         return value_map
 
     def _mean_delta_rate(self, current_values, previous_values, delta_mcs):
@@ -362,30 +317,36 @@ class MonitoringSteppable(BaseModelSteppable):
             writer.writerow(metrics)
 
     def _collect_metrics(self, mcs):
-        tumor_cells = list(self.cell_list_by_type(self.TUMOR, self.HYPOXIC))
-        normoxic_tumor_cells = list(self.cell_list_by_type(self.TUMOR))
+        normal_cells = list(self.cell_list_by_type(self.NORMAL))
         hypoxic_cells = list(self.cell_list_by_type(self.HYPOXIC))
-        endothelial_cells = list(self.cell_list_by_type(self.ENDOTHELIAL))
+        necrotic_cells = list(self.cell_list_by_type(self.NECROTIC))
+        tumor_like_cells = normal_cells + hypoxic_cells + necrotic_cells
+        active_neovascular_cells = list(self.cell_list_by_type(self.ACTIVENEOVASCULAR))
+        vascular_cells = list(self.cell_list_by_type(self.VASCULAR))
+        inactive_neovascular_cells = list(self.cell_list_by_type(self.INACTIVENEOVASCULAR))
+        vascular_like_cells = active_neovascular_cells + vascular_cells + inactive_neovascular_cells
 
         delta_mcs = 0 if self._previous_sample_mcs is None else mcs - self._previous_sample_mcs
-        tumor_volumes = [float(cell.volume) for cell in tumor_cells]
-        tumor_target_volumes = [float(cell.targetVolume) for cell in tumor_cells]
-        endothelial_volumes = [float(cell.volume) for cell in endothelial_cells]
+        tumor_volumes = [float(cell.volume) for cell in tumor_like_cells]
+        tumor_target_volumes = [float(cell.targetVolume) for cell in tumor_like_cells]
+        vascular_volumes = [float(cell.volume) for cell in vascular_like_cells]
 
-        current_tumor_volumes = self._cell_value_map(tumor_cells, attribute_name="volume")
-        current_tumor_targets = self._cell_value_map(tumor_cells, attribute_name="targetVolume")
-        current_endothelial_volumes = self._cell_value_map(endothelial_cells, attribute_name="volume")
+        current_tumor_volumes = self._cell_value_map(tumor_like_cells, attribute_name="volume")
+        current_tumor_targets = self._cell_value_map(tumor_like_cells, attribute_name="targetVolume")
+        current_vascular_volumes = self._cell_value_map(vascular_like_cells, attribute_name="volume")
 
         metrics = {
             "mcs": int(mcs),
-            "tumor_cells": len(normoxic_tumor_cells),
+            "tumor_cells": len(normal_cells),
+            "normal_cells": len(normal_cells),
             "hypoxic_cells": len(hypoxic_cells),
-            "tumor_like_cells": len(tumor_cells),
-            "hypoxic_fraction": len(hypoxic_cells) / len(tumor_cells) if tumor_cells else 0.0,
+            "necrotic_cells": len(necrotic_cells),
+            "tumor_like_cells": len(tumor_like_cells),
+            "hypoxic_fraction": len(hypoxic_cells) / len(tumor_like_cells) if tumor_like_cells else 0.0,
+            "necrotic_fraction": len(necrotic_cells) / len(tumor_like_cells) if tumor_like_cells else 0.0,
             "avg_tumor_volume": self._mean(tumor_volumes),
             "total_tumor_volume": sum(tumor_volumes),
             "avg_tumor_target_volume": self._mean(tumor_target_volumes),
-            "mean_hif": self._mean([float(cell.dict.get("HIF", 0.0)) for cell in tumor_cells]),
         }
 
         if CONFIG.monitor_include_growth_rates:
@@ -407,46 +368,64 @@ class MonitoringSteppable(BaseModelSteppable):
                 ),
             })
 
-        if CONFIG.monitor_include_endothelial_metrics:
+        if CONFIG.monitor_include_vascular_metrics:
             metrics.update({
-                "endothelial_cells": len(endothelial_cells),
-                "avg_endothelial_volume": self._mean(endothelial_volumes),
+                "endothelial_cells": len(vascular_like_cells),
+                "vascular_like_cells": len(vascular_like_cells),
+                "active_neovascular_cells": len(active_neovascular_cells),
+                "vascular_cells": len(vascular_cells),
+                "inactive_neovascular_cells": len(inactive_neovascular_cells),
+                "avg_endothelial_volume": self._mean(vascular_volumes),
+                "avg_vascular_volume": self._mean(vascular_volumes),
             })
             if CONFIG.monitor_include_growth_rates:
                 metrics["avg_endothelial_volume_growth_rate"] = self._mean_delta_rate(
-                    current_endothelial_volumes,
-                    self._previous_endothelial_volumes,
+                    current_vascular_volumes,
+                    self._previous_vascular_volumes,
                     delta_mcs,
                 )
+                metrics["avg_vascular_volume_growth_rate"] = metrics["avg_endothelial_volume_growth_rate"]
 
         if CONFIG.monitor_include_field_means:
             oxygen_field = self.field.Oxygen
-            vegf_field = self.field.VEGF
+            vegf1_field = self.field.VEGF1
+            vegf2_field = self.field.VEGF2
             metrics.update({
-                "mean_tumor_oxygen": self._mean([self._field_at_com(oxygen_field, cell) for cell in tumor_cells]),
-                "mean_tumor_vegf": self._mean([self._field_at_com(vegf_field, cell) for cell in tumor_cells]),
+                "mean_tumor_oxygen": self._mean([self._field_at_com(oxygen_field, cell) for cell in tumor_like_cells]),
+                "mean_tumor_vegf": self._mean([self._field_at_com(vegf2_field, cell) for cell in tumor_like_cells]),
+                "mean_tumor_vegf1": self._mean([self._field_at_com(vegf1_field, cell) for cell in tumor_like_cells]),
+                "mean_tumor_vegf2": self._mean([self._field_at_com(vegf2_field, cell) for cell in tumor_like_cells]),
             })
-            if CONFIG.monitor_include_endothelial_metrics:
+            if CONFIG.monitor_include_vascular_metrics:
                 metrics.update({
                     "mean_endothelial_oxygen": self._mean([
-                        self._field_at_com(oxygen_field, cell) for cell in endothelial_cells
+                        self._field_at_com(oxygen_field, cell) for cell in vascular_like_cells
                     ]),
                     "mean_endothelial_vegf": self._mean([
-                        self._field_at_com(vegf_field, cell) for cell in endothelial_cells
+                        self._field_at_com(vegf2_field, cell) for cell in vascular_like_cells
+                    ]),
+                    "mean_vascular_oxygen": self._mean([
+                        self._field_at_com(oxygen_field, cell) for cell in vascular_like_cells
+                    ]),
+                    "mean_vascular_vegf1": self._mean([
+                        self._field_at_com(vegf1_field, cell) for cell in vascular_like_cells
+                    ]),
+                    "mean_vascular_vegf2": self._mean([
+                        self._field_at_com(vegf2_field, cell) for cell in vascular_like_cells
                     ]),
                 })
 
         self._previous_sample_mcs = mcs
         self._previous_tumor_volumes = current_tumor_volumes
         self._previous_tumor_targets = current_tumor_targets
-        self._previous_endothelial_volumes = current_endothelial_volumes
+        self._previous_vascular_volumes = current_vascular_volumes
         return metrics
 
     def _print_metrics(self, metrics):
         line = (
             f"[Angiogenesis][Monitor][MCS={metrics['mcs']}] "
             f"tumor_like={metrics['tumor_like_cells']} hypoxic_fraction={metrics['hypoxic_fraction']:.3f} "
-            f"avg_tumor_volume={metrics['avg_tumor_volume']:.3f}"
+            f"necrotic_fraction={metrics['necrotic_fraction']:.3f} avg_tumor_volume={metrics['avg_tumor_volume']:.3f}"
         )
 
         if CONFIG.monitor_include_growth_rates:
@@ -458,11 +437,11 @@ class MonitoringSteppable(BaseModelSteppable):
         if CONFIG.monitor_include_field_means:
             line += (
                 f" mean_O2={metrics['mean_tumor_oxygen']:.3f}"
-                f" mean_VEGF={metrics['mean_tumor_vegf']:.3f}"
+                f" mean_VEGF2={metrics['mean_tumor_vegf2']:.3f}"
             )
 
-        if CONFIG.monitor_include_endothelial_metrics:
-            line += f" endothelial={metrics['endothelial_cells']}"
+        if CONFIG.monitor_include_vascular_metrics:
+            line += f" vascular_like={metrics['vascular_like_cells']}"
 
         print(line)
 
@@ -481,22 +460,19 @@ class MonitoringSteppable(BaseModelSteppable):
             self._print_metrics(metrics)
 
 
-# --- ReporterSteppable ---------------------------------------------------------------
-# Periodically prints simple diagnostics (counts of cell types and mean HIF).
 class ReporterSteppable(BaseModelSteppable):
     def step(self, mcs):
         if mcs % CONFIG.report_frequency != 0:
             return
 
-        tumor_count = len(list(self.cell_list_by_type(self.TUMOR)))
+        normal_count = len(list(self.cell_list_by_type(self.NORMAL)))
         hypoxic_count = len(list(self.cell_list_by_type(self.HYPOXIC)))
-        endothelial_count = len(list(self.cell_list_by_type(self.ENDOTHELIAL)))
-        mean_hif = 0.0
-        tumor_like_cells = list(self.cell_list_by_type(self.TUMOR, self.HYPOXIC))
-        if tumor_like_cells:
-            mean_hif = sum(float(cell.dict.get("HIF", 0.0)) for cell in tumor_like_cells) / len(tumor_like_cells)
+        necrotic_count = len(list(self.cell_list_by_type(self.NECROTIC)))
+        active_count = len(list(self.cell_list_by_type(self.ACTIVENEOVASCULAR)))
+        vascular_count = len(list(self.cell_list_by_type(self.VASCULAR)))
+        inactive_count = len(list(self.cell_list_by_type(self.INACTIVENEOVASCULAR)))
 
         print(
-            f"[Angiogenesis][MCS={mcs}] tumor={tumor_count} hypoxic={hypoxic_count} "
-            f"endothelial={endothelial_count} mean_HIF={mean_hif:.3f}"
+            f"[Angiogenesis][MCS={mcs}] normal={normal_count} hypoxic={hypoxic_count} necrotic={necrotic_count} "
+            f"active_neo={active_count} vascular={vascular_count} inactive_neo={inactive_count}"
         )

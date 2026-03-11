@@ -1,5 +1,7 @@
 # Assigment 3
 
+## Simulating Tumor Growth using CompuCell3D
+
 ### The Glazier-Graner-Hogeweg (GGH) Effective Energy
 
 Core Hamiltonian equation that describes the physical shape, volume, and interactions of the cells on the grid.

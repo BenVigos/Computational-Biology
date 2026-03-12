@@ -19,28 +19,28 @@ class ModelConfig:
     lattice_x: int = 100
     lattice_y: int = 100
     steps: int = 3000
-    vessel_x_min: int = 8
-    vessel_x_max: int = 14
-    vessel_y_min: int = 12
-    vessel_y_max: int = 88
-    tip_cell_x_min: int = 14
-    tip_cell_x_max: int = 20
-    tip_cell_y_values: tuple[int, ...] = (22, 48, 74)
+    vessel_x_min: int = 0
+    vessel_x_max: int = 8
+    vessel_y_min: int = 0
+    vessel_y_max: int = 100
+    tip_cell_x_min: int = vessel_x_max + 1
+    tip_cell_x_max: int = tip_cell_x_min + 5 
+    tip_cell_y_values: tuple[int, ...] = (16, 22, 28, 34, 40, 48, 54, 60, 66, 74, 80, 86)
     tip_cell_height: int = 6
-    tumor_x_min: int = 40
-    tumor_x_max: int = 62
-    tumor_y_min: int = 40
-    tumor_y_max: int = 62
-    tumor_seed_size: int = 4
+    tumor_x_min: int = 45
+    tumor_x_max: int = 55
+    tumor_y_min: int = 45
+    tumor_y_max: int = 55
+    tumor_seed_size: int = 1
 
     # Paper-derived phenotype thresholds and timing
     area_thresh: float = 1.0
     nutrient_thresh: float = 5.0
     necrotic_thresh: float = 1.0
-    tumor_growth_start_mcs: int = 100
+    tumor_growth_start_mcs: int = 5
     vascular_vegf_activation_threshold: float = 0.5
-    inactive_neighbor_area_limit: float = 70.0
-    active_neighbor_area_limit: float = 50.0
+    inactive_neighbor_area_limit: float = 7000.0
+    active_neighbor_area_limit: float = 5000.0
 
     # Paper-derived mechanics
     tumor_target_volume: float = 33.0
@@ -54,23 +54,23 @@ class ModelConfig:
     necrotic_volume_loss_rate: float = 0.5
 
     # Paper-derived growth laws
-    tumor_growth_volume_rate: float = 0.04
-    tumor_growth_surface_rate: float = 0.12
+    tumor_growth_volume_rate: float = 0.02
+    tumor_growth_surface_rate: float = 0.06
     tumor_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.06
     vascular_growth_surface_rate: float = 0.15
     vascular_growth_denominator: float = 0.5
 
     # Paper-derived mitosis thresholds
-    tumor_doubling_volume: float = 54.0
-    vascular_doubling_volume: float = 80.0
+    tumor_doubling_volume: float = 80.0
+    vascular_doubling_volume: float = 120.0
 
     # Field clamps for Python-side monitoring / safety
     field_max_value: float = 100.0
     report_frequency: int = 100
 
     # Python monitoring toggles
-    monitor_frequency: int = 50
+    monitor_frequency: int = 1
     monitor_to_console: bool = True
     monitor_to_csv: bool = True
     monitor_include_growth_rates: bool = True

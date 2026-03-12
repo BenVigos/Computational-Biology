@@ -119,6 +119,12 @@ $$\begin{align}
 |$H$| The current concentration of HIF - 1 $\alpha$.|
 
 
+Mention:
+- solver we use
+- parameter settings => change them and explain what is the result we biologically observe based on what we saw in class
+
+
+
 
 
 

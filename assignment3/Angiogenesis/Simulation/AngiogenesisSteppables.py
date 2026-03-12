@@ -120,10 +120,13 @@ class GrowthSteppable(BaseModelSteppable):
         for cell in self.cellList:
             self._apply_paper_mechanics(cell)
 
-    def _vascular_neighbor_area(self, cell):
+    def _neovascular_neighbor_area(self, cell):
+        """Shared surface with other *neovascular* cells only (Active + Inactive).
+        The frozen Vascular strip is excluded so that touching the parent vessel
+        does not block growth."""
         total_area = 0.0
         for neighbor, common_surface_area in self.get_cell_neighbor_data_list(cell):
-            if neighbor and neighbor.type in self._vascular_type_ids():
+            if neighbor and neighbor.type in (self.ACTIVENEOVASCULAR, self.INACTIVENEOVASCULAR):
                 total_area += float(common_surface_area)
         return total_area
 
@@ -131,19 +134,25 @@ class GrowthSteppable(BaseModelSteppable):
         if local_vegf2 <= CONFIG.vascular_vegf_activation_threshold:
             return
 
-        if self._vascular_neighbor_area(cell) >= neighbor_area_limit:
+        if self._neovascular_neighbor_area(cell) >= neighbor_area_limit:
             return
 
-        cell.targetVolume += (
-            CONFIG.vascular_growth_volume_rate
-            * local_vegf2
-            / (CONFIG.vascular_growth_denominator + local_vegf2)
-        )
-        cell.targetSurface += (
-            CONFIG.vascular_growth_surface_rate
-            * local_vegf2
-            / (CONFIG.vascular_growth_denominator + local_vegf2)
-        )
+        growth_fraction = local_vegf2 / (CONFIG.vascular_growth_denominator + local_vegf2)
+        cell.targetVolume += CONFIG.vascular_growth_volume_rate * growth_fraction
+        cell.targetSurface += CONFIG.vascular_growth_surface_rate * growth_fraction
+
+    def _vascular_activation_step(self, cell, local_vegf2):
+        """Switch InactiveNeovascular -> ActiveNeovascular when VEGF2 is high,
+        and ActiveNeovascular -> InactiveNeovascular when VEGF2 drops."""
+        if not CONFIG.enable_type_switching:
+            return
+
+        if cell.type == self.INACTIVENEOVASCULAR:
+            if local_vegf2 > CONFIG.vascular_activation_vegf2_threshold:
+                cell.type = self.ACTIVENEOVASCULAR
+        elif cell.type == self.ACTIVENEOVASCULAR:
+            if local_vegf2 < CONFIG.vascular_deactivation_vegf2_threshold:
+                cell.type = self.INACTIVENEOVASCULAR
 
     def _tumor_growth_step(self, cell, local_oxygen, mcs):
         if CONFIG.enable_type_switching:
@@ -187,20 +196,24 @@ class GrowthSteppable(BaseModelSteppable):
 
         for cell in self.cellList:
             if cell.type == self.INACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
+                local_vegf2 = self._field_at_com(field_neo_vasc, cell)
+                self._vascular_activation_step(cell, local_vegf2)
                 self._vascular_growth_step(
                     cell,
-                    self._field_at_com(field_neo_vasc, cell),
+                    local_vegf2,
                     CONFIG.inactive_neighbor_area_limit,
                 )
 
-            if cell.type == self.ACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
+            elif cell.type == self.ACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
+                local_vegf2 = self._field_at_com(field_neo_vasc, cell)
+                self._vascular_activation_step(cell, local_vegf2)
                 self._vascular_growth_step(
                     cell,
-                    self._field_at_com(field_neo_vasc, cell),
+                    local_vegf2,
                     CONFIG.active_neighbor_area_limit,
                 )
 
-            if cell.type in self._growing_tumor_type_ids():
+            elif cell.type in self._growing_tumor_type_ids():
                 self._tumor_growth_step(cell, self._field_at_com(field_malig, cell), mcs)
 
             if cell.type == self.HYPOXIC:

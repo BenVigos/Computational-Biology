@@ -42,8 +42,8 @@ class ModelConfig:
 
     # Paper-derived phenotype thresholds and timing
     area_thresh: float = 100.0
-    nutrient_thresh: float = 5.0
-    necrotic_thresh: float = 2.0
+    nutrient_thresh: float = 25.0
+    necrotic_thresh: float = 10.0
     tumor_growth_start_mcs: int = 500
     vascular_vegf_activation_threshold: float = 0.2
     inactive_neighbor_area_limit: float = 200

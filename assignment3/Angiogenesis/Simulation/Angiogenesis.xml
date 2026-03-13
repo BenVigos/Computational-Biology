@@ -84,7 +84,7 @@
          <DiffusionData>
             <FieldName>Oxygen</FieldName>
             <GlobalDiffusionConstant>10</GlobalDiffusionConstant><!--was 3440-->
-            <GlobalDecayConstant>0.01</GlobalDecayConstant>
+            <GlobalDecayConstant>0.005</GlobalDecayConstant>
             <DeltaT>1</DeltaT>
             <DeltaX>1.0</DeltaX>
             <InitialConcentration Type="Medium">90</InitialConcentration>
@@ -92,8 +92,8 @@
          <SecretionData>
             <Uptake Type="Medium" MaxUptake="0" RelativeUptakeRate="0.2"/>
             <Uptake Type="Hypoxic" MaxUptake="0.3" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Normal" MaxUptake="0.6" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Necrotic" MaxUptake="0.0001" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Normal" MaxUptake="0.5" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Necrotic" MaxUptake="0.0" RelativeUptakeRate="0.2"/>
             <ConstantConcentration Type="Vascular">90</ConstantConcentration>
             <ConstantConcentration Type="ActiveNeovascular">70</ConstantConcentration>
             <ConstantConcentration Type="InactiveNeovascular">70</ConstantConcentration>

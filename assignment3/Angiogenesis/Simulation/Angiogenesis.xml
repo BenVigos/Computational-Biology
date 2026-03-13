@@ -8,10 +8,12 @@
 
    <Potts>
       <Dimensions x="200" y="200" z="1"/>
-      <Steps>10000</Steps>
+      <Steps>3000</Steps>
       <Temperature>14.0</Temperature>
       <Flip2DimRatio>1</Flip2DimRatio>
       <NeighborOrder>2</NeighborOrder>
+      <Boundary_x>Periodic</Boundary_x>
+      <Boundary_y>Periodic</Boundary_y>
    </Potts>
 
    <Plugin Name="CellType">
@@ -28,19 +30,23 @@
    <Plugin Name="NeighborTracker"/>
    <Plugin Name="PixelTracker"/>
    <Plugin Name="Volume"/>
-   <Plugin Name="Surface"/>
+<!--   <Plugin Name="Surface"/>-->
 
    <Plugin Name="Contact">
       <Energy Type1="Medium" Type2="Medium">0</Energy>
-      <Energy Type1="Normal" Type2="Medium">6</Energy>
-      <Energy Type1="Normal" Type2="Normal">5</Energy>
+
+      <Energy Type1="Normal" Type2="Normal">4</Energy>
+      <Energy Type1="Hypoxic" Type2="Hypoxic">4</Energy>
+      <Energy Type1="Normal" Type2="Hypoxic">4</Energy>
+
+      <Energy Type1="Normal" Type2="Medium">16</Energy>
       <Energy Type1="Hypoxic" Type2="Medium">16</Energy>
-      <Energy Type1="Hypoxic" Type2="Normal">6</Energy>
-      <Energy Type1="Hypoxic" Type2="Hypoxic">6</Energy>
-      <Energy Type1="Necrotic" Type2="Medium">4</Energy>
-      <Energy Type1="Necrotic" Type2="Normal">4</Energy>
-      <Energy Type1="Necrotic" Type2="Hypoxic">4</Energy>
-      <Energy Type1="Necrotic" Type2="Necrotic">4</Energy>
+
+      <Energy Type1="Necrotic" Type2="Necrotic">8</Energy>
+      <Energy Type1="Necrotic" Type2="Normal">5</Energy>
+      <Energy Type1="Necrotic" Type2="Hypoxic">5</Energy>
+      <Energy Type1="Necrotic" Type2="Medium">15</Energy>
+
       <Energy Type1="ActiveNeovascular" Type2="Medium">13</Energy>
       <Energy Type1="ActiveNeovascular" Type2="Normal">18</Energy>
       <Energy Type1="ActiveNeovascular" Type2="Hypoxic">18</Energy>
@@ -59,7 +65,7 @@
       <Energy Type1="InactiveNeovascular" Type2="Vascular">3</Energy>
       <Energy Type1="InactiveNeovascular" Type2="InactiveNeovascular">6</Energy>
       <Energy Type1="InactiveNeovascular" Type2="ActiveNeovascular">3</Energy>
-      <NeighborOrder>5</NeighborOrder>
+      <NeighborOrder>4</NeighborOrder>
    </Plugin>
 
    <Plugin Name="Chemotaxis">
@@ -77,19 +83,16 @@
       <DiffusionField Name="Oxygen">
          <DiffusionData>
             <FieldName>Oxygen</FieldName>
-            <GlobalDiffusionConstant>2</GlobalDiffusionConstant><!--was 3440-->
-            <GlobalDecayConstant>0.001</GlobalDecayConstant>
+            <GlobalDiffusionConstant>10</GlobalDiffusionConstant><!--was 3440-->
+            <GlobalDecayConstant>0.01</GlobalDecayConstant>
             <DeltaT>1</DeltaT>
             <DeltaX>1.0</DeltaX>
-            <InitialConcentration Type="Medium">10</InitialConcentration>
-            <InitialConcentration Type="Hypoxic">10</InitialConcentration>
-            <InitialConcentration Type="Normal">10</InitialConcentration>
-            <InitialConcentration Type="Necrotic">10</InitialConcentration>
+            <InitialConcentration Type="Medium">90</InitialConcentration>
          </DiffusionData>
          <SecretionData>
             <Uptake Type="Medium" MaxUptake="0" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Hypoxic" MaxUptake="0.1" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Normal" MaxUptake="0.3" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Hypoxic" MaxUptake="0.3" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Normal" MaxUptake="0.6" RelativeUptakeRate="0.2"/>
             <Uptake Type="Necrotic" MaxUptake="0.0001" RelativeUptakeRate="0.2"/>
             <ConstantConcentration Type="Vascular">90</ConstantConcentration>
             <ConstantConcentration Type="ActiveNeovascular">70</ConstantConcentration>

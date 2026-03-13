@@ -99,7 +99,7 @@ class BaseModelSteppable(SteppableBasePy):
             cell.lambdaSurface = CONFIG.vascular_lambda_surface
         elif cell.type == self.NECROTIC:
             cell.targetVolume = CONFIG.necrotic_target_volume
-            cell.lambdaVolume = 2.0
+            cell.lambdaVolume = 8.0
             cell.targetSurface = 0.0
             cell.lambdaSurface = 0.0
         else:
@@ -140,6 +140,7 @@ class ConstraintInitializerSteppable(BaseModelSteppable):
     def start(self):
         dim_x = int(getattr(self.dim, "x"))
         dim_y = int(getattr(self.dim, "y"))
+        seeded_tumor_cells = 0
 
         vessel_thickness = self._fraction_to_length(
             CONFIG.vessel_boundary_thickness_fraction,
@@ -188,34 +189,54 @@ class ConstraintInitializerSteppable(BaseModelSteppable):
                 self._apply_paper_mechanics(tip)
 
         if CONFIG.enable_initial_tumor_mass:
-            tumor_x_min, tumor_x_max = self._fraction_to_span(
-                CONFIG.tumor_x_min_fraction,
-                CONFIG.tumor_x_max_fraction,
+            tumor_center_x = self._fraction_to_index(
+                CONFIG.tumor_center_x_fraction,
                 dim_x,
+                inclusive_upper=True,
             )
-            tumor_y_min, tumor_y_max = self._fraction_to_span(
-                CONFIG.tumor_y_min_fraction,
-                CONFIG.tumor_y_max_fraction,
+            tumor_center_y = self._fraction_to_index(
+                CONFIG.tumor_center_y_fraction,
                 dim_y,
+                inclusive_upper=True,
+            )
+            tumor_radius = self._fraction_to_length(
+                CONFIG.tumor_radius_fraction,
+                min(dim_x, dim_y),
+                min_size=1,
             )
             tumor_seed_size = self._fraction_to_length(
                 CONFIG.tumor_seed_size_fraction,
                 min(dim_x, dim_y),
                 min_size=1,
             )
+            radius_squared = float(tumor_radius * tumor_radius)
 
-            for x_min in range(tumor_x_min, tumor_x_max, tumor_seed_size):
-                for y_min in range(tumor_y_min, tumor_y_max, tumor_seed_size):
+            x_start = max(0, tumor_center_x - tumor_radius)
+            x_stop = min(dim_x, tumor_center_x + tumor_radius + 1)
+            y_start = max(0, tumor_center_y - tumor_radius)
+            y_stop = min(dim_y, tumor_center_y + tumor_radius + 1)
+
+            for x_min in range(x_start, x_stop, tumor_seed_size):
+                for y_min in range(y_start, y_stop, tumor_seed_size):
+                    x_max = min(x_min + tumor_seed_size, dim_x)
+                    y_max = min(y_min + tumor_seed_size, dim_y)
+                    patch_center_x = 0.5 * (x_min + x_max - 1)
+                    patch_center_y = 0.5 * (y_min + y_max - 1)
+
+                    if (
+                        (patch_center_x - tumor_center_x) ** 2
+                        + (patch_center_y - tumor_center_y) ** 2
+                    ) > radius_squared:
+                        continue
+
                     tumor = self.new_cell(self.NORMAL)
-                    self.cell_field[
-                        x_min:min(x_min + tumor_seed_size, tumor_x_max),
-                        y_min:min(y_min + tumor_seed_size, tumor_y_max),
-                        0,
-                    ] = tumor
+                    self.cell_field[x_min:x_max, y_min:y_max, 0] = tumor
                     self._apply_paper_mechanics(tumor)
+                    seeded_tumor_cells += 1
 
         print(
-            f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}' on a {dim_x}x{dim_y} grid."
+            f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}' on a {dim_x}x{dim_y} grid "
+            f"with {seeded_tumor_cells} initial tumor cells."
         )
 
 
@@ -266,12 +287,22 @@ class GrowthSteppable(BaseModelSteppable):
             if local_oxygen < CONFIG.necrotic_thresh and mcs > CONFIG.tumor_growth_start_mcs:
                 cell.type = self.NECROTIC
 
-        if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type in self._growing_tumor_type_ids():
+        if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type == self.NORMAL:
             cell.targetVolume += (
                 CONFIG.tumor_growth_volume_rate
                 * local_oxygen
                 / (CONFIG.tumor_growth_denominator + local_oxygen)
             )
+
+        if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type == self.HYPOXIC:
+            cell.targetVolume += (
+                CONFIG.hypoxic_growth_volume_rate
+                * local_oxygen
+                / (CONFIG.hypoxic_growth_denominator + local_oxygen)
+            )
+        if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type== self.NECROTIC:
+            cell.targetVolume = 0.0
+            cell.lambdaVolume = 8.0
             # cell.targetSurface += (
             #     CONFIG.tumor_growth_surface_rate
             #     * local_oxygen
@@ -293,6 +324,7 @@ class GrowthSteppable(BaseModelSteppable):
         #     minimum=0.0,
         # )
         cell.targetVolume = 0.0
+        cell.lambdaVolume = 8.0
         if cell.targetVolume < 5.0:
             cell.targetVolume = 0.0
         cell.lambdaSurface = 0.0
@@ -334,6 +366,13 @@ class GrowthSteppable(BaseModelSteppable):
 
 
 class MitosisSteppable(MitosisSteppableBase):
+    NORMAL: int
+    HYPOXIC: int
+    NECROTIC: int
+    ACTIVENEOVASCULAR: int
+    VASCULAR: int
+    INACTIVENEOVASCULAR: int
+
     def __init__(self, frequency=1):
         super().__init__(frequency)
         self.doubling_volume_dict = {
@@ -372,6 +411,7 @@ class MitosisSteppable(MitosisSteppableBase):
             parent_cell.lambdaVolume = CONFIG.tumor_lambda_volume
             parent_cell.targetSurface = CONFIG.tumor_target_surface
             parent_cell.lambdaSurface = CONFIG.tumor_lambda_surface
+
 
         if parent_cell.type in (self.INACTIVENEOVASCULAR, self.ACTIVENEOVASCULAR):
             child_cell.type = self.ACTIVENEOVASCULAR

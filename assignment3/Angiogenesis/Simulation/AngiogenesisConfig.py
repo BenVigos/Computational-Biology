@@ -33,25 +33,26 @@ class ModelConfig:
     tip_cell_width_fraction: float = 0.06
     tip_cell_height_fraction: float = 0.06
     tip_cell_center_y_fractions: tuple[float, ...] = (0.22, 0.48, 0.74)
-    tumor_x_min_fraction: float = 0.48
-    tumor_x_max_fraction: float = 0.52
-    tumor_y_min_fraction: float = 0.49
-    tumor_y_max_fraction: float = 0.51
-    tumor_seed_size_fraction: float = 0.1
+
+    # Initial tumor geometry: a small circular cluster of cells
+    tumor_center_x_fraction: float = 0.50
+    tumor_center_y_fraction: float = 0.50
+    tumor_radius_fraction: float = 0.05
+    tumor_seed_size_fraction: float = 0.02
 
     # Paper-derived phenotype thresholds and timing
-    area_thresh: float = 1.0
-    nutrient_thresh: float = 10.0
+    area_thresh: float = 100.0
+    nutrient_thresh: float = 5.0
     necrotic_thresh: float = 2.0
-    tumor_growth_start_mcs: int = 1000
+    tumor_growth_start_mcs: int = 500
     vascular_vegf_activation_threshold: float = 0.2
     inactive_neighbor_area_limit: float = 200
     active_neighbor_area_limit: float = 150
 
     # Paper-derived mechanics
     tumor_target_volume: float = 25
-    tumor_lambda_volume: float = 20.0
-    necrotic_target_volume: float = 5.0
+    tumor_lambda_volume: float = 8.0
+    necrotic_target_volume: float = 0.0
     tumor_target_surface: float = 2.0
     tumor_lambda_surface: float = 2.0
     vascular_target_volume: float = 55.0
@@ -66,9 +67,11 @@ class ModelConfig:
     vascular_deactivation_vegf2_threshold: float = 0.05
 
     # Paper-derived growth laws
-    tumor_growth_volume_rate: float = 0.1
+    tumor_growth_volume_rate: float = 0.2
     tumor_growth_surface_rate: float = 0.1
-    tumor_growth_denominator: float = 15.0
+    tumor_growth_denominator: float = 10.0
+    hypoxic_growth_volume_rate: float = 0.1
+    hypoxic_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.2
     vascular_growth_surface_rate: float = 0.3
     vascular_growth_denominator: float = 1.0
@@ -82,7 +85,7 @@ class ModelConfig:
     report_frequency: int = 50
 
     # Python monitoring toggles
-    monitor_frequency: int = 50
+    monitor_frequency: int = 10
     monitor_to_console: bool = True
     monitor_to_csv: bool = True
     monitor_include_growth_rates: bool = True

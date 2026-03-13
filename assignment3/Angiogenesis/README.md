@@ -9,18 +9,19 @@ You can now choose staged presets in `Simulation/AngiogenesisConfig.py` by chang
 - `SELECTED_PRESET = "paper_mvp"`
 - `SELECTED_PRESET = "paper_hypoxia"`
 - `SELECTED_PRESET = "paper_sprouting"`
+- `SELECTED_PRESET = "tumor_oxygen_only"`
 - `SELECTED_PRESET = "paper_full"`
 
 What each preset enables:
 - `paper_mvp`
-  - vessel strip + tumor mass
+  - boundary vessels + tumor mass
   - no sprouts
   - no phenotype switching
   - no growth
   - no mitosis
   - lighter monitoring
 - `paper_hypoxia`
-  - vessel strip + tumor mass
+  - boundary vessels + tumor mass
   - hypoxic / necrotic switching
   - tumor growth
   - no vascular sprouting growth
@@ -29,9 +30,15 @@ What each preset enables:
   - adds initial sprouts
   - enables vascular VEGF-driven growth
   - keeps mitosis off
+- `tumor_oxygen_only`
+  - keeps the boundary vessels as oxygen sources
+  - no sprouts
+  - no vascular growth or vascular switching
+  - no mitosis
+  - tumor growth + oxygen diffusion focus
 - `paper_full`
   - full paper-aligned 2D run
-  - sprouts, switching, tumor growth, vascular growth, and mitosis all on
+  - boundary vessels, sprouts, switching, tumor growth, vascular growth, and mitosis all on
 
 ## Main toggles
 You can also build your own custom stage by editing booleans in `Simulation/AngiogenesisConfig.py`:
@@ -43,19 +50,38 @@ You can also build your own custom stage by editing booleans in `Simulation/Angi
 - `enable_vascular_growth`
 - `enable_mitosis`
 - `enable_python_monitoring`
+- `enable_timescale_separation`
+
+## Timescale separation (diffusion vs growth)
+The model supports decoupled timescales so diffusion can relax before cell growth updates.
+
+Parameters in `Simulation/AngiogenesisConfig.py`:
+- `enable_timescale_separation = True`
+- `diffusion_relaxation_mcs = 100`
+- `growth_window_mcs = 10`
+- `timescale_cycle_offset_mcs = 0`
+
+Behavior:
+- for `diffusion_relaxation_mcs`, only diffusion/fields evolve,
+- for `growth_window_mcs`, growth and mitosis rules execute,
+- then the cycle repeats.
+
+Monitoring now includes:
+- `phase` (`diffusion` or `growth`)
+- `is_growth_window` (`0` or `1`)
 
 ## Grid size
 The model is currently configured for a smaller development domain:
 - Python config: `100 x 100`
 - CC3D XML domain: `100 x 100 x 1`
-- steps: `3000`
+- steps: `2000`
 
 This makes iteration faster while preserving the paper-style behavior.
 
 ## What the simulation does
 At startup the model can create:
-- a vertical `Vascular` strip on the left side,
-- several `InactiveNeovascular` sprouts attached to that vessel,
+- `Vascular` boundary vessels on **all four sides** of the domain,
+- several `InactiveNeovascular` sprouts attached near the left boundary vessel,
 - a central tumor mass seeded as `Normal` cells.
 
 During the run, depending on the preset:
@@ -75,7 +101,7 @@ It contains:
 - staged presets via `PRESETS`
 - the active selection via `SELECTED_PRESET`
 - initialization toggles
-- the reduced `100x100` geometry
+- relative placement controls (fractions of lattice dimensions)
 - paper-derived thresholds and mechanics
 - monitoring toggles
 
@@ -105,7 +131,7 @@ It keeps the paper-style:
 
 It now uses a smaller development lattice:
 - `<Dimensions x="100" y="100" z="1"/>`
-- `<Steps>3000</Steps>`
+- `<Steps>2000</Steps>`
 
 ### `Simulation/AngiogenesisSteppables.py`
 This file contains the runtime rules.
@@ -170,7 +196,7 @@ The following choices were made intentionally:
 
 ## Quick validation checklist
 When the model is working as expected, you should see:
-1. oxygen highest near the left-side vascular strip,
+1. oxygen highest near the boundary vessels,
 2. low-oxygen tumor regions become `Hypoxic` in the hypoxia/sprouting/full presets,
 3. the most deprived cells turn `Necrotic`,
 4. `VEGF2` rises around hypoxic regions,

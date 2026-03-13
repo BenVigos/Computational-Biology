@@ -7,7 +7,7 @@
    </Metadata>
 
    <Potts>
-      <Dimensions x="100" y="100" z="1"/>
+      <Dimensions x="200" y="200" z="1"/>
       <Steps>10000</Steps>
       <Temperature>14.0</Temperature>
       <Flip2DimRatio>1</Flip2DimRatio>
@@ -32,10 +32,10 @@
 
    <Plugin Name="Contact">
       <Energy Type1="Medium" Type2="Medium">0</Energy>
-      <Energy Type1="Normal" Type2="Medium">16</Energy>
-      <Energy Type1="Normal" Type2="Normal">10</Energy>
+      <Energy Type1="Normal" Type2="Medium">6</Energy>
+      <Energy Type1="Normal" Type2="Normal">5</Energy>
       <Energy Type1="Hypoxic" Type2="Medium">16</Energy>
-      <Energy Type1="Hypoxic" Type2="Normal">10</Energy>
+      <Energy Type1="Hypoxic" Type2="Normal">6</Energy>
       <Energy Type1="Hypoxic" Type2="Hypoxic">6</Energy>
       <Energy Type1="Necrotic" Type2="Medium">4</Energy>
       <Energy Type1="Necrotic" Type2="Normal">4</Energy>
@@ -77,15 +77,18 @@
       <DiffusionField Name="Oxygen">
          <DiffusionData>
             <FieldName>Oxygen</FieldName>
-            <GlobalDiffusionConstant>0.8</GlobalDiffusionConstant><!--was 3440-->
+            <GlobalDiffusionConstant>2</GlobalDiffusionConstant><!--was 3440-->
             <GlobalDecayConstant>0.001</GlobalDecayConstant>
             <DeltaT>1</DeltaT>
             <DeltaX>1.0</DeltaX>
             <InitialConcentration Type="Medium">10</InitialConcentration>
+            <InitialConcentration Type="Hypoxic">10</InitialConcentration>
+            <InitialConcentration Type="Normal">10</InitialConcentration>
+            <InitialConcentration Type="Necrotic">10</InitialConcentration>
          </DiffusionData>
          <SecretionData>
             <Uptake Type="Medium" MaxUptake="0" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Hypoxic" MaxUptake="0.5" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Hypoxic" MaxUptake="0.1" RelativeUptakeRate="0.2"/>
             <Uptake Type="Normal" MaxUptake="0.3" RelativeUptakeRate="0.2"/>
             <Uptake Type="Necrotic" MaxUptake="0.0001" RelativeUptakeRate="0.2"/>
             <ConstantConcentration Type="Vascular">90</ConstantConcentration>

@@ -10,6 +10,30 @@ from cc3d.core.PySteppables import *
 from AngiogenesisConfig import CONFIG
 
 
+def _timescale_cycle_length():
+    diffusion_mcs = max(0, int(CONFIG.diffusion_relaxation_mcs))
+    growth_mcs = max(0, int(CONFIG.growth_window_mcs))
+    total = diffusion_mcs + growth_mcs
+    return total if total > 0 else 1
+
+
+def _is_growth_window(mcs):
+    if not CONFIG.enable_timescale_separation:
+        return True
+
+    diffusion_mcs = max(0, int(CONFIG.diffusion_relaxation_mcs))
+    growth_mcs = max(0, int(CONFIG.growth_window_mcs))
+    if growth_mcs <= 0:
+        return False
+
+    phase_index = (int(mcs) + int(CONFIG.timescale_cycle_offset_mcs)) % _timescale_cycle_length()
+    return phase_index >= diffusion_mcs
+
+
+def _timescale_phase_label(mcs):
+    return "growth" if _is_growth_window(mcs) else "diffusion"
+
+
 class BaseModelSteppable(SteppableBasePy):
     NORMAL: int
     HYPOXIC: int
@@ -73,46 +97,126 @@ class BaseModelSteppable(SteppableBasePy):
             cell.lambdaVolume = CONFIG.vascular_lambda_volume
             cell.targetSurface = CONFIG.vascular_target_surface
             cell.lambdaSurface = CONFIG.vascular_lambda_surface
+        elif cell.type == self.NECROTIC:
+            cell.targetVolume = CONFIG.necrotic_target_volume
+            cell.lambdaVolume = 2.0
+            cell.targetSurface = 0.0
+            cell.lambdaSurface = 0.0
         else:
             cell.targetVolume = CONFIG.tumor_target_volume
             cell.lambdaVolume = CONFIG.tumor_lambda_volume
             cell.targetSurface = CONFIG.tumor_target_surface
             cell.lambdaSurface = CONFIG.tumor_lambda_surface
 
+    def _fraction_to_index(self, fraction, size, *, inclusive_upper=False):
+        fraction = self._clamp(float(fraction), minimum=0.0, maximum=1.0)
+        upper = size - 1 if inclusive_upper else size
+        return int(round(fraction * upper))
+
+    def _fraction_to_span(self, start_fraction, end_fraction, size, *, min_size=1):
+        start = self._fraction_to_index(start_fraction, size)
+        end = self._fraction_to_index(end_fraction, size)
+        start = min(max(start, 0), size)
+        end = min(max(end, 0), size)
+        if end < start:
+            start, end = end, start
+        if end == start:
+            end = min(size, start + max(min_size, 1))
+            start = max(0, end - max(min_size, 1))
+        return start, end
+
+    def _fraction_to_length(self, length_fraction, size, *, min_size=1):
+        length = int(round(self._clamp(float(length_fraction), minimum=0.0, maximum=1.0) * size))
+        return min(size, max(min_size, length))
+
+    def _is_growth_window(self, mcs):
+        return _is_growth_window(mcs)
+
+    def _timescale_phase_label(self, mcs):
+        return _timescale_phase_label(mcs)
+
 
 class ConstraintInitializerSteppable(BaseModelSteppable):
     def start(self):
+        dim_x = int(getattr(self.dim, "x"))
+        dim_y = int(getattr(self.dim, "y"))
+
+        vessel_thickness = self._fraction_to_length(
+            CONFIG.vessel_boundary_thickness_fraction,
+            min(dim_x, dim_y),
+            min_size=1,
+        )
+        vessel_margin_x = self._fraction_to_index(CONFIG.vessel_boundary_margin_fraction, dim_x)
+        vessel_margin_y = self._fraction_to_index(CONFIG.vessel_boundary_margin_fraction, dim_y)
+
         if CONFIG.enable_initial_vascular_strip:
-            vessel = self.new_cell(self.VASCULAR)
-            self.cell_field[
-                CONFIG.vessel_x_min:CONFIG.vessel_x_max,
-                CONFIG.vessel_y_min:CONFIG.vessel_y_max,
-                0,
-            ] = vessel
-            self._apply_paper_mechanics(vessel)
+            y0, y1 = vessel_margin_y, max(vessel_margin_y + 1, dim_y - vessel_margin_y)
+            x0, x1 = vessel_margin_x, max(vessel_margin_x + 1, dim_x - vessel_margin_x)
+
+            left_vessel = self.new_cell(self.VASCULAR)
+            self.cell_field[0:vessel_thickness, y0:y1, 0] = left_vessel
+            self._apply_paper_mechanics(left_vessel)
+
+            right_vessel = self.new_cell(self.VASCULAR)
+            self.cell_field[max(0, dim_x - vessel_thickness):dim_x, y0:y1, 0] = right_vessel
+            self._apply_paper_mechanics(right_vessel)
+
+            top_vessel = self.new_cell(self.VASCULAR)
+            self.cell_field[x0:x1, 0:vessel_thickness, 0] = top_vessel
+            self._apply_paper_mechanics(top_vessel)
+
+            bottom_vessel = self.new_cell(self.VASCULAR)
+            self.cell_field[x0:x1, max(0, dim_y - vessel_thickness):dim_y, 0] = bottom_vessel
+            self._apply_paper_mechanics(bottom_vessel)
 
         if CONFIG.enable_initial_sprouts:
-            for y_min in CONFIG.tip_cell_y_values:
+            tip_width = self._fraction_to_length(CONFIG.tip_cell_width_fraction, dim_x, min_size=1)
+            tip_height = self._fraction_to_length(CONFIG.tip_cell_height_fraction, dim_y, min_size=1)
+            tip_x_min = min(
+                max(0, vessel_thickness + self._fraction_to_index(CONFIG.tip_cell_x_offset_fraction, dim_x)),
+                max(0, dim_x - 1),
+            )
+            tip_x_max = min(dim_x, tip_x_min + tip_width)
+
+            for y_center_fraction in CONFIG.tip_cell_center_y_fractions:
+                y_center = self._fraction_to_index(y_center_fraction, dim_y, inclusive_upper=True)
+                y_min = max(0, y_center - tip_height // 2)
+                y_max = min(dim_y, y_min + tip_height)
+                y_min = max(0, y_max - tip_height)
                 tip = self.new_cell(self.INACTIVENEOVASCULAR)
-                self.cell_field[
-                    CONFIG.tip_cell_x_min:CONFIG.tip_cell_x_max,
-                    y_min:y_min + CONFIG.tip_cell_height,
-                    0,
-                ] = tip
+                self.cell_field[tip_x_min:tip_x_max, y_min:y_max, 0] = tip
                 self._apply_paper_mechanics(tip)
 
         if CONFIG.enable_initial_tumor_mass:
-            for x_min in range(CONFIG.tumor_x_min, CONFIG.tumor_x_max, CONFIG.tumor_seed_size):
-                for y_min in range(CONFIG.tumor_y_min, CONFIG.tumor_y_max, CONFIG.tumor_seed_size):
+            tumor_x_min, tumor_x_max = self._fraction_to_span(
+                CONFIG.tumor_x_min_fraction,
+                CONFIG.tumor_x_max_fraction,
+                dim_x,
+            )
+            tumor_y_min, tumor_y_max = self._fraction_to_span(
+                CONFIG.tumor_y_min_fraction,
+                CONFIG.tumor_y_max_fraction,
+                dim_y,
+            )
+            tumor_seed_size = self._fraction_to_length(
+                CONFIG.tumor_seed_size_fraction,
+                min(dim_x, dim_y),
+                min_size=1,
+            )
+
+            for x_min in range(tumor_x_min, tumor_x_max, tumor_seed_size):
+                for y_min in range(tumor_y_min, tumor_y_max, tumor_seed_size):
                     tumor = self.new_cell(self.NORMAL)
                     self.cell_field[
-                        x_min:min(x_min + CONFIG.tumor_seed_size, CONFIG.tumor_x_max),
-                        y_min:min(y_min + CONFIG.tumor_seed_size, CONFIG.tumor_y_max),
+                        x_min:min(x_min + tumor_seed_size, tumor_x_max),
+                        y_min:min(y_min + tumor_seed_size, tumor_y_max),
                         0,
                     ] = tumor
                     self._apply_paper_mechanics(tumor)
 
-        print(f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}' on a {CONFIG.lattice_x}x{CONFIG.lattice_y} grid.")
+        print(
+            f"[Angiogenesis] Initialised preset '{CONFIG.preset_name}' on a {dim_x}x{dim_y} grid."
+        )
 
 
 class GrowthSteppable(BaseModelSteppable):
@@ -168,11 +272,11 @@ class GrowthSteppable(BaseModelSteppable):
                 * local_oxygen
                 / (CONFIG.tumor_growth_denominator + local_oxygen)
             )
-            cell.targetSurface += (
-                CONFIG.tumor_growth_surface_rate
-                * local_oxygen
-                / (CONFIG.tumor_growth_denominator + local_oxygen)
-            )
+            # cell.targetSurface += (
+            #     CONFIG.tumor_growth_surface_rate
+            #     * local_oxygen
+            #     / (CONFIG.tumor_growth_denominator + local_oxygen)
+            # )
 
     def _hypoxic_adjustments(self, cell, local_oxygen, mcs):
         if not CONFIG.enable_type_switching:
@@ -184,13 +288,19 @@ class GrowthSteppable(BaseModelSteppable):
             cell.type = self.NORMAL
 
     def _necrotic_adjustments(self, cell):
-        cell.targetVolume = self._clamp(
-            float(cell.targetVolume) - CONFIG.necrotic_volume_loss_rate,
-            minimum=0.0,
-        )
+        # cell.targetVolume = self._clamp(
+        #     float(cell.targetVolume) - CONFIG.necrotic_volume_loss_rate,
+        #     minimum=0.0,
+        # )
+        cell.targetVolume = 0.0
+        if cell.targetVolume < 5.0:
+            cell.targetVolume = 0.0
         cell.lambdaSurface = 0.0
 
     def step(self, mcs):
+        if not self._is_growth_window(mcs):
+            return
+
         field_neo_vasc = self.field.VEGF2
         field_malig = self.field.Oxygen
 
@@ -235,6 +345,8 @@ class MitosisSteppable(MitosisSteppableBase):
 
     def step(self, mcs):
         if not CONFIG.enable_mitosis:
+            return
+        if not _is_growth_window(mcs):
             return
 
         cells_to_divide = []
@@ -358,6 +470,8 @@ class MonitoringSteppable(BaseModelSteppable):
 
         metrics = {
             "mcs": int(mcs),
+            "phase": self._timescale_phase_label(mcs),
+            "is_growth_window": int(self._is_growth_window(mcs)),
             "tumor_cells": len(normal_cells),
             "normal_cells": len(normal_cells),
             "hypoxic_cells": len(hypoxic_cells),
@@ -445,6 +559,7 @@ class MonitoringSteppable(BaseModelSteppable):
     def _print_metrics(self, metrics):
         line = (
             f"[Angiogenesis][Monitor][MCS={metrics['mcs']}] "
+            f"phase={metrics['phase']} "
             f"tumor_like={metrics['tumor_like_cells']} hypoxic_fraction={metrics['hypoxic_fraction']:.3f} "
             f"necrotic_fraction={metrics['necrotic_fraction']:.3f} avg_tumor_volume={metrics['avg_tumor_volume']:.3f}"
         )
@@ -501,6 +616,7 @@ class ReporterSteppable(BaseModelSteppable):
         inactive_count = len(list(self.cell_list_by_type(self.INACTIVENEOVASCULAR)))
 
         print(
-            f"[Angiogenesis][MCS={mcs}] normal={normal_count} hypoxic={hypoxic_count} necrotic={necrotic_count} "
+            f"[Angiogenesis][MCS={mcs}] phase={self._timescale_phase_label(mcs)} "
+            f"normal={normal_count} hypoxic={hypoxic_count} necrotic={necrotic_count} "
             f"active_neo={active_count} vascular={vascular_count} inactive_neo={inactive_count}"
         )

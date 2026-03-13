@@ -42,7 +42,7 @@ class ModelConfig:
 
     # Paper-derived phenotype thresholds and timing
     area_thresh: float = 100.0
-    nutrient_thresh: float = 25.0
+    nutrient_thresh: float = 20.0
     necrotic_thresh: float = 10.0
     tumor_growth_start_mcs: int = 500
     vascular_vegf_activation_threshold: float = 0.2
@@ -50,7 +50,7 @@ class ModelConfig:
     active_neighbor_area_limit: float = 150
 
     # Paper-derived mechanics
-    tumor_target_volume: float = 25
+    tumor_target_volume: float = 22.5
     tumor_lambda_volume: float = 8.0
     necrotic_target_volume: float = 0.0
     tumor_target_surface: float = 2.0
@@ -67,10 +67,10 @@ class ModelConfig:
     vascular_deactivation_vegf2_threshold: float = 0.05
 
     # Paper-derived growth laws
-    tumor_growth_volume_rate: float = 0.2
+    tumor_growth_volume_rate: float = 0.15
     tumor_growth_surface_rate: float = 0.1
     tumor_growth_denominator: float = 10.0
-    hypoxic_growth_volume_rate: float = 0.1
+    hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.5
     hypoxic_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.2
     vascular_growth_surface_rate: float = 0.3

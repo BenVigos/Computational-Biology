@@ -91,7 +91,7 @@
          </DiffusionData>
          <SecretionData>
             <Uptake Type="Medium" MaxUptake="0" RelativeUptakeRate="0.2"/>
-            <Uptake Type="Hypoxic" MaxUptake="0.3" RelativeUptakeRate="0.2"/>
+            <Uptake Type="Hypoxic" MaxUptake="0.35" RelativeUptakeRate="0.2"/>
             <Uptake Type="Normal" MaxUptake="0.5" RelativeUptakeRate="0.2"/>
             <Uptake Type="Necrotic" MaxUptake="0.0" RelativeUptakeRate="0.2"/>
             <ConstantConcentration Type="Vascular">90</ConstantConcentration>

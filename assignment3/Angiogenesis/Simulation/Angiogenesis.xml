@@ -118,13 +118,13 @@
       <DiffusionField Name="VEGF2">
          <DiffusionData>
             <FieldName>VEGF2</FieldName>
-            <GlobalDiffusionConstant>1.5</GlobalDiffusionConstant>
-            <GlobalDecayConstant>0.02</GlobalDecayConstant>
+            <GlobalDiffusionConstant>10</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.009</GlobalDecayConstant>
             <DeltaT>1</DeltaT>
             <DeltaX>1.0</DeltaX>
          </DiffusionData>
          <SecretionData>
-            <Secretion Type="Hypoxic">10</Secretion>
+            <Secretion Type="Hypoxic">1</Secretion>
          </SecretionData>
       </DiffusionField>
    </Steppable>

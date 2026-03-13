@@ -139,6 +139,22 @@ PRESETS = {
         monitor_include_vascular_metrics=False,
         enable_timescale_separation=False,
     ),
+    "vegf_tuning": replace(
+        BASE_CONFIG,
+        preset_name="tumor_oxygen_only",
+        enable_initial_sprouts=False,
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_vascular_growth=False,
+        enable_mitosis=True,
+        monitor_include_vascular_metrics=False,
+        enable_timescale_separation=False,
+        # nutrient_thresh=100,
+        # necrotic_thresh=0.0,
+        tumor_growth_start_mcs=300,
+        tumor_radius_fraction=0.175,
+    ),
+
     "paper_full": replace(
         BASE_CONFIG,
         preset_name="paper_full",
@@ -146,5 +162,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "tumor_oxygen_only"
+SELECTED_PRESET = "vegf_tuning"
 CONFIG = PRESETS[SELECTED_PRESET]

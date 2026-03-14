@@ -32,11 +32,11 @@ class ModelConfig:
     tip_cell_x_offset_fraction: float = 0.0
     tip_cell_width_fraction: float = 0.06
     tip_cell_height_fraction: float = 0.06
-    tip_cell_center_y_fractions: tuple[float, ...] = (0.22, 0.48, 0.74)
+    tip_cell_center_y_fractions: tuple[float, ...] = (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
 
     # Bottom-vessel sprouts: InactiveNeovascular cells attached to the bottom boundary vessel
     enable_bottom_vessel_sprouts: bool = True
-    bottom_sprout_x_fractions: tuple[float, ...] = (0.25, 0.50, 0.75)
+    bottom_sprout_x_fractions: tuple[float, ...] = (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
     bottom_sprout_width_fraction: float = 0.04
     bottom_sprout_height_fraction: float = 0.04
 
@@ -76,7 +76,7 @@ class ModelConfig:
     tumor_growth_volume_rate: float = 0.15
     tumor_growth_surface_rate: float = 0.1
     tumor_growth_denominator: float = 10.0
-    hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.5
+    hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.4
     hypoxic_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.2
     vascular_growth_surface_rate: float = 0.3
@@ -168,17 +168,17 @@ PRESETS = {
         enable_initial_sprouts=False,
         enable_bottom_vessel_sprouts=True,
         enable_type_switching=True,
-        enable_tumor_growth=False,
+        enable_tumor_growth=True,
         enable_vascular_growth=True,
         enable_mitosis=True,
         monitor_include_vascular_metrics=True,
         enable_timescale_separation=False,
-        vascular_activation_vegf2_threshold=0.3,
-        vascular_deactivation_vegf2_threshold=0.1,
-        nutrient_thresh=100,
-        necrotic_thresh=0.0,
-        tumor_growth_start_mcs=50,
-        tumor_radius_fraction=0.12,
+        vascular_activation_vegf2_threshold=0.7,
+        vascular_deactivation_vegf2_threshold=0.4,
+        nutrient_thresh=22.5,
+        necrotic_thresh=10,
+        tumor_growth_start_mcs=300,
+        tumor_radius_fraction=0.16,
         vascular_growth_volume_rate=0.5,
     ),
 

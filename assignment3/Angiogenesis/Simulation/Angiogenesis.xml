@@ -14,6 +14,15 @@
       <NeighborOrder>2</NeighborOrder>
       <Boundary_x>Periodic</Boundary_x>
       <Boundary_y>Periodic</Boundary_y>
+<!--       <CellMotility>-->
+<!--        <MotilityParameters CellType="InactiveNeovascular" Motility="0"/>-->
+<!--        <MotilityParameters CellType="Vascular" Motility="0"/>-->
+<!--        <MotilityParameters CellType="ActiveNeovascular" Motility="0"/>-->
+<!--        <MotilityParameters CellType="Vascular" Motility="0"/>-->
+<!--        <MotilityParameters CellType="Normal" Motility="100"/>-->
+<!--        <MotilityParameters CellType="Hypoxic" Motility="100"/>-->
+<!--        <MotilityParameters CellType="Necrotic" Motility="`100"/>-->
+<!--    </CellMotility>-->
    </Potts>
 
    <Plugin Name="CellType">
@@ -77,7 +86,7 @@
       </ChemicalField>
       <ChemicalField Name="VEGF2" Source="DiffusionSolverFE">
          <ChemotaxisByType Type="InactiveNeovascular" Lambda="0" SaturationCoef="1"/>
-         <ChemotaxisByType Type="ActiveNeovascular" Lambda="800" SaturationCoef="1"/>
+         <ChemotaxisByType Type="ActiveNeovascular" Lambda="2500" SaturationCoef="1"/>
       </ChemicalField>
    </Plugin>
 
@@ -86,8 +95,8 @@
         <Parameters Type1="ActiveNeovascular" Type2="ActiveNeovascular">
             <Lambda>10</Lambda>
             <ActivationEnergy>-100</ActivationEnergy>
-            <TargetDistance>2</TargetDistance>
-            <MaxDistance>10</MaxDistance>
+            <TargetDistance>10</TargetDistance>
+            <MaxDistance>40</MaxDistance>
             <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
         </Parameters>
 

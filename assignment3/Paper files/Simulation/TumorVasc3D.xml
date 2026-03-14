@@ -8,15 +8,15 @@
         <Boundary_x>Periodic</Boundary_x>
         <Boundary_y>Periodic</Boundary_y>
         <Boundary_z>Periodic</Boundary_z>
-        <CellMotility>
-            <MotilityParameters CellType="InactiveNeovascular" Motility="0"/>
-            <MotilityParameters CellType="Vascular" Motility="0"/>
-            <MotilityParameters CellType="ActiveNeovascular" Motility="0"/>
-            <MotilityParameters CellType="Vascular" Motility="0"/>
-            <MotilityParameters CellType="Normal" Motility="100"/>
-            <MotilityParameters CellType="Hypoxic" Motility="100"/>
-            <MotilityParameters CellType="Necrotic" Motility="`100"/>
-        </CellMotility>
+<!--        <CellMotility>-->
+<!--            <MotilityParameters CellType="InactiveNeovascular" Motility="0"/>-->
+<!--            <MotilityParameters CellType="Vascular" Motility="0"/>-->
+<!--            <MotilityParameters CellType="ActiveNeovascular" Motility="0"/>-->
+<!--            <MotilityParameters CellType="Vascular" Motility="0"/>-->
+<!--            <MotilityParameters CellType="Normal" Motility="100"/>-->
+<!--            <MotilityParameters CellType="Hypoxic" Motility="100"/>-->
+<!--            <MotilityParameters CellType="Necrotic" Motility="`100"/>-->
+<!--        </CellMotility>-->
         <NeighborOrder>3</NeighborOrder>
     </Potts>
 

@@ -51,19 +51,21 @@
       <Energy Type1="ActiveNeovascular" Type2="Normal">18</Energy>
       <Energy Type1="ActiveNeovascular" Type2="Hypoxic">18</Energy>
       <Energy Type1="ActiveNeovascular" Type2="Necrotic">18</Energy>
-      <Energy Type1="ActiveNeovascular" Type2="ActiveNeovascular">6</Energy>
+      <Energy Type1="ActiveNeovascular" Type2="ActiveNeovascular">3</Energy>
+
       <Energy Type1="Vascular" Type2="Medium">13</Energy>
       <Energy Type1="Vascular" Type2="Normal">25</Energy>
       <Energy Type1="Vascular" Type2="Hypoxic">25</Energy>
       <Energy Type1="Vascular" Type2="Necrotic">25</Energy>
       <Energy Type1="Vascular" Type2="Vascular">6</Energy>
-      <Energy Type1="Vascular" Type2="ActiveNeovascular">5</Energy>
+      <Energy Type1="Vascular" Type2="ActiveNeovascular">6</Energy>
+
       <Energy Type1="InactiveNeovascular" Type2="Medium">13</Energy>
       <Energy Type1="InactiveNeovascular" Type2="Normal">25</Energy>
       <Energy Type1="InactiveNeovascular" Type2="Hypoxic">25</Energy>
       <Energy Type1="InactiveNeovascular" Type2="Necrotic">25</Energy>
       <Energy Type1="InactiveNeovascular" Type2="Vascular">3</Energy>
-      <Energy Type1="InactiveNeovascular" Type2="InactiveNeovascular">6</Energy>
+      <Energy Type1="InactiveNeovascular" Type2="InactiveNeovascular">3</Energy>
       <Energy Type1="InactiveNeovascular" Type2="ActiveNeovascular">3</Energy>
       <NeighborOrder>4</NeighborOrder>
    </Plugin>
@@ -71,13 +73,68 @@
    <Plugin Name="Chemotaxis">
       <ChemicalField Name="VEGF1" Source="DiffusionSolverFE">
          <ChemotaxisByType Type="ActiveNeovascular" Lambda="100" ChemotactTo="Medium,Normal,Hypoxic"/>
-         <ChemotaxisByType Type="InactiveNeovascular" Lambda="100" ChemotactTo="Medium,Normal,Hypoxic"/>
+         <ChemotaxisByType Type="InactiveNeovascular" Lambda="0" ChemotactTo="Medium,Normal,Hypoxic"/>
       </ChemicalField>
       <ChemicalField Name="VEGF2" Source="DiffusionSolverFE">
-         <ChemotaxisByType Type="InactiveNeovascular" Lambda="800" SaturationCoef="1"/>
+         <ChemotaxisByType Type="InactiveNeovascular" Lambda="0" SaturationCoef="1"/>
          <ChemotaxisByType Type="ActiveNeovascular" Lambda="800" SaturationCoef="1"/>
       </ChemicalField>
    </Plugin>
+
+       <Plugin Name="FocalPointPlasticity">
+
+        <Parameters Type1="ActiveNeovascular" Type2="ActiveNeovascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+        <Parameters Type1="Vascular" Type2="Vascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+
+        <Parameters Type1="InactiveNeovascular" Type2="InactiveNeovascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+        <Parameters Type1="Vascular" Type2="InactiveNeovascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+        <Parameters Type1="Vascular" Type2="ActiveNeovascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+        <Parameters Type1="ActiveNeovascular" Type2="InactiveNeovascular">
+            <Lambda>10</Lambda>
+            <ActivationEnergy>-100</ActivationEnergy>
+            <TargetDistance>2</TargetDistance>
+            <MaxDistance>10</MaxDistance>
+            <MaxNumberOfJunctions NeighborOrder="1">2</MaxNumberOfJunctions>
+        </Parameters>
+
+
+        <NeighborOrder>1</NeighborOrder>
+    </Plugin>
 
    <Steppable Type="DiffusionSolverFE">
       <DiffusionField Name="Oxygen">
@@ -118,13 +175,13 @@
       <DiffusionField Name="VEGF2">
          <DiffusionData>
             <FieldName>VEGF2</FieldName>
-            <GlobalDiffusionConstant>10</GlobalDiffusionConstant>
-            <GlobalDecayConstant>0.009</GlobalDecayConstant>
+            <GlobalDiffusionConstant>6</GlobalDiffusionConstant>
+            <GlobalDecayConstant>0.015</GlobalDecayConstant>
             <DeltaT>1</DeltaT>
             <DeltaX>1.0</DeltaX>
          </DiffusionData>
          <SecretionData>
-            <Secretion Type="Hypoxic">1</Secretion>
+            <Secretion Type="Hypoxic">0.7</Secretion>
          </SecretionData>
       </DiffusionField>
    </Steppable>

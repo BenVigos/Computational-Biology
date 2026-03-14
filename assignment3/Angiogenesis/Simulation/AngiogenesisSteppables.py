@@ -170,6 +170,29 @@ class ConstraintInitializerSteppable(BaseModelSteppable):
             self.cell_field[x0:x1, max(0, dim_y - vessel_thickness):dim_y, 0] = bottom_vessel
             self._apply_paper_mechanics(bottom_vessel)
 
+            if CONFIG.enable_bottom_vessel_sprouts:
+                sprout_w = self._fraction_to_length(
+                    CONFIG.bottom_sprout_width_fraction, dim_x, min_size=1
+                )
+                sprout_h = self._fraction_to_length(
+                    CONFIG.bottom_sprout_height_fraction, dim_y, min_size=1
+                )
+                # sprouts sit immediately above (inside) the bottom vessel band
+                sprout_y_max = max(0, dim_y - vessel_thickness)
+                sprout_y_min = max(0, sprout_y_max - sprout_h)
+
+                for x_center_fraction in CONFIG.bottom_sprout_x_fractions:
+                    sx_center = self._fraction_to_index(
+                        x_center_fraction, dim_x, inclusive_upper=True
+                    )
+                    sx_min = max(0, sx_center - sprout_w // 2)
+                    sx_max = min(dim_x, sx_min + sprout_w)
+                    sx_min = max(0, sx_max - sprout_w)  # re-clamp after upper bound
+
+                    sprout = self.new_cell(self.INACTIVENEOVASCULAR)
+                    self.cell_field[sx_min:sx_max, sprout_y_min:sprout_y_max, 0] = sprout
+                    self._apply_paper_mechanics(sprout)
+
         if CONFIG.enable_initial_sprouts:
             tip_width = self._fraction_to_length(CONFIG.tip_cell_width_fraction, dim_x, min_size=1)
             tip_height = self._fraction_to_length(CONFIG.tip_cell_height_fraction, dim_y, min_size=1)

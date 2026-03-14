@@ -34,6 +34,12 @@ class ModelConfig:
     tip_cell_height_fraction: float = 0.06
     tip_cell_center_y_fractions: tuple[float, ...] = (0.22, 0.48, 0.74)
 
+    # Bottom-vessel sprouts: InactiveNeovascular cells attached to the bottom boundary vessel
+    enable_bottom_vessel_sprouts: bool = True
+    bottom_sprout_x_fractions: tuple[float, ...] = (0.25, 0.50, 0.75)
+    bottom_sprout_width_fraction: float = 0.04
+    bottom_sprout_height_fraction: float = 0.04
+
     # Initial tumor geometry: a small circular cluster of cells
     tumor_center_x_fraction: float = 0.50
     tumor_center_y_fraction: float = 0.50
@@ -45,9 +51,9 @@ class ModelConfig:
     nutrient_thresh: float = 20.0
     necrotic_thresh: float = 10.0
     tumor_growth_start_mcs: int = 500
-    vascular_vegf_activation_threshold: float = 0.2
-    inactive_neighbor_area_limit: float = 200
-    active_neighbor_area_limit: float = 150
+    vascular_vegf_activation_threshold: float = 0.3
+    inactive_neighbor_area_limit: float = 30
+    active_neighbor_area_limit: float = 20
 
     # Paper-derived mechanics
     tumor_target_volume: float = 22.5
@@ -55,7 +61,7 @@ class ModelConfig:
     necrotic_target_volume: float = 0.0
     tumor_target_surface: float = 2.0
     tumor_lambda_surface: float = 2.0
-    vascular_target_volume: float = 55.0
+    vascular_target_volume: float = 40.0
     vascular_lambda_volume: float = 15.0
     vascular_target_surface: float = 120.0
     vascular_lambda_surface: float = 3.0
@@ -74,7 +80,7 @@ class ModelConfig:
     hypoxic_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.2
     vascular_growth_surface_rate: float = 0.3
-    vascular_growth_denominator: float = 1.0
+    vascular_growth_denominator: float = 0.5
 
     # Paper-derived mitosis thresholds
     tumor_doubling_volume: float = 50
@@ -143,6 +149,7 @@ PRESETS = {
         BASE_CONFIG,
         preset_name="tumor_oxygen_only",
         enable_initial_sprouts=False,
+        enable_bottom_vessel_sprouts=False,
         enable_type_switching=True,
         enable_tumor_growth=True,
         enable_vascular_growth=False,
@@ -152,7 +159,27 @@ PRESETS = {
         # nutrient_thresh=100,
         # necrotic_thresh=0.0,
         tumor_growth_start_mcs=300,
-        tumor_radius_fraction=0.175,
+        tumor_radius_fraction=0.16,
+    ),
+
+    "branching_tuning": replace(
+        BASE_CONFIG,
+        preset_name="branching_tuning",
+        enable_initial_sprouts=False,
+        enable_bottom_vessel_sprouts=True,
+        enable_type_switching=True,
+        enable_tumor_growth=False,
+        enable_vascular_growth=True,
+        enable_mitosis=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        vascular_activation_vegf2_threshold=0.3,
+        vascular_deactivation_vegf2_threshold=0.1,
+        nutrient_thresh=100,
+        necrotic_thresh=0.0,
+        tumor_growth_start_mcs=50,
+        tumor_radius_fraction=0.12,
+        vascular_growth_volume_rate=0.5,
     ),
 
     "paper_full": replace(
@@ -162,5 +189,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "vegf_tuning"
+SELECTED_PRESET = "branching_tuning"
 CONFIG = PRESETS[SELECTED_PRESET]

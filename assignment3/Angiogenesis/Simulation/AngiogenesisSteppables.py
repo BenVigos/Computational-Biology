@@ -267,6 +267,67 @@ class GrowthSteppable(BaseModelSteppable):
     def start(self):
         for cell in self.cellList:
             self._apply_paper_mechanics(cell)
+        if CONFIG.enable_hif1a_network:
+            for cell in self.cell_list_by_type(*self._tumor_type_ids()):
+                cell.dict["hif1a"] = float(CONFIG.hif1a_initial_value)
+                cell.dict["vegf_drive"] = float(CONFIG.vegf_drive_basal)
+
+    def _oxygen_to_hypoxia_signal(self, local_oxygen):
+        # Low oxygen yields a larger hypoxia signal in [0, 1].
+        oxygen = max(0.0, float(local_oxygen))
+        k = max(1e-6, float(CONFIG.hif1a_hypoxia_halfmax_oxygen))
+        return k / (k + oxygen)
+
+    def _hill_activation(self, value, k, n):
+        value = max(0.0, float(value))
+        k = max(1e-6, float(k))
+        n = max(1.0, float(n))
+        value_power = value ** n
+        return value_power / (k ** n + value_power)
+
+    def _update_intracellular_network(self, cell, local_oxygen):
+        if not CONFIG.enable_hif1a_network or cell.type not in self._tumor_type_ids():
+            return
+
+        current_hif1a = float(cell.dict.get("hif1a", CONFIG.hif1a_initial_value))
+        hypoxia_signal = self._oxygen_to_hypoxia_signal(local_oxygen)
+
+        stabilization = float(CONFIG.hif1a_stabilization_rate) * hypoxia_signal
+        degradation = float(CONFIG.hif1a_degradation_rate) * current_hif1a
+        updated_hif1a = self._clamp(
+            current_hif1a + stabilization - degradation,
+            minimum=0.0,
+            maximum=float(CONFIG.hif1a_max_value),
+        )
+
+        vegf_hif_fraction = self._hill_activation(
+            updated_hif1a,
+            CONFIG.vegf_drive_hill_k,
+            CONFIG.vegf_drive_hill_n,
+        )
+        updated_vegf_drive = self._clamp(
+            float(CONFIG.vegf_drive_basal)
+            + (float(CONFIG.vegf_drive_max) - float(CONFIG.vegf_drive_basal)) * vegf_hif_fraction,
+            minimum=0.0,
+            maximum=float(CONFIG.vegf_drive_max),
+        )
+
+        cell.dict["hif1a"] = updated_hif1a
+        cell.dict["vegf_drive"] = updated_vegf_drive
+
+    def _mean_tumor_vegf_drive(self):
+        tumor_cells = list(self.cell_list_by_type(*self._tumor_type_ids()))
+        if not tumor_cells:
+            return 0.0
+        return self._mean([float(cell.dict.get("vegf_drive", 0.0)) for cell in tumor_cells])
+
+    def _effective_vegf2_signal(self, local_vegf2):
+        if not CONFIG.enable_hif1a_network:
+            return float(local_vegf2)
+        return max(
+            0.0,
+            float(local_vegf2) + float(CONFIG.hif1a_to_vegf2_weight) * self._mean_tumor_vegf_drive(),
+        )
 
     def _neovascular_neighbor_area(self, cell):
         """Shared surface with other *neovascular* cells only (Active + Inactive).
@@ -360,21 +421,26 @@ class GrowthSteppable(BaseModelSteppable):
         field_malig = self.field.Oxygen
 
         for cell in self.cellList:
+            if cell.type in self._tumor_type_ids():
+                self._update_intracellular_network(cell, self._field_at_com(field_malig, cell))
+
             if cell.type == self.INACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
                 local_vegf2 = self._field_at_com(field_neo_vasc, cell)
-                self._vascular_activation_step(cell, local_vegf2)
+                effective_vegf2 = self._effective_vegf2_signal(local_vegf2)
+                self._vascular_activation_step(cell, effective_vegf2)
                 self._vascular_growth_step(
                     cell,
-                    local_vegf2,
+                    effective_vegf2,
                     CONFIG.inactive_neighbor_area_limit,
                 )
 
             elif cell.type == self.ACTIVENEOVASCULAR and CONFIG.enable_vascular_growth:
                 local_vegf2 = self._field_at_com(field_neo_vasc, cell)
-                self._vascular_activation_step(cell, local_vegf2)
+                effective_vegf2 = self._effective_vegf2_signal(local_vegf2)
+                self._vascular_activation_step(cell, effective_vegf2)
                 self._vascular_growth_step(
                     cell,
-                    local_vegf2,
+                    effective_vegf2,
                     CONFIG.active_neighbor_area_limit,
                 )
 
@@ -425,7 +491,7 @@ class MitosisSteppable(MitosisSteppableBase):
         child_cell = getattr(self, "child_cell", None) or getattr(self, "childCell")
 
         if parent_cell.type in (self.NORMAL, self.HYPOXIC):
-            child_cell.type = self.NORMAL
+            child_cell.type = parent_cell.type
             child_cell.targetVolume = CONFIG.tumor_target_volume
             child_cell.lambdaVolume = CONFIG.tumor_lambda_volume
             child_cell.targetSurface = CONFIG.tumor_target_surface
@@ -434,10 +500,17 @@ class MitosisSteppable(MitosisSteppableBase):
             parent_cell.lambdaVolume = CONFIG.tumor_lambda_volume
             parent_cell.targetSurface = CONFIG.tumor_target_surface
             parent_cell.lambdaSurface = CONFIG.tumor_lambda_surface
+            if CONFIG.enable_hif1a_network:
+                parent_hif1a = float(parent_cell.dict.get("hif1a", CONFIG.hif1a_initial_value))
+                parent_vegf = float(parent_cell.dict.get("vegf_drive", CONFIG.vegf_drive_basal))
+                parent_cell.dict["hif1a"] = parent_hif1a
+                parent_cell.dict["vegf_drive"] = parent_vegf
+                child_cell.dict["hif1a"] = parent_hif1a
+                child_cell.dict["vegf_drive"] = parent_vegf
 
 
         if parent_cell.type in (self.INACTIVENEOVASCULAR, self.ACTIVENEOVASCULAR):
-            child_cell.type = self.ACTIVENEOVASCULAR
+            child_cell.type = parent_cell.type
             child_cell.targetVolume = CONFIG.vascular_target_volume
             child_cell.lambdaVolume = CONFIG.vascular_lambda_volume
             child_cell.targetSurface = CONFIG.vascular_target_surface
@@ -462,6 +535,7 @@ class MonitoringSteppable(BaseModelSteppable):
         self._previous_sample_mcs = None
         self._previous_tumor_volumes = {}
         self._previous_tumor_targets = {}
+        self._previous_endothelial_volumes = {}
         self._previous_vascular_volumes = {}
         self._csv_path = None
 
@@ -487,14 +561,13 @@ class MonitoringSteppable(BaseModelSteppable):
         if delta_mcs <= 0 or not previous_values:
             return 0.0
 
-        shared_ids = current_values.keys() & previous_values.keys()
-        if not shared_ids:
+        if not current_values:
             return 0.0
 
-        return self._mean([
-            (current_values[cell_id] - previous_values[cell_id]) / delta_mcs
-            for cell_id in shared_ids
-        ])
+        # Population-average rate that includes division/new IDs and disappearing IDs
+        # via the total-volume delta, then normalizes by current population size.
+        delta_total = sum(current_values.values()) - sum(previous_values.values())
+        return delta_total / (delta_mcs * max(len(current_values), 1))
 
     def _total_delta_rate(self, current_values, previous_values, delta_mcs):
         if delta_mcs <= 0 or not previous_values:
@@ -520,22 +593,25 @@ class MonitoringSteppable(BaseModelSteppable):
         active_neovascular_cells = list(self.cell_list_by_type(self.ACTIVENEOVASCULAR))
         vascular_cells = list(self.cell_list_by_type(self.VASCULAR))
         inactive_neovascular_cells = list(self.cell_list_by_type(self.INACTIVENEOVASCULAR))
+        endothelial_cells = active_neovascular_cells + inactive_neovascular_cells
         vascular_like_cells = active_neovascular_cells + vascular_cells + inactive_neovascular_cells
 
         delta_mcs = 0 if self._previous_sample_mcs is None else mcs - self._previous_sample_mcs
         tumor_volumes = [float(cell.volume) for cell in tumor_like_cells]
         tumor_target_volumes = [float(cell.targetVolume) for cell in tumor_like_cells]
-        vascular_volumes = [float(cell.volume) for cell in vascular_like_cells]
+        endothelial_volumes = [float(cell.volume) for cell in endothelial_cells]
+        vascular_volumes = [float(cell.volume) for cell in vascular_cells]
 
         current_tumor_volumes = self._cell_value_map(tumor_like_cells, attribute_name="volume")
         current_tumor_targets = self._cell_value_map(tumor_like_cells, attribute_name="targetVolume")
-        current_vascular_volumes = self._cell_value_map(vascular_like_cells, attribute_name="volume")
+        current_endothelial_volumes = self._cell_value_map(endothelial_cells, attribute_name="volume")
+        current_vascular_volumes = self._cell_value_map(vascular_cells, attribute_name="volume")
 
         metrics = {
             "mcs": int(mcs),
             "phase": self._timescale_phase_label(mcs),
             "is_growth_window": int(self._is_growth_window(mcs)),
-            "tumor_cells": len(normal_cells),
+            "tumor_cells": len(tumor_like_cells),
             "normal_cells": len(normal_cells),
             "hypoxic_cells": len(hypoxic_cells),
             "necrotic_cells": len(necrotic_cells),
@@ -568,21 +644,25 @@ class MonitoringSteppable(BaseModelSteppable):
 
         if CONFIG.monitor_include_vascular_metrics:
             metrics.update({
-                "endothelial_cells": len(vascular_like_cells),
+                "endothelial_cells": len(endothelial_cells),
                 "vascular_like_cells": len(vascular_like_cells),
                 "active_neovascular_cells": len(active_neovascular_cells),
                 "vascular_cells": len(vascular_cells),
                 "inactive_neovascular_cells": len(inactive_neovascular_cells),
-                "avg_endothelial_volume": self._mean(vascular_volumes),
+                "avg_endothelial_volume": self._mean(endothelial_volumes),
                 "avg_vascular_volume": self._mean(vascular_volumes),
             })
             if CONFIG.monitor_include_growth_rates:
                 metrics["avg_endothelial_volume_growth_rate"] = self._mean_delta_rate(
+                    current_endothelial_volumes,
+                    self._previous_endothelial_volumes,
+                    delta_mcs,
+                )
+                metrics["avg_vascular_volume_growth_rate"] = self._mean_delta_rate(
                     current_vascular_volumes,
                     self._previous_vascular_volumes,
                     delta_mcs,
                 )
-                metrics["avg_vascular_volume_growth_rate"] = metrics["avg_endothelial_volume_growth_rate"]
 
         if CONFIG.monitor_include_field_means:
             oxygen_field = self.field.Oxygen
@@ -597,25 +677,48 @@ class MonitoringSteppable(BaseModelSteppable):
             if CONFIG.monitor_include_vascular_metrics:
                 metrics.update({
                     "mean_endothelial_oxygen": self._mean([
-                        self._field_at_com(oxygen_field, cell) for cell in vascular_like_cells
+                        self._field_at_com(oxygen_field, cell) for cell in endothelial_cells
                     ]),
                     "mean_endothelial_vegf": self._mean([
-                        self._field_at_com(vegf2_field, cell) for cell in vascular_like_cells
+                        self._field_at_com(vegf2_field, cell) for cell in endothelial_cells
                     ]),
                     "mean_vascular_oxygen": self._mean([
-                        self._field_at_com(oxygen_field, cell) for cell in vascular_like_cells
+                        self._field_at_com(oxygen_field, cell) for cell in vascular_cells
                     ]),
                     "mean_vascular_vegf1": self._mean([
-                        self._field_at_com(vegf1_field, cell) for cell in vascular_like_cells
+                        self._field_at_com(vegf1_field, cell) for cell in vascular_cells
                     ]),
                     "mean_vascular_vegf2": self._mean([
-                        self._field_at_com(vegf2_field, cell) for cell in vascular_like_cells
+                        self._field_at_com(vegf2_field, cell) for cell in vascular_cells
                     ]),
                 })
+
+        if CONFIG.enable_hif1a_network:
+            mean_tumor_hif1a = self._mean([
+                float(cell.dict.get("hif1a", CONFIG.hif1a_initial_value))
+                for cell in tumor_like_cells
+            ])
+            mean_tumor_vegf_drive = self._mean([
+                float(cell.dict.get("vegf_drive", CONFIG.vegf_drive_basal))
+                for cell in tumor_like_cells
+            ])
+            mean_hif_vegf2_boost = float(CONFIG.hif1a_to_vegf2_weight) * mean_tumor_vegf_drive
+
+            metrics.update({
+                "mean_tumor_hif1a": mean_tumor_hif1a,
+                "mean_tumor_vegf_drive": mean_tumor_vegf_drive,
+                "mean_hif_vegf2_boost": mean_hif_vegf2_boost,
+            })
+
+            if CONFIG.monitor_include_field_means and CONFIG.monitor_include_vascular_metrics:
+                metrics["mean_endothelial_effective_vegf2"] = (
+                    metrics.get("mean_endothelial_vegf", 0.0) + mean_hif_vegf2_boost
+                )
 
         self._previous_sample_mcs = mcs
         self._previous_tumor_volumes = current_tumor_volumes
         self._previous_tumor_targets = current_tumor_targets
+        self._previous_endothelial_volumes = current_endothelial_volumes
         self._previous_vascular_volumes = current_vascular_volumes
         return metrics
 
@@ -637,6 +740,13 @@ class MonitoringSteppable(BaseModelSteppable):
             line += (
                 f" mean_O2={metrics['mean_tumor_oxygen']:.3f}"
                 f" mean_VEGF2={metrics['mean_tumor_vegf2']:.3f}"
+            )
+
+        if CONFIG.enable_hif1a_network:
+            line += (
+                f" mean_HIF1a={metrics['mean_tumor_hif1a']:.3f}"
+                f" mean_VEGF_drive={metrics['mean_tumor_vegf_drive']:.3f}"
+                f" HIF_boost={metrics['mean_hif_vegf2_boost']:.3f}"
             )
 
         if CONFIG.monitor_include_vascular_metrics:

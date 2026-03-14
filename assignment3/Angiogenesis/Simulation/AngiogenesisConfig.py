@@ -14,6 +14,7 @@ class ModelConfig:
     enable_vascular_growth: bool = True
     enable_mitosis: bool = True
     enable_python_monitoring: bool = True
+    enable_hif1a_network: bool = True
 
     # Timescale separation: run diffusion for N MCS, then growth/mitosis for G MCS.
     enable_timescale_separation: bool = True
@@ -81,6 +82,18 @@ class ModelConfig:
     vascular_growth_volume_rate: float = 0.2
     vascular_growth_surface_rate: float = 0.3
     vascular_growth_denominator: float = 0.5
+
+    # Oxygen -> HIF-1a -> VEGF intracellular signaling proxy
+    hif1a_initial_value: float = 0.0
+    hif1a_max_value: float = 1.0
+    hif1a_hypoxia_halfmax_oxygen: float = 20.0
+    hif1a_stabilization_rate: float = 0.04
+    hif1a_degradation_rate: float = 0.05
+    vegf_drive_basal: float = 0.02
+    vegf_drive_max: float = 1.0
+    vegf_drive_hill_k: float = 0.35
+    vegf_drive_hill_n: float = 2.0
+    hif1a_to_vegf2_weight: float = 0.6
 
     # Paper-derived mitosis thresholds
     tumor_doubling_volume: float = 50

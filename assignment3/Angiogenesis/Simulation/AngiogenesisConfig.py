@@ -211,6 +211,13 @@ PRESETS = {
         vascular_growth_volume_rate=0.5,
     ),
 
+    "full_trajectory": replace(
+        BASE_CONFIG,
+        preset_name="full_trajectory",
+        tumor_radius_fraction=0.04,  # Start much smaller (4% of lattice instead of 16%)
+        tumor_growth_start_mcs=300,
+    ),
+
     "paper_full": replace(
         BASE_CONFIG,
         preset_name="paper_full",
@@ -234,5 +241,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "branching_tuning"
+SELECTED_PRESET = "full_trajectory"
 CONFIG = PRESETS[SELECTED_PRESET]

@@ -15,9 +15,10 @@ OUTPUT_FILENAME = "angiogenesis_metrics.csv"
 
 # Configs to run
 CONFIGS = [
-    "no_endo",  
-    "no_hif1a",
-    "branching_tuning",
+    # "no_endo",  
+    # "no_hif1a",
+    # "branching_tuning",
+    "full_trajectory",
 ]
 
 def clear_old_results():

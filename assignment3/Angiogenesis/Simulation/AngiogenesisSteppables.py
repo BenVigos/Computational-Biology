@@ -210,7 +210,7 @@ class ConstraintInitializerSteppable(BaseModelSteppable):
             self.cell_field[x0:x1, max(0, dim_y - vessel_thickness):dim_y, 0] = bottom_vessel
             self._apply_paper_mechanics(bottom_vessel)
 
-            if CONFIG.enable_bottom_vessel_sprouts:
+            if CONFIG.enable_top_vessel_sprouts:
                 sprout_w = self._fraction_to_length(
                     CONFIG.bottom_sprout_width_fraction, dim_x, min_size=1
                 )

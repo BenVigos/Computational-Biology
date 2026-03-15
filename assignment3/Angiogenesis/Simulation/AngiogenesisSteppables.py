@@ -135,18 +135,13 @@ class BaseModelSteppable(SteppableBasePy):
         if cell.type in self._vascular_type_ids():
             cell.targetVolume = CONFIG.vascular_target_volume
             cell.lambdaVolume = CONFIG.vascular_lambda_volume
-            cell.targetSurface = CONFIG.vascular_target_surface
-            cell.lambdaSurface = CONFIG.vascular_lambda_surface
+
         elif cell.type == self.NECROTIC:
             cell.targetVolume = CONFIG.necrotic_target_volume
             cell.lambdaVolume = 8.0
-            cell.targetSurface = 0.0
-            cell.lambdaSurface = 0.0
         else:
             cell.targetVolume = CONFIG.tumor_target_volume
             cell.lambdaVolume = CONFIG.tumor_lambda_volume
-            cell.targetSurface = CONFIG.tumor_target_surface
-            cell.lambdaSurface = CONFIG.tumor_lambda_surface
 
     def _fraction_to_index(self, fraction, size, *, inclusive_upper=False):
         fraction = self._clamp(float(fraction), minimum=0.0, maximum=1.0)
@@ -388,7 +383,6 @@ class GrowthSteppable(BaseModelSteppable):
 
         growth_fraction = local_vegf2 / (CONFIG.vascular_growth_denominator + local_vegf2)
         cell.targetVolume += CONFIG.vascular_growth_volume_rate * growth_fraction
-        cell.targetSurface += CONFIG.vascular_growth_surface_rate * growth_fraction
 
     def _vascular_activation_step(self, cell, local_vegf2):
         """Switch InactiveNeovascular -> ActiveNeovascular when VEGF2 is high,
@@ -427,11 +421,6 @@ class GrowthSteppable(BaseModelSteppable):
         if CONFIG.enable_tumor_growth and mcs > CONFIG.tumor_growth_start_mcs and cell.type== self.NECROTIC:
             cell.targetVolume = 0.0
             cell.lambdaVolume = 8.0
-            # cell.targetSurface += (
-            #     CONFIG.tumor_growth_surface_rate
-            #     * local_oxygen
-            #     / (CONFIG.tumor_growth_denominator + local_oxygen)
-            # )
 
     def _hypoxic_adjustments(self, cell, local_oxygen, mcs):
         if not CONFIG.enable_type_switching:
@@ -451,7 +440,6 @@ class GrowthSteppable(BaseModelSteppable):
         cell.lambdaVolume = 8.0
         if cell.targetVolume < 5.0:
             cell.targetVolume = 0.0
-        cell.lambdaSurface = 0.0
 
     def step(self, mcs):
         if not self._is_growth_window(mcs):
@@ -534,12 +522,8 @@ class MitosisSteppable(MitosisSteppableBase):
             child_cell.type = parent_cell.type
             child_cell.targetVolume = CONFIG.tumor_target_volume
             child_cell.lambdaVolume = CONFIG.tumor_lambda_volume
-            child_cell.targetSurface = CONFIG.tumor_target_surface
-            child_cell.lambdaSurface = CONFIG.tumor_lambda_surface
             parent_cell.targetVolume = CONFIG.tumor_target_volume
             parent_cell.lambdaVolume = CONFIG.tumor_lambda_volume
-            parent_cell.targetSurface = CONFIG.tumor_target_surface
-            parent_cell.lambdaSurface = CONFIG.tumor_lambda_surface
             if CONFIG.enable_hif1a_network:
                 parent_hif1a = float(parent_cell.dict.get("hif1a", CONFIG.hif1a_initial_value))
                 parent_vegf = float(parent_cell.dict.get("vegf_drive", CONFIG.vegf_drive_basal))
@@ -553,12 +537,8 @@ class MitosisSteppable(MitosisSteppableBase):
             child_cell.type = parent_cell.type
             child_cell.targetVolume = CONFIG.vascular_target_volume
             child_cell.lambdaVolume = CONFIG.vascular_lambda_volume
-            child_cell.targetSurface = CONFIG.vascular_target_surface
-            child_cell.lambdaSurface = CONFIG.vascular_lambda_surface
             parent_cell.targetVolume = CONFIG.vascular_target_volume
             parent_cell.lambdaVolume = CONFIG.vascular_lambda_volume
-            parent_cell.targetSurface = CONFIG.vascular_target_surface
-            parent_cell.lambdaSurface = CONFIG.vascular_lambda_surface
 
 
 class MonitoringSteppable(BaseModelSteppable):

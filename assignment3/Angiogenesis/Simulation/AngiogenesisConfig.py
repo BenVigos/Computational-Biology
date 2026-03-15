@@ -194,7 +194,7 @@ PRESETS = {
         vascular_growth_volume_rate=0.5,
     ),
 
-    """This preset evaluates tumor growth and type swithcing with out the presense of angiogenesis or hif1a mediated vegf production."""
+    #This preset evaluates tumor growth and type swithcing with out the presense of angiogenesis or hif1a mediated vegf production.
     "tumor_growth_only": replace(
         BASE_CONFIG,
         preset_name="tumor_growth_only",
@@ -212,7 +212,7 @@ PRESETS = {
         tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
     ),
 
-    """This preset evaluates tumor growth in the presence of hypoxia-induced type switching."""
+    #This preset evaluates tumor growth in the presence of hypoxia-induced type switching.
     "tumor_growth_with_hif1a": replace(
         BASE_CONFIG,
         preset_name="tumor_growth_with_hif1a",
@@ -230,7 +230,7 @@ PRESETS = {
         tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
     ),
 
-    """This preset has angiogenesis only, with no tumor growth or hif1a. This can be used to tune the VEGF-driven sprouting response in isolation."""
+    #This preset has angiogenesis only, with no tumor growth or hif1a. This can be used to tune the VEGF-driven sprouting response in isolation.
     "late_stage_angiogenesis_only": replace(
         BASE_CONFIG,
         preset_name="late_stage_angiogenesis_only",
@@ -250,7 +250,7 @@ PRESETS = {
         necrotic_thresh=0.0,  # Set low to prevent tumor cell death
     ),
 
-    """This preset has angiogenesis and hif1a with no tumor growth. This can be used to tune the HIF-VEGF dynamics and sprouting response in isolation."""
+    #This preset has angiogenesis and hif1a with no tumor growth. This can be used to tune the HIF-VEGF dynamics and sprouting response in isolation.
     "late_stage_angiogenesis_with_hif1a": replace(
         BASE_CONFIG,
         preset_name="late_stage_angiogenesis_with_hif1a",
@@ -270,8 +270,8 @@ PRESETS = {
         necrotic_thresh=0.0,  # Set low to prevent tumor cell death
     ),
 
-    """This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
-    Angiogenesis is included. Only the late stage of tumor growth is included, starting from a larger initial radius."""
+    #This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
+    #Angiogenesis is included. Only the late stage of tumor growth is included, starting from a larger initial radius.
     "late_stage_no_hif1a": replace(
         BASE_CONFIG,
         preset_name="late_stage_no_hif1a",
@@ -290,8 +290,8 @@ PRESETS = {
 
     ),
 
-    """This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells.
-     Only the late stage of tumor growth is included, starting from a larger initial radius"""
+    #This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells.
+    #Only the late stage of tumor growth is included, starting from a larger initial radius
     "late_stage": replace(
         BASE_CONFIG,
         preset_name="late_stage",
@@ -308,8 +308,8 @@ PRESETS = {
         tumor_radius_fraction=0.16,  # Start much smaller (4% of lattice instead of 16%)
         tumor_growth_start_mcs=300,
     ),
-    """This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
-    Angiogenesis is included."""
+    #This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
+    #Angiogenesis is included.
     "full_trajectory_no_hif1a": replace(
         BASE_CONFIG,
         preset_name="full_trajectory_no_hif1a",
@@ -328,7 +328,7 @@ PRESETS = {
 
     ),
 
-    """This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells."""
+    #This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells.
     "full_trajectory": replace(
         BASE_CONFIG,
         preset_name="full_trajectory",
@@ -348,5 +348,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "full_trajectory"
+SELECTED_PRESET = "tumor_growth_only"
 CONFIG = PRESETS[SELECTED_PRESET]

@@ -103,13 +103,22 @@ def plot_tumor_dynamics(df: pd.DataFrame, config_name: str) -> plt.Figure | None
 
     # volumes
     ax = axes[1, 0]
-    plot_with_ci(ax, df, "total_tumor_volume", "Total volume", "tab:blue", 1.5)
-    ax.set_ylabel("Total volume (voxels)")
-    if "avg_tumor_volume" in df.columns:
-        ax2 = _twin_right(ax, "tab:cyan")
-        plot_with_ci(ax, df, "avg_tumor_volume", "Avg cell volume", "tab:cyan", 1.2, '--', twin_ax=ax2)
-        ax2.set_ylabel("Avg cell volume (voxels)")
-        ax2.legend(loc="upper left", fontsize=8)
+    vol_plotted = False
+    for col, label, color in [
+        ("avg_normal_volume",   "Normal cell vol",   "tab:blue"),
+        ("avg_hypoxic_volume",  "Hypoxic cell vol",  "tab:orange"),
+        ("avg_necrotic_volume", "Necrotic cell vol", "tab:red"),
+    ]:
+        if plot_with_ci(ax, df, col, label, color, 1.3):
+            vol_plotted = True
+    _shade_boundary_warning(ax, df)
+    _decorate(ax,
+              title="Per-phenotype cell volumes\n(necrotic → 0 confirms shrinkage; normal stable near target)",
+              xlabel="MCS", ylabel="Avg volume (voxels)")
+    if vol_plotted:
+        ax.axhline(22.5, color="gray", linestyle=":", linewidth=0.8, alpha=0.6,
+                   label="Tumor target vol (22.5)")
+        ax.legend(fontsize=8)
 
     # pressure
     ax = axes[1, 1]
@@ -136,7 +145,7 @@ def plot_tumor_dynamics(df: pd.DataFrame, config_name: str) -> plt.Figure | None
 # ── 2. Vascular response ──────────────────────────────────────────────────────
 def plot_vascular_response(df: pd.DataFrame, config_name: str) -> plt.Figure | None:
     pop_cols = available_columns(df, ["active_neovascular_cells", "inactive_neovascular_cells"])
-    size_cols = available_columns(df, ["avg_endothelial_volume"])
+    size_cols = available_columns(df, ["avg_active_neovascular_volume", "avg_inactive_neovascular_volume"])
     rate_cols = available_columns(df, ["avg_endothelial_volume_growth_rate"])
     if not pop_cols and not size_cols and not rate_cols: return None
 
@@ -155,8 +164,12 @@ def plot_vascular_response(df: pd.DataFrame, config_name: str) -> plt.Figure | N
 
     if size_cols:
         ax = axes[panel]; panel += 1
-        for col in size_cols: plot_with_ci(ax, df, col, col.replace("_", " "), "tab:cyan", 1.3)
-        _decorate(ax, title="Average endothelial cell volume", ylabel="Volume (voxels)")
+        plot_with_ci(ax, df, "avg_active_neovascular_volume",
+                     "Active (tip) vol", "tab:green", 1.3)
+        plot_with_ci(ax, df, "avg_inactive_neovascular_volume",
+                     "Inactive (stalk) vol", "tab:olive", 1.3)
+        _decorate(ax, title="Per-type neovascular volumes\n(tip cells grow; stalk cells remain at target)",
+                  ylabel="Avg volume (voxels)")
         ax.legend(fontsize=8)
 
     if rate_cols:
@@ -199,7 +212,7 @@ def plot_signaling_fields(df: pd.DataFrame, config_name: str) -> plt.Figure | No
 
 # ── 4. System-level dynamics ──────────────────────────────────────────────────
 def plot_system_dynamics(df: pd.DataFrame, config_name: str) -> plt.Figure | None:
-    rate_col = next((c for c in ["avg_tumor_volume_growth_rate", "total_tumor_volume_growth_rate"] if c in df.columns), None)
+    rate_col = next((c for c in ["total_tumor_volume_growth_rate", "avg_tumor_volume_growth_rate"] if c in df.columns), None)
     o2_col = "mean_tumor_oxygen" if "mean_tumor_oxygen" in df.columns else None
     if not rate_col and not o2_col: return None
 
@@ -273,6 +286,66 @@ def plot_hif1a_network(df: pd.DataFrame, config_name: str) -> plt.Figure | None:
     fig.tight_layout()
     return fig
 
+def plot_spatial_metrics(df: pd.DataFrame, config_name: str) -> plt.Figure | None:
+    has_morph = "tumor_effective_radius" in df.columns
+    has_prox  = "mean_tumor_to_vessel_distance" in df.columns
+    has_core  = "hypoxic_mean_radius" in df.columns
+    has_eff   = "tumor_oxygen_per_neovascular_cell" in df.columns
+    if not any([has_morph, has_prox, has_core]):
+        return None
+ 
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharex=True)
+    fig.suptitle(f"[{config_name}] 6 · Spatial Metrics", fontsize=12, fontweight="bold")
+    fig.subplots_adjust(top=0.92)
+ 
+    # Morphology
+    ax = axes[0, 0]
+    plot_with_ci(ax, df, "tumor_effective_radius", "Effective radius", "tab:blue", 1.8)
+    plot_with_ci(ax, df, "tumor_mean_radius",      "Mean radial dist", "tab:cyan", 1.2, "--")
+    _shade_boundary_warning(ax, df)
+    _decorate(ax, title="Tumor morphology\n(effective radius from area; mean radius from COM distances)",
+              ylabel="Length scale (voxels)")
+    ax.legend(fontsize=8)
+ 
+    if "tumor_radial_cv" in df.columns:
+        ax2 = _twin_right(ax, "tab:purple")
+        plot_with_ci(ax, df, "tumor_radial_cv",   "Radial CV (irregularity)", "tab:purple", 1.2, "-.", twin_ax=ax2)
+        plot_with_ci(ax, df, "tumor_aspect_ratio","Aspect ratio",             "tab:pink",   1.0, ":", twin_ax=ax2)
+        ax2.set_ylabel("Shape irregularity")
+        ax2.legend(loc="lower right", fontsize=8)
+ 
+    # Proximity
+    ax = axes[0, 1]
+    plot_with_ci(ax, df, "mean_tumor_to_vessel_distance", "Mean dist → any vessel", "tab:red",   1.5)
+    plot_with_ci(ax, df, "mean_dist_to_sprout",           "Mean dist → sprout",     "tab:orange", 1.2, "--")
+    plot_with_ci(ax, df, "min_tumor_to_vessel_distance",  "Min dist → vessel",      "tab:green",  1.0, ":")
+    _shade_boundary_warning(ax, df)
+    _decorate(ax, title="Vascular proximity\n(distances falling = sprouts approaching tumor)",
+              ylabel="Distance (voxels)")
+    ax.legend(fontsize=8)
+
+    # Hypoxic Core
+    ax = axes[1, 0]
+    plot_with_ci(ax, df, "normal_mean_radius",   "Normal mean radius",  "tab:blue",   1.3)
+    plot_with_ci(ax, df, "hypoxic_mean_radius",  "Hypoxic mean radius", "tab:orange", 1.3, "--")
+    plot_with_ci(ax, df, "necrotic_mean_radius", "Necrotic mean radius","tab:red",    1.3, ":")
+    plot_with_ci(ax, df, "tumor_effective_radius","Tumor effective radius","black",   1.0, "--")
+    _decorate(ax,
+              title="Radial architecture\n(correct: necrotic < hypoxic < normal < effective radius)",
+              xlabel="MCS", ylabel="Radius from tumor centre (voxels)")
+    ax.legend(fontsize=8)
+ 
+    if "hypoxic_core_offset" in df.columns:
+        ax2 = _twin_right(ax, "sienna")
+        plot_with_ci(ax, df, "hypoxic_core_offset", "Core offset",    "sienna", 1.0, "-.", twin_ax=ax2)
+        plot_with_ci(ax, df, "hypoxic_inner_fraction","Hyp. inner frac","tab:orange", 0.9, ":", twin_ax=ax2)
+        plot_with_ci(ax, df, "necrotic_inner_fraction","Nec. inner frac","tab:red",   0.9, ":", twin_ax=ax2)
+        ax2.set_ylabel("Offset (voxels) / inner fraction")
+        ax2.legend(loc="upper left", fontsize=8)
+ 
+    fig.tight_layout()
+    return fig
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -311,6 +384,7 @@ def main() -> int:
             ("3_signaling_fields", plot_signaling_fields(group_df, config_name)),
             ("4_system_dynamics", plot_system_dynamics(group_df, config_name)),
             ("5_hif1a_network", plot_hif1a_network(group_df, config_name)),
+            ("6_spatial_dynamics", plot_spatial_metrics(group_df, config_name))
         ]
         
         for stem, fig in figures:
@@ -321,6 +395,7 @@ def main() -> int:
                 print(f" - Saved {out_path.name}")
 
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -739,6 +739,7 @@ class MonitoringSteppable(BaseModelSteppable):
             "normal_mean_radius": normal_mean_radius,
             "mean_dist_to_sprout": mean_dist_to_sprout,
             "min_dist_to_sprout":  min_dist_to_sprout,
+            "proximity_threshold": proximity_threshold,
         }
 
         if CONFIG.monitor_include_growth_rates:

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # --- User variables ---
-N = 5  # Increased to 5 to generate a meaningful 95% Confidence Interval band
+N = 10  # Increased to 5 to generate a meaningful 95% Confidence Interval band
 CC3D_PROJECT = str(Path("../Angiogenesis/Angiogenesis.cc3d").resolve())
 CONFIG_PATH = Path("../Angiogenesis/Simulation/AngiogenesisConfig.py")
 RESULTS_DIR = Path("../results")
@@ -15,9 +15,13 @@ OUTPUT_FILENAME = "angiogenesis_metrics.csv"
 
 # Configs to run
 CONFIGS = [
-    # "no_endo",  
-    # "no_hif1a",
-    # "branching_tuning",
+    "tumor_growth_only",
+    "tumor_growth_with_hif1a",
+    "late_stage_angiogenesis_only",
+    "late_stage_angiogenesis_with_hif1a",
+    "late_stage_no_hif1a",
+    "late_stage",
+    "full_trajectory_no_hif1a",
     "full_trajectory",
 ]
 

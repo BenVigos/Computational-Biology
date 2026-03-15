@@ -23,33 +23,40 @@ FIELD_SUBFOLDER_HINTS = {
 }
 
 # User configuration (edit these values and run the script)
-RUN_FOLDER = "tumor_growth"
+RUN_FOLDER = "late_stage"  # Subfolder inside visualization/ containing the field subfolders.
 FIELDS = ["Cell_Field", "Oxygen", "VEGF2"]
 FPS = 6
-OUTPUT = "../visualization/tumor_growth/tumor_growth.mp4"
-MAX_FRAMES = None  # Example: 200
+OUTPUT = "../visualization/late_stage_angiogenesis.mp4"
+MAX_FRAMES = 200  # Example: 200
 
 # Panel label styling
 PANEL_LABEL_HEIGHT = 44
 PANEL_LABEL_FONT_SIZE = 24
 
+# Global MCS counter styling
+SHOW_MCS_COUNTER = True
+USE_FILENAME_TIMESTEP_AS_MCS = True
+MCS_START = 0
+MCS_STEP = 10
+MCS_BANNER_HEIGHT = 30
+MCS_BANNER_FONT_SIZE = 18
+
 # Per-panel labels (keys must use canonical field names)
 PANEL_LABELS = {
     "Cell_Field": "Cell distribution",
-    "Oxygen": "Oxygen concentration",
-    "VEGF2": "VEGF concentration",
+    "Oxygen": "Oxygen concentration (arbitrary unit)",
+    "VEGF2": "VEGF concentration (arbitrary unit)",
 }
 
 # Cell-field legend entries (user-editable).
 # Each item requires: name + color (hex code).
 CELL_FIELD_LEGEND = [
-    {"name": "Medium", "color": "#000000"},
     {"name": "Normal", "color": "#0000ff"},
     {"name": "Hypoxic", "color": "#008000"},
     {"name": "Necrotic", "color": "#ff0000"},
-    # {"name": "ActiveNeovascular", "color": "#DC1E1E"},
+    {"name": "Active Neovascular", "color": "#55aaff"},
     {"name": "Vascular", "color": "#aa0000"},
-    # {"name": "InactiveNeovascular", "color": "#B400B4"},
+    {"name": "Inactive Neovascular", "color": "#ff00ff"},
 ]
 
 
@@ -127,13 +134,17 @@ def _ensure_rgb(frame: np.ndarray) -> np.ndarray:
     return frame
 
 
-def _load_label_font() -> ImageFont.ImageFont:
+def _load_font(size: int) -> ImageFont.ImageFont:
     for font_name in ("arial.ttf", "DejaVuSans-Bold.ttf", "DejaVuSans.ttf"):
         try:
-            return ImageFont.truetype(font_name, PANEL_LABEL_FONT_SIZE)
+            return ImageFont.truetype(font_name, size)
         except Exception:
             continue
     return ImageFont.load_default()
+
+
+def _load_label_font() -> ImageFont.ImageFont:
+    return _load_font(PANEL_LABEL_FONT_SIZE)
 
 
 def _add_panel_label(frame: np.ndarray, label: str) -> np.ndarray:
@@ -190,6 +201,27 @@ def _add_cell_field_legend(frame: np.ndarray) -> np.ndarray:
     return np.array(image)
 
 
+def _add_mcs_counter(frame: np.ndarray, mcs_value: int) -> np.ndarray:
+    if not SHOW_MCS_COUNTER:
+        return frame
+
+    banner_h = int(max(20, MCS_BANNER_HEIGHT))
+    image = Image.new("RGB", (frame.shape[1], frame.shape[0] + banner_h), (15, 15, 15))
+    image.paste(Image.fromarray(frame), (0, 0))
+
+    draw = ImageDraw.Draw(image)
+    font = _load_font(MCS_BANNER_FONT_SIZE)
+    text = f"MCS: {int(mcs_value)}"
+    text_bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = text_bbox[2] - text_bbox[0]
+    text_h = text_bbox[3] - text_bbox[1]
+
+    text_x = max(0, (frame.shape[1] - text_w) // 2)
+    text_y = frame.shape[0] + max(0, (banner_h - text_h) // 2)
+    draw.text((text_x, text_y), text, fill=(255, 255, 255), font=font)
+    return np.array(image)
+
+
 def pad_to_height(frame: np.ndarray, target_height: int) -> np.ndarray:
     if frame.shape[0] == target_height:
         return frame
@@ -199,7 +231,7 @@ def pad_to_height(frame: np.ndarray, target_height: int) -> np.ndarray:
     return np.pad(frame, ((0, pad_rows), (0, 0), (0, 0)), mode="constant", constant_values=0)
 
 
-def compose_frame_row(panel_specs: list[tuple[str, Path]]) -> np.ndarray:
+def compose_frame_row(panel_specs: list[tuple[str, Path]], mcs_value: int) -> np.ndarray:
     rgb_frames = []
     for field_name, frame_path in panel_specs:
         frame = _ensure_rgb(imageio.imread(str(frame_path)))
@@ -210,7 +242,8 @@ def compose_frame_row(panel_specs: list[tuple[str, Path]]) -> np.ndarray:
 
     max_height = max(frame.shape[0] for frame in rgb_frames)
     aligned = [pad_to_height(frame, max_height) for frame in rgb_frames]
-    return np.concatenate(aligned, axis=1)
+    combined = np.concatenate(aligned, axis=1)
+    return _add_mcs_counter(combined, mcs_value)
 
 
 def default_output_path(run_path: Path, selected_fields: list[str]) -> Path:
@@ -261,9 +294,10 @@ def main() -> None:
     fps = max(1, int(FPS))
     writer, final_output_path = open_writer_with_fallback(output_path, fps)
     with writer:
-        for timestep in common_times:
+        for frame_idx, timestep in enumerate(common_times):
             panel_specs = [(field, frame_maps[field][timestep]) for field in deduped_fields]
-            panel_frame = compose_frame_row(panel_specs)
+            mcs_value = int(timestep) if USE_FILENAME_TIMESTEP_AS_MCS else int(MCS_START + frame_idx * MCS_STEP)
+            panel_frame = compose_frame_row(panel_specs, mcs_value)
             writer.append_data(panel_frame)
 
     print(f"[make_visualization_video] Saved {len(common_times)} frames to: {final_output_path}")

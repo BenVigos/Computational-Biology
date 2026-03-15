@@ -3,11 +3,11 @@ from dataclasses import dataclass, replace
 
 @dataclass(frozen=True)
 class ModelConfig:
-    preset_name: str = "paper_full"
+    preset_name: str = "branching_tuning"
 
     # Runtime toggles
     enable_initial_vascular_strip: bool = True
-    enable_initial_sprouts: bool = True
+    enable_initial_sprouts: bool = False
     enable_initial_tumor_mass: bool = True
     enable_type_switching: bool = True
     enable_tumor_growth: bool = True
@@ -17,7 +17,7 @@ class ModelConfig:
     enable_hif1a_network: bool = True
 
     # Timescale separation: run diffusion for N MCS, then growth/mitosis for G MCS.
-    enable_timescale_separation: bool = True
+    enable_timescale_separation: bool = False
     diffusion_relaxation_mcs: int = 100
     growth_window_mcs: int = 10
     timescale_cycle_offset_mcs: int = 0
@@ -44,14 +44,14 @@ class ModelConfig:
     # Initial tumor geometry: a small circular cluster of cells
     tumor_center_x_fraction: float = 0.50
     tumor_center_y_fraction: float = 0.50
-    tumor_radius_fraction: float = 0.05
+    tumor_radius_fraction: float = 0.16
     tumor_seed_size_fraction: float = 0.02
 
     # Paper-derived phenotype thresholds and timing
     area_thresh: float = 100.0
-    nutrient_thresh: float = 20.0
+    nutrient_thresh: float = 22.5
     necrotic_thresh: float = 10.0
-    tumor_growth_start_mcs: int = 500
+    tumor_growth_start_mcs: int = 300
     vascular_vegf_activation_threshold: float = 0.3
     inactive_neighbor_area_limit: float = 30
     active_neighbor_area_limit: float = 20
@@ -69,9 +69,9 @@ class ModelConfig:
     necrotic_volume_loss_rate: float = 0.5
 
     # Vascular activation: VEGF2 threshold for switching Inactive -> Active
-    vascular_activation_vegf2_threshold: float = 0.3
+    vascular_activation_vegf2_threshold: float = 0.7
     # Vascular deactivation: VEGF2 threshold for switching Active -> Inactive
-    vascular_deactivation_vegf2_threshold: float = 0.05
+    vascular_deactivation_vegf2_threshold: float = 0.4
 
     # Paper-derived growth laws
     tumor_growth_volume_rate: float = 0.15
@@ -79,7 +79,7 @@ class ModelConfig:
     tumor_growth_denominator: float = 10.0
     hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.4
     hypoxic_growth_denominator: float = 10.0
-    vascular_growth_volume_rate: float = 0.2
+    vascular_growth_volume_rate: float = 0.5
     vascular_growth_surface_rate: float = 0.3
     vascular_growth_denominator: float = 0.5
 
@@ -110,13 +110,25 @@ class ModelConfig:
     monitor_include_growth_rates: bool = True
     monitor_include_field_means: bool = True
     monitor_include_vascular_metrics: bool = True
-    monitor_output_dir: str = "results"
+    monitor_output_dir: str = "../results"
     monitor_output_filename: str = "angiogenesis_metrics.csv"
 
 
 BASE_CONFIG = ModelConfig()
 
 PRESETS = {
+    "legacy": replace(
+        BASE_CONFIG,
+        preset_name="legacy",
+        enable_initial_sprouts=True,
+        enable_timescale_separation=True,
+        tumor_radius_fraction=0.05,
+        nutrient_thresh=20.0,
+        tumor_growth_start_mcs=500,
+        vascular_activation_vegf2_threshold=0.3,
+        vascular_deactivation_vegf2_threshold=0.05,
+        vascular_growth_volume_rate=0.2,
+    ),
     "paper_mvp": replace(
         BASE_CONFIG,
         preset_name="paper_mvp",
@@ -198,6 +210,22 @@ PRESETS = {
     "paper_full": replace(
         BASE_CONFIG,
         preset_name="paper_full",
+    ),
+
+    "no_hif1a": replace(
+        BASE_CONFIG,
+        preset_name="no_hif1a",
+        enable_hif1a_network=False,
+    ),
+
+    "no_endo": replace(
+        BASE_CONFIG,
+        preset_name="no_endo",
+        enable_initial_vascular_strip=True,  # Corrected to include blood vessels
+        enable_initial_sprouts=False,
+        enable_bottom_vessel_sprouts=False,
+        enable_vascular_growth=False,
+        monitor_include_vascular_metrics=False,
     ),
 }
 

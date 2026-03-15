@@ -240,58 +240,56 @@ def plot_tumor_dynamics(df: pd.DataFrame) -> plt.Figure | None:
 # ── 2. Vascular response ──────────────────────────────────────────────────────
 
 def plot_vascular_response(df: pd.DataFrame) -> plt.Figure | None:
-    """Three-panel: endothelial populations · cell sizes · vascular growth rate."""
+    """Panels: endothelial populations · cell sizes · endothelial growth rate."""
+    # Only include endothelial-related columns
     pop_cols = available_columns(
-        df, ["vascular_like_cells", "active_neovascular_cells",
-             "inactive_neovascular_cells", "vascular_cells"]
+        df, ["active_neovascular_cells", "inactive_neovascular_cells"]
     )
-    size_cols = available_columns(df, ["avg_vascular_volume", "avg_endothelial_volume"])
-    rate_cols = available_columns(
-        df, ["avg_vascular_volume_growth_rate", "avg_endothelial_volume_growth_rate"]
-    )
+    size_cols = available_columns(df, ["avg_endothelial_volume"])
+    rate_cols = available_columns(df, ["avg_endothelial_volume_growth_rate"])
     if not pop_cols and not size_cols and not rate_cols:
         return None
 
-    fig, axes = plt.subplots(3, 1, figsize=(11, 10), sharex=True)
-    fig.suptitle("2 · Vascular Response", fontsize=12, fontweight="bold")
+    n_panels = sum([bool(pop_cols), bool(size_cols), bool(rate_cols)])
+    fig, axes = plt.subplots(n_panels, 1, figsize=(11, 3.5 * n_panels), sharex=True)
+    axes = [axes] if n_panels == 1 else list(axes)
+    fig.suptitle("2 · Endothelial Response", fontsize=12, fontweight="bold")
     mcs = df["mcs"]
+    panel = 0
 
     # populations
-    ax = axes[0]
-    VASC_STYLES: list[tuple[str, str, str, float]] = [
-        ("vascular_like_cells",        "All neovascular",   "black",      2.0),
-        ("active_neovascular_cells",   "Active (tip cell)", "tab:green",  1.3),
-        ("inactive_neovascular_cells", "Inactive (stalk)",  "tab:olive",  1.3),
-        ("vascular_cells",             "Parent vessel",     "tab:blue",   1.3),
-    ]
-    for col, label, color, lw in VASC_STYLES:
-        if col in df.columns:
-            ax.plot(mcs, df[col], label=label, color=color, linewidth=lw)
-    _decorate(ax,
-              title="Endothelial populations\n(VEGF2 chemotaxis activates sprouting; active count rises with hypoxia)",
-              ylabel="Cell count")
     if pop_cols:
+        ax = axes[panel]; panel += 1
+        ENDO_STYLES: list[tuple[str, str, str, float]] = [
+            ("active_neovascular_cells",   "Active (tip cell)", "tab:green",  1.3),
+            ("inactive_neovascular_cells", "Inactive (stalk)",  "tab:olive",  1.3),
+        ]
+        for col, label, color, lw in ENDO_STYLES:
+            if col in df.columns:
+                ax.plot(mcs, df[col], label=label, color=color, linewidth=lw)
+        _decorate(ax,
+                  title="Endothelial populations\n(VEGF2 chemotaxis activates sprouting; active count rises with hypoxia)",
+                  ylabel="Cell count")
         ax.legend(fontsize=8)
 
     # mean cell volume
-    ax = axes[1]
-    SIZE_COLORS = {"avg_vascular_volume": "tab:blue", "avg_endothelial_volume": "tab:cyan"}
-    for col in size_cols:
-        ax.plot(mcs, df[col], label=col.replace("_", " "),
-                color=SIZE_COLORS.get(col, "tab:gray"), linewidth=1.3)
-    _decorate(ax, title="Average vascular cell volume", ylabel="Volume (voxels)")
     if size_cols:
+        ax = axes[panel]; panel += 1
+        for col in size_cols:
+            ax.plot(mcs, df[col], label=col.replace("_", " "),
+                    color="tab:cyan", linewidth=1.3)
+        _decorate(ax, title="Average endothelial cell volume", ylabel="Volume (voxels)")
         ax.legend(fontsize=8)
 
     # growth rate (smoothed)
-    ax = axes[2]
-    for col in rate_cols:
-        ax.plot(mcs, _smooth(df[col]),
-                label=col.replace("_", " ") + " (smooth)", linewidth=1.4)
-    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
-    _decorate(ax, title="Vascular growth rate (smoothed)",
-              xlabel="MCS", ylabel="\u0394Vol / MCS")
     if rate_cols:
+        ax = axes[panel]; panel += 1
+        for col in rate_cols:
+            ax.plot(mcs, _smooth(df[col]),
+                    label=col.replace("_", " ") + " (smooth)", linewidth=1.4, color="tab:cyan")
+        ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+        _decorate(ax, title="Endothelial growth rate (smoothed)",
+                  xlabel="MCS", ylabel="ΔVol / MCS")
         ax.legend(fontsize=8)
 
     fig.tight_layout()
@@ -303,11 +301,10 @@ def plot_vascular_response(df: pd.DataFrame) -> plt.Figure | None:
 def plot_signaling_fields(df: pd.DataFrame) -> plt.Figure | None:
     """Two panels: oxygen (drop and recovery) · VEGF2 (dual axis with hypoxic fraction)."""
     o2_cols = available_columns(
-        df, ["mean_tumor_oxygen", "mean_vascular_oxygen", "mean_endothelial_oxygen"]
+        df, ["mean_tumor_oxygen"]  # Only tumor oxygen, remove vascular/endothelial
     )
     vegf_cols = available_columns(
-        df, ["mean_tumor_vegf2", "mean_vascular_vegf2",
-             "mean_tumor_vegf1", "mean_vascular_vegf1"]
+        df, ["mean_tumor_vegf2", "mean_tumor_vegf1"]  # Only tumor VEGF, remove vascular
     )
     if not o2_cols and not vegf_cols:
         return None
@@ -321,35 +318,20 @@ def plot_signaling_fields(df: pd.DataFrame) -> plt.Figure | None:
 
     if o2_cols:
         ax = axes[panel]; panel += 1
-        O2_STYLE: dict[str, tuple[str, str, str]] = {
-            "mean_tumor_oxygen":      ("Tumor (mean)",      "tab:red",  "-"),
-            "mean_vascular_oxygen":   ("Vascular (mean)",   "tab:blue", "--"),
-            "mean_endothelial_oxygen":("Endothelial (mean)","tab:cyan", ":"),
-        }
-        for col, (label, color, ls) in O2_STYLE.items():
-            if col in df.columns:
-                ax.plot(mcs, df[col], label=label, color=color,
-                        linestyle=ls, linewidth=1.4)
+        # Only plot tumor oxygen
+        if "mean_tumor_oxygen" in df.columns:
+            ax.plot(mcs, df["mean_tumor_oxygen"], label="Tumor (mean)", color="tab:red", linestyle="-", linewidth=1.4)
         _decorate(ax,
                   title="Oxygen field\n(tumor consumes O\u2082; angiogenesis restores supply)",
                   ylabel="[O\u2082] (a.u.)")
         ax.legend(fontsize=8)
-        # overlay active sprouts on right axis to show correlation
-        if "active_neovascular_cells" in df.columns:
-            ax2 = _twin_right(ax, "tab:green")
-            ax2.plot(mcs, df["active_neovascular_cells"],
-                     color="tab:green", alpha=0.5, linewidth=1.0,
-                     linestyle="--", label="Active sprouts")
-            ax2.set_ylabel("Active neovascular cells")
-            ax2.legend(loc="upper right", fontsize=8)
 
     if vegf_cols:
         ax = axes[panel]; panel += 1
+        # Only plot tumor VEGF fields
         VEGF_STYLE: dict[str, tuple[str, str, str]] = {
             "mean_tumor_vegf2":   ("VEGF2 @ tumor",    "tab:orange", "-"),
-            "mean_vascular_vegf2":("VEGF2 @ vascular", "tab:red",    "--"),
             "mean_tumor_vegf1":   ("VEGF1 @ tumor",    "tab:purple", ":"),
-            "mean_vascular_vegf1":("VEGF1 @ vascular", "mediumpurple","-."),
         }
         for col, (label, color, ls) in VEGF_STYLE.items():
             if col in df.columns:
@@ -360,15 +342,6 @@ def plot_signaling_fields(df: pd.DataFrame) -> plt.Figure | None:
                   title="VEGF fields\n(rise with hypoxia; fall as new vessels supply O\u2082)",
                   xlabel="MCS", ylabel="VEGF (a.u.)")
         ax.legend(loc="upper left", fontsize=8)
-        # overlay hypoxic fraction to show coupling
-        if "hypoxic_fraction" in df.columns:
-            ax2 = _twin_right(ax, "sienna")
-            ax2.plot(mcs, df["hypoxic_fraction"],
-                     color="sienna", alpha=0.45, linewidth=1.0,
-                     label="Hypoxic fraction")
-            ax2.set_ylabel("Hypoxic fraction")
-            ax2.set_ylim(bottom=0)
-            ax2.legend(loc="upper right", fontsize=8)
 
     axes[-1].set_xlabel("MCS")
     fig.tight_layout()
@@ -384,7 +357,7 @@ def plot_system_dynamics(df: pd.DataFrame) -> plt.Figure | None:
          if c in df.columns), None
     )
     o2_col = "mean_tumor_oxygen" if "mean_tumor_oxygen" in df.columns else None
-    sprout_col = "active_neovascular_cells" if "active_neovascular_cells" in df.columns else None
+    sprout_col = None  # Remove vascular cell overlays
     if not rate_col and not o2_col:
         return None
 
@@ -436,12 +409,7 @@ def plot_system_dynamics(df: pd.DataFrame) -> plt.Figure | None:
         ax.set_ylabel("Mean [O\u2082] (a.u.)")
         ax.tick_params(axis="y", colors="tab:cyan")
         ax.spines["left"].set_color("tab:cyan")
-    if sprout_col:
-        ax2 = _twin_right(ax, "tab:green")
-        ax2.plot(mcs, df[sprout_col], color="tab:green", linewidth=1.3,
-                 linestyle="--", label="Active sprouts")
-        ax2.set_ylabel("Active neovascular cells")
-        ax2.legend(loc="upper right", fontsize=8)
+    # Removed overlay of active neovascular cells
     _decorate(ax,
               title="Oxygen recovery vs. active sprout count\n(sprouting precedes O\u2082 restoration; observe the phase lag)",
               xlabel="MCS", ylabel="Mean [O\u2082] (a.u.)")

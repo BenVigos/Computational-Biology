@@ -3,6 +3,7 @@
 # while keeping the lattice 2D and the initial geometry programmatic.
 
 import csv
+import math
 import pathlib
 
 from cc3d.core.PySteppables import *
@@ -78,6 +79,45 @@ class BaseModelSteppable(SteppableBasePy):
 
     def _mean(self, values):
         return sum(values) / len(values) if values else 0.0
+
+    def _cell_com_position(self, cell):
+        x, y, _ = self._cell_com_indices(cell)
+        return float(x), float(y)
+
+    def _weighted_centroid(self, cells):
+        if not cells:
+            return None
+
+        total_weight = 0.0
+        sum_x = 0.0
+        sum_y = 0.0
+        for cell in cells:
+            weight = max(float(getattr(cell, "volume", 0.0)), 1.0)
+            x, y = self._cell_com_position(cell)
+            sum_x += weight * x
+            sum_y += weight * y
+            total_weight += weight
+
+        if total_weight <= 0.0:
+            return None
+        return sum_x / total_weight, sum_y / total_weight
+
+    def _euclidean_distance(self, point_a, point_b):
+        if point_a is None or point_b is None:
+            return 0.0
+        dx = float(point_a[0]) - float(point_b[0])
+        dy = float(point_a[1]) - float(point_b[1])
+        return math.sqrt(dx * dx + dy * dy)
+
+    def _min_distance_to_points(self, source_point, target_points):
+        if source_point is None or not target_points:
+            return 0.0
+        return min(self._euclidean_distance(source_point, point) for point in target_points)
+
+    def _radial_distances(self, cells, origin):
+        if origin is None:
+            return []
+        return [self._euclidean_distance(self._cell_com_position(cell), origin) for cell in cells]
 
     def _vascular_type_ids(self):
         return (self.ACTIVENEOVASCULAR, self.VASCULAR, self.INACTIVENEOVASCULAR)
@@ -593,19 +633,75 @@ class MonitoringSteppable(BaseModelSteppable):
         active_neovascular_cells = list(self.cell_list_by_type(self.ACTIVENEOVASCULAR))
         vascular_cells = list(self.cell_list_by_type(self.VASCULAR))
         inactive_neovascular_cells = list(self.cell_list_by_type(self.INACTIVENEOVASCULAR))
+        neovascular_cells = active_neovascular_cells + inactive_neovascular_cells
         endothelial_cells = active_neovascular_cells + inactive_neovascular_cells
         vascular_like_cells = active_neovascular_cells + vascular_cells + inactive_neovascular_cells
 
         delta_mcs = 0 if self._previous_sample_mcs is None else mcs - self._previous_sample_mcs
+        normal_volumes = [float(cell.volume) for cell in normal_cells]
+        hypoxic_volumes = [float(cell.volume) for cell in hypoxic_cells]
+        necrotic_volumes = [float(cell.volume) for cell in necrotic_cells]
+        active_neovascular_volumes = [float(cell.volume) for cell in active_neovascular_cells]
+        inactive_neovascular_volumes = [float(cell.volume) for cell in inactive_neovascular_cells]
         tumor_volumes = [float(cell.volume) for cell in tumor_like_cells]
         tumor_target_volumes = [float(cell.targetVolume) for cell in tumor_like_cells]
+        neovascular_volumes = [float(cell.volume) for cell in neovascular_cells]
         endothelial_volumes = [float(cell.volume) for cell in endothelial_cells]
-        vascular_volumes = [float(cell.volume) for cell in vascular_cells]
+        parent_vessel_volumes = [float(cell.volume) for cell in vascular_cells]
 
         current_tumor_volumes = self._cell_value_map(tumor_like_cells, attribute_name="volume")
         current_tumor_targets = self._cell_value_map(tumor_like_cells, attribute_name="targetVolume")
         current_endothelial_volumes = self._cell_value_map(endothelial_cells, attribute_name="volume")
         current_vascular_volumes = self._cell_value_map(vascular_cells, attribute_name="volume")
+
+        tumor_centroid = self._weighted_centroid(tumor_like_cells)
+        hypoxic_core_cells = hypoxic_cells + necrotic_cells
+        hypoxic_core_centroid = self._weighted_centroid(hypoxic_core_cells)
+        tumor_positions = [self._cell_com_position(cell) for cell in tumor_like_cells]
+        neovascular_positions = [self._cell_com_position(cell) for cell in neovascular_cells]
+        tumor_radial_distances = self._radial_distances(tumor_like_cells, tumor_centroid)
+        hypoxic_radial_distances = self._radial_distances(hypoxic_cells, tumor_centroid)
+        necrotic_radial_distances = self._radial_distances(necrotic_cells, tumor_centroid)
+        tumor_effective_radius = math.sqrt(sum(tumor_volumes) / math.pi) if tumor_volumes else 0.0
+        tumor_min_x = min((point[0] for point in tumor_positions), default=0.0)
+        tumor_max_x = max((point[0] for point in tumor_positions), default=0.0)
+        tumor_min_y = min((point[1] for point in tumor_positions), default=0.0)
+        tumor_max_y = max((point[1] for point in tumor_positions), default=0.0)
+        tumor_span_x = tumor_max_x - tumor_min_x
+        tumor_span_y = tumor_max_y - tumor_min_y
+        tumor_aspect_ratio = tumor_span_x / tumor_span_y if tumor_span_y > 0 else 0.0
+        tumor_mean_radius = self._mean(tumor_radial_distances)
+        tumor_radius_std = (
+            math.sqrt(self._mean([(radius - tumor_mean_radius) ** 2 for radius in tumor_radial_distances]))
+            if tumor_radial_distances else 0.0
+        )
+        mean_tumor_to_vessel_distance = self._mean([
+            self._min_distance_to_points(position, neovascular_positions) for position in tumor_positions
+        ]) if tumor_positions and neovascular_positions else 0.0
+        min_tumor_to_vessel_distance = min([
+            self._min_distance_to_points(position, neovascular_positions) for position in tumor_positions
+        ], default=0.0)
+        proximity_threshold = float(CONFIG.vessel_proximity_distance)
+        tumor_near_vessel_fraction = (
+            sum(
+                1
+                for position in tumor_positions
+                if self._min_distance_to_points(position, neovascular_positions) <= proximity_threshold
+            ) / len(tumor_positions)
+            if tumor_positions and neovascular_positions else 0.0
+        )
+        hypoxic_core_offset = self._euclidean_distance(tumor_centroid, hypoxic_core_centroid)
+        hypoxic_mean_radius = self._mean(hypoxic_radial_distances)
+        necrotic_mean_radius = self._mean(necrotic_radial_distances)
+        inner_core_radius = float(CONFIG.hypoxic_core_inner_fraction) * tumor_effective_radius
+        hypoxic_inner_fraction = (
+            sum(1 for radius in hypoxic_radial_distances if radius <= inner_core_radius) / len(hypoxic_radial_distances)
+            if hypoxic_radial_distances else 0.0
+        )
+        necrotic_inner_fraction = (
+            sum(1 for radius in necrotic_radial_distances if radius <= inner_core_radius) / len(necrotic_radial_distances)
+            if necrotic_radial_distances else 0.0
+        )
 
         metrics = {
             "mcs": int(mcs),
@@ -619,8 +715,26 @@ class MonitoringSteppable(BaseModelSteppable):
             "hypoxic_fraction": len(hypoxic_cells) / len(tumor_like_cells) if tumor_like_cells else 0.0,
             "necrotic_fraction": len(necrotic_cells) / len(tumor_like_cells) if tumor_like_cells else 0.0,
             "avg_tumor_volume": self._mean(tumor_volumes),
+            "avg_normal_volume": self._mean(normal_volumes),
+            "avg_hypoxic_volume": self._mean(hypoxic_volumes),
+            "avg_necrotic_volume": self._mean(necrotic_volumes),
             "total_tumor_volume": sum(tumor_volumes),
             "avg_tumor_target_volume": self._mean(tumor_target_volumes),
+            "tumor_effective_radius": tumor_effective_radius,
+            "tumor_mean_radius": tumor_mean_radius,
+            "tumor_radius_std": tumor_radius_std,
+            "tumor_radial_cv": tumor_radius_std / tumor_mean_radius if tumor_mean_radius > 0 else 0.0,
+            "tumor_span_x": tumor_span_x,
+            "tumor_span_y": tumor_span_y,
+            "tumor_aspect_ratio": tumor_aspect_ratio,
+            "mean_tumor_to_vessel_distance": mean_tumor_to_vessel_distance,
+            "min_tumor_to_vessel_distance": min_tumor_to_vessel_distance,
+            "tumor_near_vessel_fraction": tumor_near_vessel_fraction,
+            "hypoxic_core_offset": hypoxic_core_offset,
+            "hypoxic_mean_radius": hypoxic_mean_radius,
+            "necrotic_mean_radius": necrotic_mean_radius,
+            "hypoxic_inner_fraction": hypoxic_inner_fraction,
+            "necrotic_inner_fraction": necrotic_inner_fraction,
         }
 
         if CONFIG.monitor_include_growth_rates:
@@ -645,12 +759,16 @@ class MonitoringSteppable(BaseModelSteppable):
         if CONFIG.monitor_include_vascular_metrics:
             metrics.update({
                 "endothelial_cells": len(endothelial_cells),
+                "neovascular_cells": len(neovascular_cells),
                 "vascular_like_cells": len(vascular_like_cells),
                 "active_neovascular_cells": len(active_neovascular_cells),
                 "vascular_cells": len(vascular_cells),
                 "inactive_neovascular_cells": len(inactive_neovascular_cells),
+                "avg_active_neovascular_volume": self._mean(active_neovascular_volumes),
+                "avg_inactive_neovascular_volume": self._mean(inactive_neovascular_volumes),
+                "avg_neovascular_volume": self._mean(neovascular_volumes),
                 "avg_endothelial_volume": self._mean(endothelial_volumes),
-                "avg_vascular_volume": self._mean(vascular_volumes),
+                "avg_parent_vessel_volume": self._mean(parent_vessel_volumes),
             })
             if CONFIG.monitor_include_growth_rates:
                 metrics["avg_endothelial_volume_growth_rate"] = self._mean_delta_rate(
@@ -658,7 +776,7 @@ class MonitoringSteppable(BaseModelSteppable):
                     self._previous_endothelial_volumes,
                     delta_mcs,
                 )
-                metrics["avg_vascular_volume_growth_rate"] = self._mean_delta_rate(
+                metrics["avg_parent_vessel_volume_growth_rate"] = self._mean_delta_rate(
                     current_vascular_volumes,
                     self._previous_vascular_volumes,
                     delta_mcs,
@@ -692,6 +810,22 @@ class MonitoringSteppable(BaseModelSteppable):
                         self._field_at_com(vegf2_field, cell) for cell in vascular_cells
                     ]),
                 })
+
+        if CONFIG.monitor_include_vascular_metrics:
+            metrics.update({
+                "tumor_oxygen_per_neovascular_cell": (
+                    metrics.get("mean_tumor_oxygen", 0.0) / len(neovascular_cells)
+                    if neovascular_cells and CONFIG.monitor_include_field_means else 0.0
+                ),
+                "tumor_oxygen_per_neovascular_volume": (
+                    metrics.get("mean_tumor_oxygen", 0.0) / sum(neovascular_volumes)
+                    if neovascular_volumes and CONFIG.monitor_include_field_means else 0.0
+                ),
+                "hypoxia_per_neovascular_cell": (
+                    metrics.get("hypoxic_fraction", 0.0) / len(neovascular_cells)
+                    if neovascular_cells else 0.0
+                ),
+            })
 
         if CONFIG.enable_hif1a_network:
             mean_tumor_hif1a = self._mean([

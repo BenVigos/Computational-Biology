@@ -95,6 +95,10 @@ class ModelConfig:
     vegf_drive_hill_n: float = 2.0
     hif1a_to_vegf2_weight: float = 0.6
 
+    # Spatial monitoring controls
+    vessel_proximity_distance: float = 15.0
+    hypoxic_core_inner_fraction: float = 0.5
+
     # Paper-derived mitosis thresholds
     tumor_doubling_volume: float = 50
     vascular_doubling_volume: float = 80.0

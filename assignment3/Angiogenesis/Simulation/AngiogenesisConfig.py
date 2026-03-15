@@ -262,7 +262,7 @@ PRESETS = {
         enable_vascular_growth=True,
         monitor_include_vascular_metrics=True,
         enable_timescale_separation=False,
-        enable_hif1a_network=False,
+        enable_hif1a_network=True,
 
         tumor_radius_fraction=0.16,  # Start much smaller (4% of lattice instead of 16%)
         tumor_growth_start_mcs=300,
@@ -305,7 +305,7 @@ PRESETS = {
         enable_timescale_separation=False,
         enable_hif1a_network=True,
 
-        tumor_radius_fraction=0.04,  # Start much smaller (4% of lattice instead of 16%)
+        tumor_radius_fraction=0.16,  # Start much smaller (4% of lattice instead of 16%)
         tumor_growth_start_mcs=300,
     ),
     """This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.

@@ -90,7 +90,7 @@
       </ChemicalField>
    </Plugin>
 
-       <Plugin Name="FocalPointPlasticity">
+    <Plugin Name="FocalPointPlasticity">
 
         <Parameters Type1="ActiveNeovascular" Type2="ActiveNeovascular">
             <Lambda>10</Lambda>

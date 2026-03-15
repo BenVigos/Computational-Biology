@@ -74,7 +74,6 @@ class ModelConfig:
     hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.4
     hypoxic_growth_denominator: float = 10.0
     vascular_growth_volume_rate: float = 0.5
-    vascular_growth_surface_rate: float = 0.3
     vascular_growth_denominator: float = 0.5
 
     # Oxygen -> HIF-1a -> VEGF intracellular signaling proxy
@@ -348,5 +347,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "tumor_growth_with_hif1a"
+SELECTED_PRESET = "late_stage"
 CONFIG = PRESETS[SELECTED_PRESET]

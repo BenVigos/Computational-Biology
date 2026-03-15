@@ -264,7 +264,7 @@ PRESETS = {
         enable_timescale_separation=False,
         enable_hif1a_network=True,
 
-        tumor_radius_fraction=0.16,  # Start much smaller (4% of lattice instead of 16%)
+        tumor_radius_fraction=0.16,  # Start near steady state with no angiogenesis
         tumor_growth_start_mcs=300,
         nutrient_thresh=100,  # Set high to keep tumor hypoxic
         necrotic_thresh=0.0,  # Set low to prevent tumor cell death
@@ -285,8 +285,8 @@ PRESETS = {
         enable_timescale_separation=False,
         enable_hif1a_network=False,
 
-        tumor_radius_fraction=0.16,  # Start smaller to better observe growth trajectory
-        tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
+        tumor_radius_fraction=0.16,  # Start near steady state with no angiogenesis
+        tumor_growth_start_mcs=300,
 
     ),
 
@@ -348,5 +348,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "tumor_growth_only"
+SELECTED_PRESET = "tumor_growth_with_hif1a"
 CONFIG = PRESETS[SELECTED_PRESET]

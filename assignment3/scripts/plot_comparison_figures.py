@@ -164,7 +164,7 @@ def figure_A_tumor_vs_angiogenesis(
     """
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
     fig.suptitle(
-        "Figure A · Tumor Growth - With and Without Angiogenesis",
+        "Tumor Growth - With and Without Angiogenesis",
         fontsize=12, fontweight="bold",
     )
 
@@ -266,7 +266,7 @@ def figure_B_endothelial_activation(
     """
     fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharex=True)
     fig.suptitle(
-        "Figure B · Endothelial Activation - With and Without HIF-1α",
+        "Endothelial Activation - With and Without HIF-1α",
         fontsize=12, fontweight="bold",
     )
 
@@ -360,7 +360,7 @@ def figure_C_combined_tumor_dynamics(
     """
     fig, axes = plt.subplots(1, 3, figsize=(18, 5), sharex=True)
     fig.suptitle(
-        "Figure C · Combined Tumor Dynamics  –  With and Without Angiogenesis",
+        "Combined Tumor Dynamics  –  With and Without Angiogenesis",
         fontsize=12, fontweight="bold",
     )
 

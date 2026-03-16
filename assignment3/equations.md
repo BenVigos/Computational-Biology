@@ -4,6 +4,9 @@ geometry:
 ---
 # Assignment 3: Simulating Tumor Growth and Angiogenesis in CompuCell3D
 
+Shirinifard, A., Gens, J. S., Zaitlen, B. L., Popławski, N. J., Swat, M., & Glazier, J. A. (2009). 3D Multi-Cell simulation of tumor growth and angiogenesis. *PLoS ONE*, 4(10), e7190. DOI: [10.1371/journal.pone.0007190](https://doi.org/10.1371/journal.pone.0007190)
+
+
 ## 1. Cellular Potts Model Effective Energy
 
 Core Hamiltonian equation that describes the physical shape, volume, and interactions of the cells on the grid *(Slide # 26, from Cell-based modelling 2 lecture)*.

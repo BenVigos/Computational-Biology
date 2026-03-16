@@ -347,5 +347,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "full_trajectory"
+SELECTED_PRESET = "late_stage_angiogenesis_only"
 CONFIG = PRESETS[SELECTED_PRESET]

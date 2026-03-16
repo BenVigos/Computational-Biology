@@ -11,6 +11,14 @@ header-includes:
 
 \begin{figure}[H]
 \centering
+\includegraphics[width=\textwidth]{angiogenesis-3612748292.jpg}
+\caption{Schematic representation of the tumor microenvironment and angiogenesis process. The figure illustrates the interactions between tumor cells, endothelial cells, and the extracellular matrix, highlighting key signaling pathways such as VEGF and HIF-1$\alpha$ that drive angiogenic sprouting and vascular remodeling in response to hypoxic conditions within the tumor mass. Image Source:Tocris Bioscience. Angiogenesis in cancer research product guide, 
+3 Ed., (2015),  https://www.tocris.com/literature/product-guides/angiogenesis-in-cancer }
+\label{fig:angiogenesis-schematic}
+\end{figure}
+
+\begin{figure}[H]
+\centering
 \includegraphics[width=\textwidth]{results/comparison_figures/figure_A_tumor_vs_angiogenesis.png}
 \caption{Figure A. Comparison of tumor growth in simulations without angiogenesis and in the full model including angiogenesis. Panel (a) shows the temporal evolution of tumor size, reported as both the effective tumor radius and the mean radial distance of tumor cells from the tumor centroid, thereby capturing changes in overall extent and spatial spread. Panel (b) shows the corresponding tumor cell composition over time, separating total tumor-like cells into normoxic, hypoxic, and necrotic subpopulations to illustrate how vascular support modifies the balance between proliferative and oxygen-limited states. Panel (c) shows the hypoxic fraction, highlighting how the emergence of angiogenesis changes the degree of oxygen stress experienced by the tumor during progression.}
 \label{fig:comparison-a}

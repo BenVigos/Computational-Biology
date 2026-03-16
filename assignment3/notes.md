@@ -1,5 +1,7 @@
 # Notes
 
+
+## Model development and equations
 We should look at:
 
 ### 1. Tumor dynamics
@@ -23,6 +25,83 @@ We should look at:
 
 ## Plots Results and Comparison
 
+### Introduction
+- Will go over figures and videos in this assignment
+- Discuss why they were chosen and what they show
+- Highlight key features from the results
+
+### Conceptual overview
+- Understanding what is being modelled is crucial to interpreting the results
+- Figure 1: Schematic of the tumor-angiogenesis model
+  - Shows the key components and interactions in the model
+  - Tumor cells, hypoxia, VEGF, endothelial cells
+  - Helps to understand the biological processes being simulated
+
+### Results
+- Methodology:
+    - Isolate each of the processes present (tumor growth, angiogenesis and impact of hif1a) 
+    - helps understand their individual contributions
+    - That's why we have 3 different figures
+
+- Figure 1: Comparison of tumor growth in simulations without angiogenesis and in the full model including angiogenesis
+
+    - Panel (a): Temporal evolution of tumor size
+      - assumes spherical tumor geometry: effective tumor radius
+      - mean radial distance of tumor cells from the tumor centroid allows us to understand how the tumor changes spatially over time
+      - Deviation in the two measures can indicate tumor is not fully spherical or doesn't have uniform cell density
+      
+    - Panel (b): Tumor cell composition over time
+      - Provides insights into number of normoxic, hypoxic, and necrotic cells
+      - Shows how angiogenesis affects the balance between proliferative and oxygen-limited states
+
+    - In bowth panels we see that angiogenesis allows for more sustained tumor growth.
+
+    - Panel (c): Hypoxic fraction
+      - Answers the question: does angiogenesis reduce the degree of oxygen stress experienced by the tumor during progression?
+      - We see that angiogenesis reduces the hypoxic fraction, indicating improved oxygen supply to the tumor
+
+- Figure 2: Comparison of endothelial activation given a fully hypoxic non-growing tumor with and without HIF-1$\alpha$ signaling enabled
+
+    - Panel (a): Time evolution of VEGF and HIF-1$\alpha$-associated signaling
+      - Shows how the inclusion of HIF-1$\alpha$ alters the molecular pro-angiogenic response (i.e., VEGF production)
+      - We see no significant change in the production of VEGF.
+    
+    - Panel (b): Numbers of active and inactive neovascular cells
+      - Provides a direct measure of how signaling differences translate into endothelial activation and sprout dynamics
+      - We see that with HIF-1$\alpha$, there are more active neovascular cells, indicating enhanced angiogenesis
+    
+    - Panel (c): Tumor oxygen levels together with the minimum distance between the tumor and nearby sprouts
+      - Links biochemical signaling to the spatial approach of the chemotaxis of the vascular network toward the tumor mass
+      - We see that with HIF-1$\alpha$, tumor oxygen levels improve over time as sprouts approach, demonstrating the functional impact of enhanced angiogenesis
+
+- Figure 3: Integrated comparison of tumor-only growth and the full tumor--angiogenesis model
+    - Goal: to directly compare the tumor dynamics and signaling environment in the presence versus absence of angiogenesis, highlighting how vascular support reshapes tumor progression
+    - Contains aggregate metrics from both previous figures to provide a comprehensive view of the differences between the two conditions
+
+    - Panel (a): Temporal evolution of total tumor-like cells together with the normoxic, hypoxic, and necrotic subpopulations
+      - Allows direct assessment of how angiogenesis reshapes tumor composition
+      - We see that angiogenesis leads to a larger total tumor cell population, with a higher proportion of normoxic cells.
+      
+    - Panel (b): VEGF and HIF-1$\alpha$ signaling dynamics
+      - Allows us to directly couple the signaling fields to the quantitative makeup of the tumor population
+
+    - Panel (c): Tumor oxygen levels together with the minimum tumor-to-vessel distance
+      - Demonstrates how vascular proximity is associated with changes in oxygen availability during tumor progression
+      - We see that in the angiogenesis model, tumor oxygen levels improve over time as the minimum distance to vessels decreases, confirming that angiogenesis effectively enhances oxygen delivery to the tumor
+      - In contrast, in the non-angiogenesis model, tumor oxygen levels remain low and the minimum distance to vessels does not change (until very late), illustrating the lack of vascular support
+      - The late part of the figures can also give us insights into some of the finite-size effects of the model.
+
+## Video descriptions
+- Becaue an image is worth a thousand words, a video is worth a million. The videos provide a dynamic visualization of the processes we are simulating, allowing us to see how the tumor and vasculature evolve over time in a way that static figures cannot capture.
+- Video 1: Tumor growth without angiogenesis
+- Video 2: Angiogenesis without tumor growth
+- Video 3: Tumor growth with angiogenesis
+
+
+
+
+
+## Old stuff
 - General model: tumour that begins normoxic, outgrows its oxygen supply,
 enters a hypoxic crisis that drives VEGF2 secretion, recruits new vessels via
 angiogenesis, and recovers.

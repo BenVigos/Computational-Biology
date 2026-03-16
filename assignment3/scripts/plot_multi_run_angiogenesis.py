@@ -111,7 +111,7 @@ def plot_tumor_dynamics(df: pd.DataFrame, config_name: str) -> plt.Figure | None
     ]:
         if plot_with_ci(ax, df, col, label, color, 1.3):
             vol_plotted = True
-    _shade_boundary_warning(ax, df)
+    
     _decorate(ax,
               title="Per-phenotype cell volumes\n(necrotic → 0 confirms shrinkage; normal stable near target)",
               xlabel="MCS", ylabel="Avg volume (voxels)")
@@ -302,7 +302,7 @@ def plot_spatial_metrics(df: pd.DataFrame, config_name: str) -> plt.Figure | Non
     ax = axes[0, 0]
     plot_with_ci(ax, df, "tumor_effective_radius", "Effective radius", "tab:blue", 1.8)
     plot_with_ci(ax, df, "tumor_mean_radius",      "Mean radial dist", "tab:cyan", 1.2, "--")
-    _shade_boundary_warning(ax, df)
+    
     _decorate(ax, title="Tumor morphology\n(effective radius from area; mean radius from COM distances)",
               ylabel="Length scale (voxels)")
     ax.legend(fontsize=8)
@@ -319,7 +319,7 @@ def plot_spatial_metrics(df: pd.DataFrame, config_name: str) -> plt.Figure | Non
     plot_with_ci(ax, df, "mean_tumor_to_vessel_distance", "Mean dist → any vessel", "tab:red",   1.5)
     plot_with_ci(ax, df, "mean_dist_to_sprout",           "Mean dist → sprout",     "tab:orange", 1.2, "--")
     plot_with_ci(ax, df, "min_tumor_to_vessel_distance",  "Min dist → vessel",      "tab:green",  1.0, ":")
-    _shade_boundary_warning(ax, df)
+    
     _decorate(ax, title="Vascular proximity\n(distances falling = sprouts approaching tumor)",
               ylabel="Distance (voxels)")
     ax.legend(fontsize=8)
@@ -353,6 +353,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, required=True)
     return parser.parse_args()
 
+def shift_mcs(df: pd.DataFrame, shift: int = 300) -> pd.DataFrame:
+    """Shift the MCS column by a specified value."""
+    if "mcs" in df.columns:
+        df["mcs"] = df["mcs"] - shift
+    return df
+
 def main() -> int:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -363,6 +369,7 @@ def main() -> int:
         if path.exists():
             df = pd.read_csv(path)
             df["config"] = path.parent.name
+            df = shift_mcs(df)  # Apply the MCS shift here
             dfs.append(df)
             
     if not dfs:

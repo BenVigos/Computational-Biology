@@ -79,17 +79,17 @@ def add_run_column(src_path, dst_path, run_id):
     df.to_csv(dst_path, index=False)
 
 def main():
-    clear_old_results()  # Clean the slate before we start!
+    # clear_old_results()  # Clean the slate before we start!
     
-    for config_name in CONFIGS:
-        print(f"\n--- Running config: {config_name} ---")
-        for run_id in range(1, N+1):
-            print(f"  Run {run_id}/{N}")
-            set_selected_preset(config_name)
-            run_simulation()
-            move_and_tag_output(config_name, run_id)
-            time.sleep(1) 
-    print("\nAll runs complete.")
+    # for config_name in CONFIGS:
+    #     print(f"\n--- Running config: {config_name} ---")
+    #     for run_id in range(1, N+1):
+    #         print(f"  Run {run_id}/{N}")
+    #         set_selected_preset(config_name)
+    #         run_simulation()
+    #         move_and_tag_output(config_name, run_id)
+    #         time.sleep(1) 
+    # print("\nAll runs complete.")
 
     # Safely gather only the CSVs from our targeted config directories
     csv_files = []

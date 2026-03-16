@@ -243,4 +243,5 @@ Compared to model without angiogenesis... both tumor experience identical hypoxi
 - merge VEGF and Oxygen field in plot 3, noting that VEGF1 is not relevant
 - discard plot 4
 - keep plot 5, interesting to compare to the one without angiogenesis. It shows HIF1a dynamics working
-- keep some spatial metrics from 6, especially those that show that are tumor has hollow structure and that necrotic_radius < hypoxic_radius < normal_radius for necrotic "core".
+- keep some spatial metrics from 6, especially those that show that are tumor has hollow structure and that necrotic_radius < hypoxic_radius < normal_radius for necrotic "core". And vessels distance
+- limitation: no decoupling in metrics collection?, boundaries effects? FiPy vs CC3D solver? pharmacokinetics and dynamics extensions?

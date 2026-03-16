@@ -23,11 +23,11 @@ FIELD_SUBFOLDER_HINTS = {
 }
 
 # User configuration (edit these values and run the script)
-RUN_FOLDER = "late_stage"  # Subfolder inside visualization/ containing the field subfolders.
+RUN_FOLDER = "angiogenesis_no_tumor_growth"  # Subfolder inside visualization/ containing the field subfolders.
 FIELDS = ["Cell_Field", "Oxygen", "VEGF2"]
 FPS = 6
-OUTPUT = "../visualization/late_stage_angiogenesis.mp4"
-MAX_FRAMES = 200  # Example: 200
+OUTPUT = "../visualization/angiogenesis_no_tumor_growth.mp4"
+MAX_FRAMES = None  # Example: 200
 
 # Panel label styling
 PANEL_LABEL_HEIGHT = 44
@@ -51,11 +51,11 @@ PANEL_LABELS = {
 # Cell-field legend entries (user-editable).
 # Each item requires: name + color (hex code).
 CELL_FIELD_LEGEND = [
-    {"name": "Normal", "color": "#0000ff"},
-    {"name": "Hypoxic", "color": "#008000"},
-    {"name": "Necrotic", "color": "#ff0000"},
-    {"name": "Active Neovascular", "color": "#55aaff"},
+    # {"name": "Normoxic tumor", "color": "#0000ff"},
+    {"name": "Hypoxic tumor", "color": "#008000"},
+    # {"name": "Necrotic tumor", "color": "#ff0000"},
     {"name": "Vascular", "color": "#aa0000"},
+    {"name": "Active Neovascular", "color": "#55aaff"},
     {"name": "Inactive Neovascular", "color": "#ff00ff"},
 ]
 

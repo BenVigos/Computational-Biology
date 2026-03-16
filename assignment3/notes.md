@@ -108,14 +108,14 @@ Expected behaviour (Figure 1):
 5. No regulation implemented.
 6. Blood supply stimulates further tumor growth.
 
-If we look at Figure 2 we see that the addition of angiogenesis allows for growth after the first initial spike, while the model without angiogenesis reaches a steady state. Subplot b shows that the peak around 900 MCS is caused by a significant spike in nectoric cells. If we look at figure B, subplot c we see that this point corresponds with an increase of oxygen from the reached equillibrium, due to the approaching endothelial cells. This supply of oxygen allows for further tumor growth, which eventually fills almost the entire domain. Subplot c shows that with angiogenesis the hypoxic fraction continuiously declines after the second peak, while the model without angiogenesis seems to oscillate at a higher value. 
+If we look at Figure 2 we see that the addition of angiogenesis allows for growth after the first initial spike, while the model without angiogenesis reaches a steady state. Subplot b shows that the peak around 900 MCS is caused by a significant spike in necrotic cells. If we look at figure 3c we see that this point corresponds with an increase of oxygen from the reached equillibrium, due to the approaching endothelial cells. This supply of oxygen allows for further tumor growth, which eventually fills almost the entire domain. Subplot c shows that with angiogenesis the hypoxic fraction continuiously declines after the second peak, while the model without angiogenesis seems to oscillate at a higher value. 
 
 The supply of fresh oxygen through endothelial cells does not just allow for growth, it allows for healthier growth with less hypoxic cells. This indicates that our model is simulating the expected behaviour of angiogensis properly.
 
 
 Figure 3a, shows the mean VEGF and HIF-1 alpha concentrations inside the tumor cells. The simulations only tracked this level within tumor cells and not across the entire domain, where we would expect to see a difference.
 
-However, hen we look at the activation of neovascular cells in subplot b, we see a significant increase in the amount of active neovascular cells. During the initialization there is some factor causing an increase in inactive neovascular cells, which allows for this increased level of activated cells. We have not found the cause within our model for this incrase of inactive neovascular cells due to time constraints.
+However, when we look at the activation of neovascular cells in subplot b, we see a significant increase in the amount of active neovascular cells. During the initialization there is some factor causing an increase in inactive neovascular cells, which allows for this increased level of activated cells. We have not found the cause within our model for this incrase of inactive neovascular cells due to time constraints.
 
 If we look at Figure 4b After the peaks at 1200 Monte Carlo Steps we see a decrease in both VEGF and HIF-1a with angiogenesis due to the fresh supply of oxygen and accompanying decrease in hypoxic cells.
 

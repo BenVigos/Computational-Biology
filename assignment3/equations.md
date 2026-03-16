@@ -4,7 +4,7 @@
 
 ## 1. Cellular Potts Model Effective Energy
 
-Core Hamiltonian equation that describes the physical shape, volume, and interactions of the cells on the grid \textit{(Slide # 26, from Cell-based modelling 2 lecture)}
+Core Hamiltonian equation that describes the physical shape, volume, and interactions of the cells on the grid *(Slide # 26, from Cell-based modelling 2 lecture)*
 
 
 $$\mathcal{H}=\sum_{\langle i,j \rangle} J\big(\tau(\sigma_i),\tau(\sigma_j)\big)\left(1-\delta_{\sigma_i,\sigma_j}\right) + \sum_{\sigma} \lambda_V\big(V(\sigma) V_t(\sigma)\big)^2$$
@@ -26,7 +26,7 @@ Where:
 
 ### 3.1 Oxygen field $O$
 
-The oxygen field follows a diffusion-decay equation with type-specific uptake. \textit{(Slide # 44, from Reaction Diffusion Systems lecture)}
+The oxygen field follows a diffusion-decay equation with type-specific uptake. *(Slide # 44, from Reaction Diffusion Systems lecture)*
 
 
 $$
@@ -52,7 +52,7 @@ $$
 
 ### 3.2 VEGF1 field $V_1$
 
-VEGF1 is the field secreted by vascular-like cells.\textit{(Slide # 44, from Reaction Diffusion Systems lecture)}
+VEGF1 is the field secreted by vascular-like cells.*(Slide # 44, from Reaction Diffusion Systems lecture)*
 
 $$
 \frac{\partial V_1}{\partial t}=D_{V1}\nabla^2V_1-\lambda_{V1}V_1+s_{V1}\,\delta_{\text{vascular-like}}
@@ -68,7 +68,7 @@ $$
 
 ### 3.3 VEGF2 field $V_2$
 
-VEGF2 is the hypoxia-associated signal secreted by hypoxic tumor cells. \textit{(Slide # 44, from Raction Diffusion Systems lecture)}
+VEGF2 is the hypoxia-associated signal secreted by hypoxic tumor cells.*(Slide # 44, from Raction Diffusion Systems lecture)*
 
 $$
 \frac{\partial V_2}{\partial t}=D_{V2}\nabla^2V_2-\lambda_{V2}V_2+s_{V2}\,\delta_{\text{Hypoxic}}
@@ -83,7 +83,7 @@ $$
 
 ## 4. Tumor Phenotype Switching
 
-Tumor phenotype changes are threshold rules driven by local oxygen at the cell center of mass (COM). \textit{(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)}
+Tumor phenotype changes are threshold rules driven by local oxygen at the cell center of mass (COM). *(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*
 
 ### 4.1 Normal to Hypoxic
 
@@ -105,7 +105,8 @@ $$
 
 ## 5. Tumor Growth Laws
 
-Tumor growth is implemented as a change in target volume, using Michaelis-Menten-like dependence on oxygen. \textit{(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)}
+Tumor growth is implemented as a change in target volume, using Michaelis-Menten-like dependence on oxygen. 
+*(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*
 
 ### 5.1 Normal tumor growth
 
@@ -133,7 +134,7 @@ $$
 
 ### 5.3 Necrotic behavior
 
-Necrotic cells do not grow. Their target volume is forced to zero. \textit{(Slide # 25, from Cell-based modelling 2 lecture)}
+Necrotic cells do not grow. Their target volume is forced to zero. *(Slide # 25, from Cell-based modelling 2 lecture)*
 
 $$
 V_t^{\text{Necrotic}} = 0
@@ -142,7 +143,8 @@ $$
 
 ## 6. Vascular Activation and Deactivation
 
-Neovascular sprouts switch phenotype according to the effective VEGF2 level. {(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)}
+Neovascular sprouts switch phenotype according to the effective VEGF2 level. 
+*(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*
 
 ### 6.1 Activation
 
@@ -158,7 +160,7 @@ $$
 
 ## 7. Vascular Growth Law with Contact Inhibition
 
-Vascular target-volume growth is Michaelis-Menten-like. \textit{(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)}
+Vascular target-volume growth is Michaelis-Menten-like. *(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*
 
 $$
 \frac{dV_t^{\text{neo}}}{dt} = G_V\frac{V_{\text{eff}}}{K_V + V_{\text{eff}}}
@@ -184,7 +186,7 @@ $$
 
 ## 8. Mitosis Rules
 
-Cells divide once their actual volume exceeds a type-specific doubling threshold. \textit{(Slide # 28, from Cell-based modelling 2 lecture)}
+Cells divide once their actual volume exceeds a type-specific doubling threshold. *(Slide # 28, from Cell-based modelling 2 lecture)*
 
 ### 8.1 Tumor-cell mitosis
 
@@ -204,7 +206,7 @@ for ActiveNeovascular and InactiveNeovascular cells.
 
 ## 9. HIF-1α Intracellular Regulatory Network
 
-Local oxygen concentration controls HIF-1α accumulation, and HIF-1α in turn drives VEGF transcriptional activity. \textit{(Slide # 43, from Gene Regulatory Networks lecture)}
+Local oxygen concentration controls HIF-1α accumulation, and HIF-1α in turn drives VEGF transcriptional activity. *(Slide # 43, from Gene Regulatory Networks lecture)*
 
 ### 9.1 Hypoxia signal from oxygen
 

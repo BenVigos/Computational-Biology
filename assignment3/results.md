@@ -1,0 +1,46 @@
+---
+geometry:
+- margin=0.5in
+- paperwidth=210mm
+- paperheight=210mm
+header-includes:
+  - \usepackage{float}
+  - \usepackage{graphicx}
+---
+# Assignment 3: Figures and videos
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{angiogenesis-3612748292.jpg}
+\caption{Schematic representation of the tumor microenvironment and angiogenesis process. The figure illustrates the interactions between tumor cells, endothelial cells, and the extracellular matrix, highlighting key signaling pathways such as VEGF and HIF-1$\alpha$ that drive angiogenic sprouting and vascular remodeling in response to hypoxic conditions within the tumor mass. Image Source:Tocris Bioscience. Angiogenesis in cancer research product guide, 
+3 Ed., (2015),  https://www.tocris.com/literature/product-guides/angiogenesis-in-cancer }
+\label{fig:angiogenesis-schematic}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/comparison_figures/figure_A_tumor_vs_angiogenesis.png}
+\caption{Comparison of tumor growth in simulations without angiogenesis and in the full model including angiogenesis. Panel (a) shows the temporal evolution of tumor size, reported as both the effective tumor radius and the mean radial distance of tumor cells from the tumor centroid, thereby capturing changes in overall extent and spatial spread. Panel (b) shows the corresponding tumor cell composition over time, separating total tumor-like cells into normoxic, hypoxic, and necrotic subpopulations to illustrate how vascular support modifies the balance between proliferative and oxygen-limited states. Panel (c) shows the hypoxic fraction, highlighting how the emergence of angiogenesis changes the degree of oxygen stress experienced by the tumor during progression.}
+\label{fig:comparison-a}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/comparison_figures/figure_B_endothelial_activation.png}
+\caption{Comparison of late-stage endothelial activation in simulations without HIF-1$\alpha$ and in simulations with HIF-1$\alpha$ signaling enabled. Panel (a) shows the time evolution of VEGF and HIF-1$\alpha$-associated signaling, illustrating how the inclusion of HIF-1$\alpha$ alters the molecular pro-angiogenic response. Panel (b) shows the numbers of active and inactive neovascular cells, providing a direct measure of how signaling differences translate into endothelial activation and sprout dynamics. Panel (c) shows tumor oxygen levels together with the minimum distance between the tumor and nearby sprouts, linking biochemical signaling to the spatial approach of the vascular network toward the tumor mass.}
+\label{fig:comparison-b}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/comparison_figures/figure_C_combined_tumor_dynamics.png}
+\caption{Integrated comparison of tumor-only growth and the full tumor--angiogenesis model. Panel (a) shows the temporal evolution of total tumor-like cells together with the normoxic, hypoxic, and necrotic subpopulations, allowing direct assessment of how angiogenesis reshapes tumor composition. Panel (b) shows VEGF and HIF-1$\alpha$ signaling dynamics, revealing the distinct regulatory environment associated with vascularized versus non-vascularized growth. Panel (c) shows tumor oxygen levels together with the minimum tumor-to-vessel distance, demonstrating how vascular proximity is associated with changes in oxygen availability during tumor progression.}
+\label{fig:comparison-c}
+\end{figure}
+
+# Supplementary Videos
+Three supplementary videos are included to visually illustrate the dynamic processes involved in each of the 3 performed simulations.
+
+- Video 1: Tumor growth without angiogenesis
+- Video 2: Angiogenesis without tumor growth
+- Video 3: Tumor growth with angiogenesis

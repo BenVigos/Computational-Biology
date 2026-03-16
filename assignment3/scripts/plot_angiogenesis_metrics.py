@@ -17,10 +17,54 @@ from typing import Iterable
 import matplotlib.pyplot as plt
 import pandas as pd
 
+SMOOTH_WINDOW = 15  # rolling-average window for noisy / rate series
+ZERO_CROSSING_MIN_GAP_FRACTION = 0.07
+
 
 DEFAULT_INPUT = Path("../Angiogenesis/results/angiogenesis_metrics.csv")
 DEFAULT_FORMAT = "png"
 DEFAULT_DPI = 160
+
+
+def _smooth(series: pd.Series, window: int = SMOOTH_WINDOW) -> pd.Series:
+    """Rolling mean with min_periods=1 so edges do not go NaN."""
+    return series.rolling(window, center=True, min_periods=1).mean()
+
+
+def _twin_right(ax: plt.Axes, color: str) -> plt.Axes:
+    """Return a right-hand twin axis styled with *color*."""
+    ax2 = ax.twinx()
+    ax2.spines["right"].set_color(color)
+    ax2.tick_params(axis="y", colors=color)
+    ax2.yaxis.label.set_color(color)
+    return ax2
+
+
+def _decorate(
+    ax: plt.Axes,
+    *,
+    title: str = "",
+    xlabel: str = "",
+    ylabel: str = "",
+) -> None:
+    if title:
+        ax.set_title(title, fontsize=9)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.25, linestyle="--")
+
+
+def _debounce_crossings(crossings: list[int], min_gap: int) -> list[int]:
+    if not crossings:
+        return []
+    min_gap = max(1, int(min_gap))
+    kept = [int(crossings[0])]
+    for cx in crossings[1:]:
+        if int(cx) - kept[-1] >= min_gap:
+            kept.append(int(cx))
+    return kept
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,221 +140,523 @@ def save_figure(fig: plt.Figure, output_dir: Path, prefix: str, stem: str, fmt: 
     return output_path
 
 
-def plot_counts_and_fraction(df: pd.DataFrame) -> plt.Figure | None:
-    count_columns = available_columns(
-        df,
-        [
-            "tumor_cells",
-            "normal_cells",
-            "hypoxic_cells",
-            "necrotic_cells",
-            "tumor_like_cells",
-            "endothelial_cells",
-            "vascular_like_cells",
-            "active_neovascular_cells",
-            "vascular_cells",
-            "inactive_neovascular_cells",
-        ],
+# ── 1. Tumor dynamics ─────────────────────────────────────────────────────────
+
+def plot_tumor_dynamics(df: pd.DataFrame) -> plt.Figure | None:
+    """2x2 grid: cell counts · phenotype fractions · volumes · growth pressure."""
+    has_counts = any(c in df.columns for c in ["tumor_like_cells", "normal_cells", "hypoxic_cells", "necrotic_cells"])
+    has_fractions = any(c in df.columns for c in ["hypoxic_fraction", "necrotic_fraction"])
+    has_volumes = any(
+        c in df.columns
+        for c in [
+            "total_tumor_volume",
+            "avg_normal_volume",
+            "avg_hypoxic_volume",
+            "avg_necrotic_volume",
+            "avg_tumor_volume",
+        ]
     )
-    fraction_columns = available_columns(df, ["hypoxic_fraction", "necrotic_fraction"])
-    if not count_columns and not fraction_columns:
+    has_pressure = "avg_tumor_target_volume" in df.columns and "avg_tumor_volume" in df.columns
+    if not any([has_counts, has_fractions, has_volumes, has_pressure]):
         return None
 
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-    if count_columns:
-        for column in count_columns:
-            axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[0].set_ylabel("Cell count")
-        axes[0].set_title("Cell populations over time")
-        axes[0].grid(alpha=0.3)
-        axes[0].legend()
-    else:
-        axes[0].set_visible(False)
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharex=True)
+    fig.suptitle("1 · Tumor Dynamics", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
 
-    if fraction_columns:
-        for column in fraction_columns:
-            axes[1].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[1].set_ylabel("Fraction")
-        axes[1].set_xlabel("MCS")
-        axes[1].set_title("Tumor phenotype fractions over time")
-        axes[1].grid(alpha=0.3)
-        axes[1].legend()
-    else:
-        axes[1].set_visible(False)
+    # ── counts ────────────────────────────────────────────────────────────────
+    ax = axes[0, 0]
+    CELL_STYLES: list[tuple[str, str, str, float]] = [
+        ("tumor_like_cells", "Total tumor",  "black",       2.0),
+        ("normal_cells",     "Normal",        "tab:blue",    1.2),
+        ("hypoxic_cells",    "Hypoxic",       "tab:orange",  1.2),
+        ("necrotic_cells",   "Necrotic",      "tab:red",     1.2),
+    ]
+    plotted = False
+    for col, label, color, lw in CELL_STYLES:
+        if col in df.columns:
+            ax.plot(mcs, df[col], label=label, color=color, linewidth=lw)
+            plotted = True
+    _decorate(ax,
+              title="Cell counts\n(slow growth → acceleration → O\u2082 limitation)",
+              ylabel="Number of cells")
+    if plotted:
+        ax.legend(fontsize=8)
 
+    # ── phenotype fractions + VEGF2 right axis ────────────────────────────────
+    ax = axes[0, 1]
+    frac_plotted = False
+    for col, label, color in [
+        ("hypoxic_fraction",  "Hypoxic fraction",  "tab:orange"),
+        ("necrotic_fraction", "Necrotic fraction", "tab:red"),
+    ]:
+        if col in df.columns:
+            ax.plot(mcs, df[col], label=label, color=color, linewidth=1.4)
+            frac_plotted = True
+    _decorate(ax,
+              title="Phenotype fractions & VEGF2\n(hypoxia drives VEGF2 → angiogenesis → O\u2082 recovery → fractions drop)",
+              ylabel="Fraction")
+    if frac_plotted:
+        ax.set_ylim(bottom=0)
+        ax.legend(loc="upper left", fontsize=8)
+    if "mean_tumor_vegf2" in df.columns:
+        ax2 = _twin_right(ax, "tab:purple")
+        ax2.plot(mcs, _smooth(df["mean_tumor_vegf2"]),
+                 color="tab:purple", linestyle="--", linewidth=1.2, label="Mean VEGF2 (smooth)")
+        ax2.set_ylabel("Mean VEGF2")
+        ax2.legend(loc="upper right", fontsize=8)
+
+    # ── volumes ───────────────────────────────────────────────────────────────
+    ax = axes[1, 0]
+    ax2 = None
+    if "total_tumor_volume" in df.columns:
+        ax.plot(mcs, df["total_tumor_volume"], color="tab:blue",
+                label="Total volume", linewidth=1.5)
+        ax.set_ylabel("Total volume (voxels)")
+    phenotype_avg_specs = [
+        ("avg_normal_volume", "Normal avg volume", "tab:blue", "-"),
+        ("avg_hypoxic_volume", "Hypoxic avg volume", "tab:orange", "--"),
+        ("avg_necrotic_volume", "Necrotic avg volume", "tab:red", ":"),
+    ]
+    phenotype_columns_present = any(column in df.columns for column, _, _, _ in phenotype_avg_specs)
+    if phenotype_columns_present:
+        ax2 = _twin_right(ax, "tab:gray")
+        for column, label, color, linestyle in phenotype_avg_specs:
+            if column in df.columns:
+                ax2.plot(
+                    mcs,
+                    _smooth(df[column]),
+                    color=color,
+                    linestyle=linestyle,
+                    linewidth=1.3,
+                    label=label,
+                )
+        ax2.set_ylabel("Phenotype avg cell volume (voxels)")
+        ax2.legend(loc="upper left", fontsize=8)
+    elif "avg_tumor_volume" in df.columns:
+        ax2 = _twin_right(ax, "tab:cyan")
+        ax2.plot(mcs, _smooth(df["avg_tumor_volume"]), color="tab:cyan",
+                 linestyle="--", linewidth=1.2, label="Avg cell volume")
+        ax2.set_ylabel("Avg cell volume (voxels)")
+        ax2.legend(loc="upper left", fontsize=8)
+    _decorate(ax, title="Tumor volume and phenotype-specific average size",
+              xlabel="MCS", ylabel="Total volume (voxels)")
+    
+    # ── growth pressure: target vs actual ─────────────────────────────────────
+    ax = axes[1, 1]
+    pres_plotted = False
+    if has_pressure:
+        ax.plot(mcs, df["avg_tumor_target_volume"], color="tab:green",
+                linewidth=1.5, label="Avg target volume")
+        ax.plot(mcs, df["avg_tumor_volume"], color="tab:blue",
+                linestyle="--", linewidth=1.2, label="Avg actual volume")
+        ax.fill_between(mcs, df["avg_tumor_volume"], df["avg_tumor_target_volume"],
+                        alpha=0.15, color="tab:green", label="Growth pressure")
+        pres_plotted = True
+    _decorate(ax, title="Growth pressure (target \u2212 actual)\n+ HIF-1\u03b1 if network enabled",
+              xlabel="MCS", ylabel="Volume (voxels)")
+    if pres_plotted:
+        ax.legend(loc="upper left", fontsize=8)
+    # overlay HIF-1a if present
+    if "mean_tumor_hif1a" in df.columns:
+        ax2 = _twin_right(ax, "tab:purple")
+        ax2.plot(mcs, df["mean_tumor_hif1a"], color="tab:purple",
+                 linewidth=1.2, linestyle=":", label="Mean HIF-1\u03b1")
+        ax2.set_ylabel("Mean HIF-1\u03b1")
+        ax2.legend(loc="lower right", fontsize=8)
+
+    fig.tight_layout()
     return fig
 
 
-def plot_tumor_volume(df: pd.DataFrame) -> plt.Figure | None:
-    columns = available_columns(
+# ── 2. Vascular response ──────────────────────────────────────────────────────
+
+def plot_vascular_response(df: pd.DataFrame) -> plt.Figure | None:
+    """Panels: endothelial populations · cell sizes · endothelial growth rate."""
+    # Only include endothelial-related columns
+    pop_cols = available_columns(
+        df, ["neovascular_cells", "active_neovascular_cells",
+             "inactive_neovascular_cells", "vascular_cells"]
+    )
+    size_cols = available_columns(
         df,
         [
-            "avg_tumor_volume",
-            "total_tumor_volume",
-            "avg_tumor_target_volume",
-            "avg_vascular_volume",
-            "avg_endothelial_volume",
-            "mean_hif",
+            "avg_neovascular_volume",
+            "avg_active_neovascular_volume",
+            "avg_inactive_neovascular_volume",
+            "avg_parent_vessel_volume",
         ],
     )
-    if not columns:
-        return None
-
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
-
-    upper_columns = available_columns(
+    rate_cols = available_columns(
         df,
         [
-            "avg_tumor_volume",
-            "avg_tumor_target_volume",
-            "total_tumor_volume",
-            "avg_vascular_volume",
-            "avg_endothelial_volume",
-        ],
-    )
-    for column in upper_columns:
-        axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
-    axes[0].set_ylabel("Volume")
-    axes[0].set_title("Tumor size metrics")
-    axes[0].grid(alpha=0.3)
-    if upper_columns:
-        axes[0].legend()
-
-    if "mean_hif" in df.columns:
-        axes[1].plot(df["mcs"], df["mean_hif"], color="tab:purple", label="mean HIF")
-        axes[1].set_ylabel("Mean HIF")
-        axes[1].set_title("Hypoxia signalling")
-        axes[1].grid(alpha=0.3)
-        axes[1].legend()
-    else:
-        axes[1].set_visible(False)
-
-    axes[1].set_xlabel("MCS")
-    return fig
-
-
-def plot_growth_rates(df: pd.DataFrame) -> plt.Figure | None:
-    columns = available_columns(
-        df,
-        [
-            "avg_tumor_volume_growth_rate",
-            "avg_tumor_target_growth_rate",
-            "total_tumor_volume_growth_rate",
             "avg_endothelial_volume_growth_rate",
-            "avg_vascular_volume_growth_rate",
+            "avg_parent_vessel_volume_growth_rate",
         ],
     )
-    if not columns:
+    size_cols = available_columns(df, ["avg_endothelial_volume"])
+    rate_cols = available_columns(df, ["avg_endothelial_volume_growth_rate"])
+    if not pop_cols and not size_cols and not rate_cols:
         return None
 
-    fig, ax = plt.subplots(figsize=(10, 5.5))
-    for column in columns:
-        ax.plot(df["mcs"], df[column], label=column.replace("_", " "))
-    ax.axhline(0.0, color="black", linewidth=1, alpha=0.5)
-    ax.set_xlabel("MCS")
-    ax.set_ylabel("Rate per MCS")
-    ax.set_title("Growth-rate metrics")
-    ax.grid(alpha=0.3)
-    ax.legend()
+    n_panels = sum([bool(pop_cols), bool(size_cols), bool(rate_cols)])
+    fig, axes = plt.subplots(n_panels, 1, figsize=(11, 3.5 * n_panels), sharex=True)
+    axes = [axes] if n_panels == 1 else list(axes)
+    fig.suptitle("2 · Endothelial Response", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
+    panel = 0
+
+    # populations
+    ax = axes[0]
+    VASC_STYLES: list[tuple[str, str, str, float]] = [
+        ("neovascular_cells",          "All neovascular",   "black",      2.0),
+        ("active_neovascular_cells",   "Active (tip cell)", "tab:green",  1.3),
+        ("inactive_neovascular_cells", "Inactive (stalk)",  "tab:olive",  1.3),
+        ("vascular_cells",             "Parent vessel",     "tab:blue",   1.3),
+    ]
+    for col, label, color, lw in VASC_STYLES:
+        if col in df.columns:
+            ax.plot(mcs, df[col], label=label, color=color, linewidth=lw)
+    _decorate(ax,
+              title="Endothelial populations\n(VEGF2 chemotaxis activates sprouting; active count rises with hypoxia)",
+              ylabel="Cell count")
+    if pop_cols:
+        ax = axes[panel]; panel += 1
+        ENDO_STYLES: list[tuple[str, str, str, float]] = [
+            ("active_neovascular_cells",   "Active (tip cell)", "tab:green",  1.3),
+            ("inactive_neovascular_cells", "Inactive (stalk)",  "tab:olive",  1.3),
+        ]
+        for col, label, color, lw in ENDO_STYLES:
+            if col in df.columns:
+                ax.plot(mcs, df[col], label=label, color=color, linewidth=lw)
+        _decorate(ax,
+                  title="Endothelial populations\n(VEGF2 chemotaxis activates sprouting; active count rises with hypoxia)",
+                  ylabel="Cell count")
+        ax.legend(fontsize=8)
+
+    # mean cell volume
+    ax = axes[1]
+    plotted_size = False
+    size_specs = [
+        ("avg_neovascular_volume", "Neovascular avg volume", "tab:green"),
+        ("avg_active_neovascular_volume", "Active sprout avg volume", "tab:cyan"),
+        ("avg_inactive_neovascular_volume", "Inactive sprout avg volume", "tab:olive"),
+    ]
+    for col, label, color in size_specs:
+        if col in df.columns:
+            ax.plot(mcs, _smooth(df[col]), label=label, color=color, linewidth=1.4)
+            plotted_size = True
+    _decorate(ax, title="Sprout / endothelial average volume", ylabel="Volume (voxels)")
+    if plotted_size:
+        ax.legend(fontsize=8)
+    elif "avg_parent_vessel_volume" in df.columns:
+        ax.text(
+            0.5,
+            0.5,
+            "Parent vessel volume tracked in CSV but omitted here\nbecause frozen vessel cells dominate the scale.",
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=9,
+        )
+
+    # growth rate (smoothed)
+    ax = axes[2]
+    plotted_rate = False
+    for col, label, color in [
+        ("avg_endothelial_volume_growth_rate", "Endothelial growth rate", "tab:cyan"),
+        ("avg_parent_vessel_volume_growth_rate", "Parent vessel growth rate", "tab:gray"),
+    ]:
+        if col in df.columns and col != "avg_parent_vessel_volume_growth_rate":
+            ax.plot(mcs, _smooth(df[col]), label=label + " (smooth)", linewidth=1.4, color=color)
+            plotted_rate = True
+    ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+    _decorate(ax, title="Sprout / endothelial growth rate (smoothed)",
+              xlabel="MCS", ylabel="\u0394Vol / MCS")
+    if plotted_rate:
+        ax.legend(fontsize=8)
+    elif "avg_parent_vessel_volume_growth_rate" in df.columns:
+        ax.text(
+            0.5,
+            0.5,
+            "Frozen parent vessel growth rate omitted from plot.",
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=9,
+        )
+
+    fig.tight_layout()
     return fig
 
 
-def plot_field_means(df: pd.DataFrame) -> plt.Figure | None:
-    tumor_field_columns = available_columns(df, ["mean_tumor_oxygen", "mean_tumor_vegf", "mean_tumor_vegf1", "mean_tumor_vegf2"])
-    endothelial_field_columns = available_columns(
-        df,
-        [
-            "mean_endothelial_oxygen",
-            "mean_endothelial_vegf",
-            "mean_vascular_oxygen",
-            "mean_vascular_vegf1",
-            "mean_vascular_vegf2",
-        ],
+# ── 3. Signaling fields ───────────────────────────────────────────────────────
+
+def plot_signaling_fields(df: pd.DataFrame) -> plt.Figure | None:
+    """Two panels: oxygen (drop and recovery) · VEGF2 (dual axis with hypoxic fraction)."""
+    o2_cols = available_columns(
+        df, ["mean_tumor_oxygen"]  # Only tumor oxygen, remove vascular/endothelial
     )
-    if not tumor_field_columns and not endothelial_field_columns:
+    vegf_cols = available_columns(
+        df, ["mean_tumor_vegf2", "mean_tumor_vegf1"]  # Only tumor VEGF, remove vascular
+    )
+    if not o2_cols and not vegf_cols:
         return None
 
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    nrows = int(bool(o2_cols)) + int(bool(vegf_cols))
+    fig, raw_axes = plt.subplots(nrows, 1, figsize=(11, 4.5 * nrows), sharex=True)
+    axes = [raw_axes] if nrows == 1 else list(raw_axes)
+    fig.suptitle("3 · Signaling Fields", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
+    panel = 0
 
-    if tumor_field_columns:
-        for column in tumor_field_columns:
-            axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[0].set_ylabel("Field value")
-        axes[0].set_title("Tumor-local field means")
-        axes[0].grid(alpha=0.3)
-        axes[0].legend()
-    else:
-        axes[0].set_visible(False)
+    if o2_cols:
+        ax = axes[panel]; panel += 1
+        # Only plot tumor oxygen
+        if "mean_tumor_oxygen" in df.columns:
+            ax.plot(mcs, df["mean_tumor_oxygen"], label="Tumor (mean)", color="tab:red", linestyle="-", linewidth=1.4)
+        _decorate(ax,
+                  title="Oxygen field\n(tumor consumes O\u2082; angiogenesis restores supply)",
+                  ylabel="[O\u2082] (a.u.)")
+        ax.legend(fontsize=8)
 
-    if endothelial_field_columns:
-        for column in endothelial_field_columns:
-            axes[1].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[1].set_xlabel("MCS")
-        axes[1].set_ylabel("Field value")
-        axes[1].set_title("Endothelial-local field means")
-        axes[1].grid(alpha=0.3)
-        axes[1].legend()
-    else:
-        axes[1].set_visible(False)
+    if vegf_cols:
+        ax = axes[panel]; panel += 1
+        # Only plot tumor VEGF fields
+        VEGF_STYLE: dict[str, tuple[str, str, str]] = {
+            "mean_tumor_vegf2":   ("VEGF2 @ tumor",    "tab:orange", "-"),
+            "mean_tumor_vegf1":   ("VEGF1 @ tumor",    "tab:purple", ":"),
+        }
+        for col, (label, color, ls) in VEGF_STYLE.items():
+            if col in df.columns:
+                ax.plot(mcs, _smooth(df[col]),
+                        label=label + " (smooth)", color=color,
+                        linestyle=ls, linewidth=1.4)
+        _decorate(ax,
+                  title="VEGF fields\n(rise with hypoxia; fall as new vessels supply O\u2082)",
+                  xlabel="MCS", ylabel="VEGF (a.u.)")
+        ax.legend(loc="upper left", fontsize=8)
 
+    axes[-1].set_xlabel("MCS")
+    fig.tight_layout()
     return fig
 
 
-def plot_endothelial_metrics(df: pd.DataFrame) -> plt.Figure | None:
-    columns = available_columns(
-        df,
-        [
-            "endothelial_cells",
-            "vascular_like_cells",
-            "active_neovascular_cells",
-            "vascular_cells",
-            "inactive_neovascular_cells",
-            "avg_endothelial_volume",
-            "avg_vascular_volume",
-        ],
+# ── 4. System-level dynamics ──────────────────────────────────────────────────
+
+def plot_system_dynamics(df: pd.DataFrame) -> plt.Figure | None:
+    """Two panels: tumor growth rate (smoothed, annotated) · O2 recovery vs active sprouts."""
+    rate_col = next(
+        (c for c in ["avg_tumor_volume_growth_rate", "total_tumor_volume_growth_rate"]
+         if c in df.columns), None
     )
-    if not columns:
+    o2_col = "mean_tumor_oxygen" if "mean_tumor_oxygen" in df.columns else None
+    sprout_col = None  # Remove vascular cell overlays
+    if not rate_col and not o2_col:
         return None
 
-    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(11, 8), sharex=True)
+    fig.suptitle("4 · System-level Dynamics", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
 
-    population_columns = available_columns(
-        df,
-        ["endothelial_cells", "vascular_like_cells", "active_neovascular_cells", "vascular_cells", "inactive_neovascular_cells"],
-    )
-    if population_columns:
-        for column in population_columns:
-            axes[0].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[0].set_ylabel("Cell count")
-        axes[0].set_title("Vascular / neovascular populations")
-        axes[0].grid(alpha=0.3)
-        axes[0].legend()
-    else:
-        axes[0].set_visible(False)
+    # ── tumor growth rate ─────────────────────────────────────────────────────
+    ax = axes[0]
+    if rate_col:
+        raw = df[rate_col]
+        smooth = _smooth(raw)
+        ax.plot(mcs, raw, color="tab:blue", alpha=0.20, linewidth=0.7)
+        ax.plot(mcs, smooth, color="tab:blue", linewidth=2.0,
+                label="Tumor growth rate (smooth)")
+        ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.5)
+        # mark zero-crossings (growth → stasis)
+        zero_cross = mcs[
+            (smooth.shift(1).gt(0) & smooth.le(0)) |
+            (smooth.shift(1).lt(0) & smooth.ge(0))
+        ]
+        crossing_candidates = [int(v) for v in zero_cross.tolist()]
+        span = int(mcs.max() - mcs.min()) if len(mcs) else 0
+        min_gap = max(10, int(ZERO_CROSSING_MIN_GAP_FRACTION * span))
+        for cx in _debounce_crossings(crossing_candidates, min_gap):
+            ax.axvline(cx, color="tab:red", linestyle=":", alpha=0.6, linewidth=1.0)
+            ax.annotate(
+                "rate\u2248 0",
+                xy=(cx, 0),
+                xytext=(cx + max(5, int((mcs.max() - mcs.min()) * 0.03)),
+                        float(smooth.abs().max()) * 0.4),
+                fontsize=7, color="tab:red",
+                arrowprops=dict(arrowstyle="->", color="tab:red", lw=0.8),
+            )
+    if "avg_tumor_target_growth_rate" in df.columns:
+        ax.plot(mcs, _smooth(df["avg_tumor_target_growth_rate"]),
+                color="tab:green", linewidth=1.5, linestyle="--",
+                label="Target growth rate (smooth)")
+    _decorate(ax,
+              title="Tumor growth rate\n(fast under O\u2082; slows with hypoxia; may recover after angiogenesis)",
+              ylabel="\u0394Vol / MCS")
+    ax.legend(fontsize=8)
 
-    size_columns = available_columns(df, ["avg_endothelial_volume", "avg_vascular_volume"])
-    if size_columns:
-        for column in size_columns:
-            axes[1].plot(df["mcs"], df[column], label=column.replace("_", " "))
-        axes[1].set_xlabel("MCS")
-        axes[1].set_ylabel("Volume")
-        axes[1].set_title("Vascular / neovascular size")
-        axes[1].grid(alpha=0.3)
-        axes[1].legend()
-    else:
-        axes[1].set_visible(False)
+    # ── O2 recovery vs active sprout count ───────────────────────────────────
+    ax = axes[1]
+    if o2_col:
+        ax.plot(mcs, df[o2_col], color="tab:cyan", linewidth=1.5,
+                label="Mean tumor O\u2082")
+        ax.set_ylabel("Mean [O\u2082] (a.u.)")
+        ax.tick_params(axis="y", colors="tab:cyan")
+        ax.spines["left"].set_color("tab:cyan")
+    # Removed overlay of active neovascular cells
+    _decorate(ax,
+              title="Oxygen recovery vs. active sprout count\n(sprouting precedes O\u2082 restoration; observe the phase lag)",
+              xlabel="MCS", ylabel="Mean [O\u2082] (a.u.)")
+    if o2_col:
+        ax.legend(loc="upper left", fontsize=8)
 
+    fig.tight_layout()
+    return fig
+
+
+# ── 5. HIF-1a network (only if columns are present) ───────────────────────────
+
+def plot_hif1a_network(df: pd.DataFrame) -> plt.Figure | None:
+    """HIF-1a dynamics and VEGF drive, only emitted when the network was enabled."""
+    if "mean_tumor_hif1a" not in df.columns:
+        return None
+
+    fig, axes = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+    fig.suptitle("5 · HIF-1\u03b1 Gene Network", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
+
+    ax = axes[0]
+    ax.plot(mcs, df["mean_tumor_hif1a"], color="tab:purple", linewidth=1.5,
+            label="Mean HIF-1\u03b1")
+    _decorate(ax, title="Intracellular HIF-1\u03b1 (stabilised by low O\u2082, degraded constitutively)",
+              ylabel="HIF-1\u03b1 (a.u.)")
+    if "mean_tumor_oxygen" in df.columns:
+        ax2 = _twin_right(ax, "tab:red")
+        ax2.plot(mcs, df["mean_tumor_oxygen"], color="tab:red",
+                 linestyle="--", linewidth=1.1, alpha=0.7, label="Mean O\u2082")
+        ax2.set_ylabel("Mean [O\u2082]")
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    ax = axes[1]
+    if "mean_tumor_vegf_drive" in df.columns:
+        ax.plot(mcs, df["mean_tumor_vegf_drive"], color="tab:orange", linewidth=1.5,
+                label="Mean VEGF drive")
+    _decorate(ax,
+              title="Intracellular VEGF drive (Hill function of HIF-1\u03b1)\nboosts effective VEGF2 seen by endothelium",
+              xlabel="MCS", ylabel="VEGF drive (a.u.)")
+    if "mean_tumor_vegf2" in df.columns:
+        ax2 = _twin_right(ax, "sienna")
+        ax2.plot(mcs, _smooth(df["mean_tumor_vegf2"]), color="sienna",
+                 linestyle="--", linewidth=1.0, alpha=0.7, label="Mean VEGF2 field (smooth)")
+        ax2.set_ylabel("Mean VEGF2 field")
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    fig.tight_layout()
+    return fig
+
+
+# ── 6. Spatial metrics ────────────────────────────────────────────────────────
+
+def plot_spatial_metrics(df: pd.DataFrame) -> plt.Figure | None:
+    """2x2 grid: tumor morphology, vessel proximity, hypoxic core, vascular efficiency."""
+    required_groups = [
+        ["tumor_effective_radius", "tumor_aspect_ratio", "tumor_radial_cv"],
+        ["mean_tumor_to_vessel_distance", "min_tumor_to_vessel_distance", "tumor_near_vessel_fraction"],
+        ["hypoxic_mean_radius", "necrotic_mean_radius", "hypoxic_inner_fraction", "necrotic_inner_fraction"],
+        ["tumor_oxygen_per_neovascular_cell", "tumor_oxygen_per_neovascular_volume", "hypoxia_per_neovascular_cell"],
+    ]
+    if not any(any(column in df.columns for column in group) for group in required_groups):
+        return None
+
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9), sharex=True)
+    fig.suptitle("6 · Spatial Metrics", fontsize=12, fontweight="bold")
+    mcs = df["mcs"]
+
+    # Tumor morphology
+    ax = axes[0, 0]
+    if "tumor_effective_radius" in df.columns:
+        ax.plot(mcs, _smooth(df["tumor_effective_radius"]), color="tab:blue", linewidth=1.6, label="Effective radius")
+    if "tumor_mean_radius" in df.columns:
+        ax.plot(mcs, _smooth(df["tumor_mean_radius"]), color="tab:cyan", linewidth=1.2, linestyle="--", label="Mean radial distance")
+    _decorate(ax, title="Tumor morphology over time", ylabel="Length scale (voxels)")
+    if "tumor_aspect_ratio" in df.columns or "tumor_radial_cv" in df.columns:
+        ax2 = _twin_right(ax, "tab:purple")
+        if "tumor_aspect_ratio" in df.columns:
+            ax2.plot(mcs, _smooth(df["tumor_aspect_ratio"]), color="tab:purple", linewidth=1.2, linestyle=":", label="Aspect ratio")
+        if "tumor_radial_cv" in df.columns:
+            ax2.plot(mcs, _smooth(df["tumor_radial_cv"]), color="mediumorchid", linewidth=1.2, linestyle="-.", label="Radial CV")
+        ax2.set_ylabel("Shape irregularity")
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    # Vascular penetration and proximity
+    ax = axes[0, 1]
+    if "mean_tumor_to_vessel_distance" in df.columns:
+        ax.plot(mcs, _smooth(df["mean_tumor_to_vessel_distance"]), color="tab:red", linewidth=1.5, label="Mean tumor→vessel distance")
+    if "min_tumor_to_vessel_distance" in df.columns:
+        ax.plot(mcs, _smooth(df["min_tumor_to_vessel_distance"]), color="tab:orange", linewidth=1.2, linestyle="--", label="Minimum tumor→vessel distance")
+    _decorate(ax, title="Vascular penetration and proximity", ylabel="Distance (voxels)")
+    if "tumor_near_vessel_fraction" in df.columns:
+        ax2 = _twin_right(ax, "tab:green")
+        ax2.plot(mcs, _smooth(df["tumor_near_vessel_fraction"]), color="tab:green", linewidth=1.3, label="Tumor near-vessel fraction")
+        ax2.set_ylabel("Fraction of tumor cells")
+        ax2.set_ylim(bottom=0)
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    # Hypoxic core structure
+    ax = axes[1, 0]
+    if "hypoxic_mean_radius" in df.columns:
+        ax.plot(mcs, _smooth(df["hypoxic_mean_radius"]), color="tab:orange", linewidth=1.4, label="Hypoxic mean radius")
+    if "necrotic_mean_radius" in df.columns:
+        ax.plot(mcs, _smooth(df["necrotic_mean_radius"]), color="tab:red", linewidth=1.4, linestyle="--", label="Necrotic mean radius")
+    if "tumor_effective_radius" in df.columns:
+        ax.plot(mcs, _smooth(df["tumor_effective_radius"]), color="black", linewidth=1.0, linestyle=":", label="Tumor effective radius")
+    _decorate(ax, title="Hypoxic core structure", xlabel="MCS", ylabel="Radius from tumor center")
+    if "hypoxic_inner_fraction" in df.columns or "necrotic_inner_fraction" in df.columns or "hypoxic_core_offset" in df.columns:
+        ax2 = _twin_right(ax, "sienna")
+        if "hypoxic_inner_fraction" in df.columns:
+            ax2.plot(mcs, _smooth(df["hypoxic_inner_fraction"]), color="sienna", linewidth=1.1, label="Hypoxic inner-core fraction")
+        if "necrotic_inner_fraction" in df.columns:
+            ax2.plot(mcs, _smooth(df["necrotic_inner_fraction"]), color="firebrick", linewidth=1.1, linestyle="--", label="Necrotic inner-core fraction")
+        if "hypoxic_core_offset" in df.columns:
+            ax2.plot(mcs, _smooth(df["hypoxic_core_offset"]), color="peru", linewidth=1.1, linestyle=":", label="Core offset")
+        ax2.set_ylabel("Inner-core fraction / offset")
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    # Vascular efficiency
+    ax = axes[1, 1]
+    if "tumor_oxygen_per_neovascular_cell" in df.columns:
+        ax.plot(mcs, _smooth(df["tumor_oxygen_per_neovascular_cell"]), color="tab:cyan", linewidth=1.4, label="Tumor O2 / neovascular cell")
+    if "tumor_oxygen_per_neovascular_volume" in df.columns:
+        ax.plot(mcs, _smooth(df["tumor_oxygen_per_neovascular_volume"]), color="tab:blue", linewidth=1.4, linestyle="--", label="Tumor O2 / neovascular volume")
+    _decorate(ax, title="Vascular efficiency", xlabel="MCS", ylabel="Oxygen delivery efficiency")
+    if "hypoxia_per_neovascular_cell" in df.columns or "mean_tumor_oxygen" in df.columns:
+        ax2 = _twin_right(ax, "tab:green")
+        if "hypoxia_per_neovascular_cell" in df.columns:
+            ax2.plot(mcs, _smooth(df["hypoxia_per_neovascular_cell"]), color="tab:green", linewidth=1.1, label="Hypoxia / neovascular cell")
+        if "mean_tumor_oxygen" in df.columns:
+            ax2.plot(mcs, _smooth(df["mean_tumor_oxygen"]), color="limegreen", linewidth=1.1, linestyle=":", label="Mean tumor O2")
+        ax2.set_ylabel("Hypoxia burden / O2")
+        ax2.legend(loc="upper right", fontsize=8)
+    ax.legend(loc="upper left", fontsize=8)
+
+    fig.tight_layout()
     return fig
 
 
 def generate_plots(df: pd.DataFrame) -> list[tuple[str, plt.Figure]]:
     figures: list[tuple[str, plt.Figure]] = []
     for stem, figure in [
-        ("counts", plot_counts_and_fraction(df)),
-        ("tumor_volume", plot_tumor_volume(df)),
-        ("growth_rates", plot_growth_rates(df)),
-        ("field_means", plot_field_means(df)),
-        ("endothelial", plot_endothelial_metrics(df)),
+        ("1_tumor_dynamics",    plot_tumor_dynamics(df)),
+        ("2_vascular_response", plot_vascular_response(df)),
+        ("3_signaling_fields",  plot_signaling_fields(df)),
+        ("4_system_dynamics",   plot_system_dynamics(df)),
+        ("5_hif1a_network",     plot_hif1a_network(df)),
+        ("6_spatial_metrics",   plot_spatial_metrics(df)),
     ]:
         if figure is not None:
             figures.append((stem, figure))

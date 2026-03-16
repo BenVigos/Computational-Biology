@@ -3,86 +3,129 @@ from dataclasses import dataclass, replace
 
 @dataclass(frozen=True)
 class ModelConfig:
-    preset_name: str = "paper_full"
+    preset_name: str = "branching_tuning"
 
     # Runtime toggles
     enable_initial_vascular_strip: bool = True
-    enable_initial_sprouts: bool = True
+    enable_initial_sprouts: bool = False
     enable_initial_tumor_mass: bool = True
     enable_type_switching: bool = True
     enable_tumor_growth: bool = True
     enable_vascular_growth: bool = True
     enable_mitosis: bool = True
     enable_python_monitoring: bool = True
+    enable_hif1a_network: bool = True
 
-    # 2D lattice / initialization
+    # Timescale separation: run diffusion for N MCS, then growth/mitosis for G MCS.
+    enable_timescale_separation: bool = False
+    diffusion_relaxation_mcs: int = 100
+    growth_window_mcs: int = 10
+    timescale_cycle_offset_mcs: int = 0
+
+    # 2D lattice / runtime controls
     lattice_x: int = 100
     lattice_y: int = 100
-    steps: int = 3000
-    vessel_x_min: int = 0
-    vessel_x_max: int = 8
-    vessel_y_min: int = 0
-    vessel_y_max: int = 100
-    tip_cell_x_min: int = vessel_x_max + 1
-    tip_cell_x_max: int = tip_cell_x_min + 5 
-    tip_cell_y_values: tuple[int, ...] = (16, 22, 28, 34, 40, 48, 54, 60, 66, 74, 80, 86)
-    tip_cell_height: int = 6
-    tumor_x_min: int = 45
-    tumor_x_max: int = 55
-    tumor_y_min: int = 45
-    tumor_y_max: int = 55
-    tumor_seed_size: int = 1
+    steps: int = 2000
 
-    # Paper-derived phenotype thresholds and timing
-    area_thresh: float = 1.0
-    nutrient_thresh: float = 5.0
-    necrotic_thresh: float = 1.0
-    tumor_growth_start_mcs: int = 5
-    vascular_vegf_activation_threshold: float = 0.5
-    inactive_neighbor_area_limit: float = 7000.0
-    active_neighbor_area_limit: float = 5000.0
+    # Relative placement controls (fractions of lattice size)
+    vessel_boundary_thickness_fraction: float = 0.05
+    vessel_boundary_margin_fraction: float = 0.0
+    tip_cell_x_offset_fraction: float = 0.0
+    tip_cell_width_fraction: float = 0.06
+    tip_cell_height_fraction: float = 0.06
+    tip_cell_center_y_fractions: tuple[float, ...] = (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
 
-    # Paper-derived mechanics
-    tumor_target_volume: float = 33.0
-    tumor_lambda_volume: float = 10.0
-    tumor_target_surface: float = 90.0
-    tumor_lambda_surface: float = 2.0
-    vascular_target_volume: float = 60.0
-    vascular_lambda_volume: float = 13.0
-    vascular_target_surface: float = 150.0
-    vascular_lambda_surface: float = 3.0
-    necrotic_volume_loss_rate: float = 0.5
+    # Bottom-vessel sprouts: InactiveNeovascular cells attached to the bottom boundary vessel
+    enable_top_vessel_sprouts: bool = True
+    bottom_sprout_x_fractions: tuple[float, ...] = (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9)
+    bottom_sprout_width_fraction: float = 0.04
+    bottom_sprout_height_fraction: float = 0.04
+
+    # Initial tumor geometry: a small circular cluster of cells
+    tumor_center_x_fraction: float = 0.50
+    tumor_center_y_fraction: float = 0.50
+    tumor_radius_fraction: float = 0.04
+    tumor_seed_size_fraction: float = 0.02
+
+    area_thresh: float = 100.0
+    nutrient_thresh: float = 22.5
+    necrotic_thresh: float = 10.0
+    tumor_growth_start_mcs: int = 300
+    vascular_vegf_activation_threshold: float = 0.3
+    inactive_neighbor_area_limit: float = 30
+    active_neighbor_area_limit: float = 20
+
+    tumor_target_volume: float = 22.5
+    tumor_lambda_volume: float = 8.0
+    necrotic_target_volume: float = 0.0
+    vascular_target_volume: float = 40.0
+    vascular_lambda_volume: float = 15.0
+    necrotic_volume_loss_rate: float = 0.5 #not used in current implementation, but could be used to model gradual shrinking of necrotic cells instead of instant removal
+
+    # Vascular activation: VEGF2 threshold for switching Inactive -> Active
+    vascular_activation_vegf2_threshold: float = 0.7
+    # Vascular deactivation: VEGF2 threshold for switching Active -> Inactive
+    vascular_deactivation_vegf2_threshold: float = 0.4
 
     # Paper-derived growth laws
-    tumor_growth_volume_rate: float = 0.02
-    tumor_growth_surface_rate: float = 0.06
+    tumor_growth_volume_rate: float = 0.15
+    tumor_growth_surface_rate: float = 0.1
     tumor_growth_denominator: float = 10.0
-    vascular_growth_volume_rate: float = 0.06
-    vascular_growth_surface_rate: float = 0.15
+    hypoxic_growth_volume_rate: float = tumor_growth_volume_rate**0.4
+    hypoxic_growth_denominator: float = 10.0
+    vascular_growth_volume_rate: float = 0.5
     vascular_growth_denominator: float = 0.5
 
+    # Oxygen -> HIF-1a -> VEGF intracellular signaling proxy
+    hif1a_initial_value: float = 0.0
+    hif1a_max_value: float = 1.0
+    hif1a_hypoxia_halfmax_oxygen: float = 20.0
+    hif1a_stabilization_rate: float = 0.04
+    hif1a_degradation_rate: float = 0.05
+    vegf_drive_basal: float = 0.02
+    vegf_drive_max: float = 1.0
+    vegf_drive_hill_k: float = 0.35
+    vegf_drive_hill_n: float = 2.0
+    hif1a_to_vegf2_weight: float = 0.6
+
+    # Spatial monitoring controls
+    vessel_proximity_distance: float = 15.0
+    hypoxic_core_inner_fraction: float = 0.5
+
     # Paper-derived mitosis thresholds
-    tumor_doubling_volume: float = 80.0
-    vascular_doubling_volume: float = 120.0
+    tumor_doubling_volume: float = 50
+    vascular_doubling_volume: float = 80.0
 
     # Field clamps for Python-side monitoring / safety
     field_max_value: float = 100.0
-    report_frequency: int = 100
+    report_frequency: int = 50
 
     # Python monitoring toggles
-    monitor_frequency: int = 1
+    monitor_frequency: int = 10
     monitor_to_console: bool = True
     monitor_to_csv: bool = True
     monitor_include_growth_rates: bool = True
     monitor_include_field_means: bool = True
     monitor_include_vascular_metrics: bool = True
-    monitor_output_dir: str = "results"
+    monitor_output_dir: str = "../results"
     monitor_output_filename: str = "angiogenesis_metrics.csv"
 
 
 BASE_CONFIG = ModelConfig()
 
 PRESETS = {
+    "legacy": replace(
+        BASE_CONFIG,
+        preset_name="legacy",
+        enable_initial_sprouts=True,
+        enable_timescale_separation=True,
+        tumor_radius_fraction=0.05,
+        nutrient_thresh=20.0,
+        tumor_growth_start_mcs=500,
+        vascular_activation_vegf2_threshold=0.3,
+        vascular_deactivation_vegf2_threshold=0.05,
+        vascular_growth_volume_rate=0.2,
+    ),
     "paper_mvp": replace(
         BASE_CONFIG,
         preset_name="paper_mvp",
@@ -113,12 +156,196 @@ PRESETS = {
         enable_vascular_growth=True,
         enable_mitosis=False,
     ),
-    "paper_full": replace(
+    "vegf_tuning": replace(
         BASE_CONFIG,
-        preset_name="paper_full",
+        preset_name="tumor_oxygen_only",
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=False,
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_vascular_growth=False,
+        enable_mitosis=True,
+        monitor_include_vascular_metrics=False,
+        enable_timescale_separation=False,
+        # nutrient_thresh=100,
+        # necrotic_thresh=0.0,
+        tumor_growth_start_mcs=300,
+        tumor_radius_fraction=0.16,
+    ),
+
+    "branching_tuning": replace(
+        BASE_CONFIG,
+        preset_name="branching_tuning",
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_vascular_growth=True,
+        enable_mitosis=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        vascular_activation_vegf2_threshold=0.7,
+        vascular_deactivation_vegf2_threshold=0.4,
+        nutrient_thresh=22.5,
+        necrotic_thresh=10,
+        tumor_growth_start_mcs=300,
+        tumor_radius_fraction=0.16,
+        vascular_growth_volume_rate=0.5,
+    ),
+
+    #This preset evaluates tumor growth and type swithcing with out the presense of angiogenesis or hif1a mediated vegf production.
+    "tumor_growth_only": replace(
+        BASE_CONFIG,
+        preset_name="tumor_growth_only",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=False,
+        enable_vascular_growth=False,
+        monitor_include_vascular_metrics=False,
+        enable_timescale_separation=False,
+        enable_hif1a_network=False,
+
+        tumor_radius_fraction=0.04,  # Start smaller to better observe growth trajectory
+        tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
+    ),
+
+    #This preset evaluates tumor growth in the presence of hypoxia-induced type switching.
+    "tumor_growth_with_hif1a": replace(
+        BASE_CONFIG,
+        preset_name="tumor_growth_with_hif1a",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=False,
+        enable_vascular_growth=False,
+        monitor_include_vascular_metrics=False,
+        enable_timescale_separation=False,
+        enable_hif1a_network=True,
+
+        tumor_radius_fraction=0.04,  # Start smaller to better observe growth trajectory
+        tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
+    ),
+
+    #This preset has angiogenesis only, with no tumor growth or hif1a. This can be used to tune the VEGF-driven sprouting response in isolation.
+    "late_stage_angiogenesis_only": replace(
+        BASE_CONFIG,
+        preset_name="late_stage_angiogenesis_only",
+        enable_type_switching=True,
+        enable_tumor_growth=False,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=False,
+
+        tumor_radius_fraction=0.16,  # Start much smaller (4% of lattice instead of 16%)
+        tumor_growth_start_mcs=300,
+        nutrient_thresh=100,  # Set high to keep tumor hypoxic
+        necrotic_thresh=0.0,  # Set low to prevent tumor cell death
+    ),
+
+    #This preset has angiogenesis and hif1a with no tumor growth. This can be used to tune the HIF-VEGF dynamics and sprouting response in isolation.
+    "late_stage_angiogenesis_with_hif1a": replace(
+        BASE_CONFIG,
+        preset_name="late_stage_angiogenesis_with_hif1a",
+        enable_type_switching=True,
+        enable_tumor_growth=False,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=True,
+
+        tumor_radius_fraction=0.16,  # Start near steady state with no angiogenesis
+        tumor_growth_start_mcs=300,
+        nutrient_thresh=100,  # Set high to keep tumor hypoxic
+        necrotic_thresh=0.0,  # Set low to prevent tumor cell death
+    ),
+
+    #This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
+    #Angiogenesis is included. Only the late stage of tumor growth is included, starting from a larger initial radius.
+    "late_stage_no_hif1a": replace(
+        BASE_CONFIG,
+        preset_name="late_stage_no_hif1a",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=False,
+
+        tumor_radius_fraction=0.16,  # Start near steady state with no angiogenesis
+        tumor_growth_start_mcs=300,
+
+    ),
+
+    #This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells.
+    #Only the late stage of tumor growth is included, starting from a larger initial radius
+    "late_stage": replace(
+        BASE_CONFIG,
+        preset_name="late_stage",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=True,
+
+        tumor_radius_fraction=0.16,
+        tumor_growth_start_mcs=300,
+    ),
+    #This preset evaluates tumor growth and type swithcing with out the presense of HIF-1a mediated VEGF production.
+    #Angiogenesis is included.
+    "full_trajectory_no_hif1a": replace(
+        BASE_CONFIG,
+        preset_name="full_trajectory_no_hif1a",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=False,
+
+        tumor_radius_fraction=0.04,  # Start smaller to better observe growth trajectory
+        tumor_growth_start_mcs=300,  # Allow time of oxygen field to stabilize before tumor starts growing
+
+    ),
+
+    #This prest runs the entire tumor growth and angiogenesis trajectory starting from only a few cells.
+    "full_trajectory": replace(
+        BASE_CONFIG,
+        preset_name="full_trajectory",
+        enable_type_switching=True,
+        enable_tumor_growth=True,
+        enable_mitosis=True,
+        enable_initial_sprouts=False,
+        enable_top_vessel_sprouts=True,
+        enable_vascular_growth=True,
+        monitor_include_vascular_metrics=True,
+        enable_timescale_separation=False,
+        enable_hif1a_network=True,
+
+        tumor_radius_fraction=0.04,  # Start much smaller (4% of lattice instead of 16%)
+        tumor_growth_start_mcs=300,
     ),
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "paper_sprouting"
+SELECTED_PRESET = "late_stage_angiogenesis_only"
 CONFIG = PRESETS[SELECTED_PRESET]

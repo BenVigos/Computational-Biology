@@ -1,178 +1,282 @@
-# Assigment 3
+---
+geometry:
+- margin=1in
+---
+# Assignment 3: Simulating Tumor Growth and Angiogenesis in CompuCell3D
 
-## Simulating Tumor Growth using CompuCell3D
-
-### The Glazier-Graner-Hogeweg (GGH) Effective Energy
-
-The total energy of the cell configuration that governs all morphodynamics.
-
-$$\begin{align}
-H_{\text{GGH}} = \underbrace{\sum_{\vec{i},\,\vec{j}\;\text{neighbors}} J\left(\tau(\sigma(\vec{i})),\,\tau(\sigma(\vec{j}))\right)\left(1 - \delta(\sigma(\vec{i}),\sigma(\vec{j}))\right)}_{\text{contact energy}} + \underbrace{\sum_{\sigma} \lambda_{\text{vol}}(\tau) \left(v(\sigma) - V_t(\tau(\sigma))\right)^2}_{\text{volume constraint}} + \underbrace{\sum_{\sigma} \lambda_{\text{sur}}(\tau) \left(s(\sigma) - S_t(\tau(\sigma))\right)^2}_{\text{surface constraint}}
-\end{align}$$
+Shirinifard, A., Gens, J. S., Zaitlen, B. L., Popławski, N. J., Swat, M., & Glazier, J. A. (2009). 3D Multi-Cell simulation of tumor growth and angiogenesis. *PLoS ONE*, 4(10), e7190. DOI: [10.1371/journal.pone.0007190](https://doi.org/10.1371/journal.pone.0007190)
 
 
-Table: Definitions of the parameters used in the GGH formula. 
+## 1. Cellular Potts Model Effective Energy
 
-| Parameter | Definition |
-| :--- | :--- |
-|$\vec{i}$ and $\vec{j}$ | The locations of the lattice sites (voxels).|
-|$\sigma(\vec{i})$ | The specific cell index located at voxel $\vec{i}$.|
-|$\tau(\sigma)$ | The associated cell type of cell $\sigma$.|
-|$J(\tau_1, \tau_2)$ | The contact energy between two neighboring cells.|
-|$\delta(\sigma(\vec{i}),\sigma(\vec{j}))$ | The Kronecker delta function.|
-|$\lambda_{vol}(\tau), \lambda_{sur}(\tau)$ | The inverse compressibility and surface stiffness.|
-$V_{t}(\tau(\sigma))$ | The target volume of the cell. |
-| $v(\sigma)$ | Actual volume of the cell. |
-| $S_t(\tau)$ | The target surface for the cell type. |
-| $s(\sigma)$ | Actual surface of the cell | 
+Core Hamiltonian equation that describes the physical shape, volume, and interactions of the cells on the grid *(Slide # 26, from Cell-based modelling 2 lecture)*.
 
 
-### The Chemotaxis Energy
-Chemotaxis is added to the Effective Energy to represent the cells movement towards higher chemical concentration.
-
-*Saturated Chemotaxis Rule for VEGF2*
-
-$$
-\begin{align}
-\Delta\mathcal{H}_{chemotaxis}^{VEGF2} = -\lambda \left(\frac{C(\vec{i}_{target})}{s+C(\vec{i}_{target})}-\frac{C(\vec{i}_{source})}{s+C(\vec{i}_{source})}\right)
-\end{align}
-$$
+$$\begin{equation}
+\mathcal{H}=\sum_{\langle i,j \rangle} J\big(\tau(\sigma_i),\tau(\sigma_j)\big)\left(1-\delta_{\sigma_i,\sigma_j}\right) + \sum_{\sigma} \lambda_V\big(V(\sigma) V_t(\sigma)\big)^2
+\end{equation}$$
 
 | Parameter | Definition |
 | :--- | :--- |
-|$\lambda$|Chemotaxis strength.|
-|$C(\vec{i})$| The concentration of the VEGF2 field at a given target or source.|
-|$s$| Saturation Coefficient.|
+| $i,j$ | Neighboring lattice sites |
+| $\sigma_i$ | Cell identity occupying lattice site $i$ |
+| $\tau(\sigma)$ | Type of cell $\sigma$ |
+| $J$ | Contact energy between neighboring cell types |
+| $\delta$ | Kronecker delta |
+| $V(\sigma)$ | Actual cell volume |
+| $V_t(\sigma)$ | Target cell volume |
+| $\lambda_V$ | Volume constraint strength |
 
-*Linear Chemotaxis Rule for VEGF1*
+## 2. Chemotaxis in the CPM
 
-$$\begin{align}
-\Delta\mathcal{H}_{chemotaxis}^{VEGF1} = -\lambda (C(\vec{i}_{target}) - C(\vec{i}_{source})
-\end{align}$$
+Directed endothelial migration is represented as an additional energy contribution in the Cellular Potts update rule (*Slide # 46, from Cell-based modelling 2 lecture)*.
 
+$$\begin{equation}
+\Delta H_{\text{chem}} = -\lambda_{\text{chem}}\,\big(S(V(\mathbf{x}_t))-S(V(\mathbf{x}_s))\big)
+\end{equation}$$
 
-Then, the total Effective Energy used in Monte Carlo steps: 
+with a saturating response function
 
-$$
-\begin{align}
-\Delta H_{total} = \Delta H_{chemotaxis} - \Delta_{HGGH}
-\end{align}
-$$
-
-## Tumor Cell Growth
-Tumor cells grow depending on local oxygen concentration.
-### Volume Growth
-$$\begin{align}
-V_{target}​\(t+1)=V_{target}​(t)+k_v\frac{O}{​K+O}​
-\end{align}
-$$
-### Surface Growth
-$$\begin{align}
-S_{target}​\(t+1)=S_{target}​(t)+k_s\frac{O}{​K+O}​
-\end{align}
-$$
-| Parameter | Definition |
-| :--- | :--- |
-|$O$ | Oxygen concentration.|
-|$K$ |Growth saturation coefficient.|
-|$k_v, k_s$ | Volume and surface growth rate.|
-### Necrotic Cell Decay
-Cells turn necrotic if $O_{local} < \theta_{O, thr}$. Necrotic cells shrink over time.
-
-$$\begin{align}
-V_\{target}​(t+1)=max(V_{target}​(t)−k_{necrosis}​,0)
-\end{align}$$
-## Vascular Growth
-Endothelial cells respond to VEGF2 concentration.
-### Volume Growth
-$$\begin{align}
-V_{target}​\(t+1)=V_{target}​(t)+k_v^{vasc}\frac{\text{VEGF}}{​K_v+\text{VEGF}}​
-\end{align}
-$$
-### Surface Growth
-$$\begin{align}
-S_{target}​\(t+1)=S_{target}​(t)+k_s^{vasc}\frac{\text{VEGF}}{​K_v+\text{VEGF}}​
-\end{align}
-$$
-| Parameter | Definition |
-| :--- | :--- |
-|$\text{VEGF}$ | VEGF2 concentration.|
-|$K_v$ |Growth saturation coefficient.|
-|$k_v^{vasc}, k_s^{vasc}$ | Volume and surface growth rate.|
-
-## Cell Division
-For both tumor and vascular cells, cells divide when their volume exceeds the volume doubling threshold.
-
-$$\begin{align}
-V > V_{\text{doubling}}
-\end{align}$$
-
-
-### Partial Differential Equations for Chemical Fields
-
-### 1. Oxygen Field ($P$)
-
-$$\begin{align}
-\frac{\partial P}{\partial t} = D_O \nabla^2 P - \epsilon_{tumor} P \cdot \delta_{tumor} + S_{blood}
-\end{align}
-$$
+$$\begin{equation}
+S(V)=\frac{V}{K_{\text{sat}}+V}
+\end{equation}$$
 
 | Parameter | Definition |
 | :--- | :--- |
-|$D_O $| The diffusion constant for the oxygen field.|
-|$- \epsilon_{tumor} P$| The rate at which the tumor consumes oxygen.|
-|$\delta_{tumor}$ | A function that equals to 1 at voxels where there is a tumoral cell, 0 elsewhere. |
-|$S_{blood}$| Oxygen partial pressure constantly supplied by the blood vessels | 
+| $\lambda_{\text{chem}}$ | Chemotactic sensitivity|
+| $V(\mathbf{x})$ | VEGF concentration at lattice position $\mathbf{x}$ |
+| $S(V)$ | Saturating mapping from concentration to chemotactic drive |
+| $K_{\text{sat}}$ | Saturation coefficient controlling response compression at high VEGF |
 
-###  2. VEGF2 Field ($V_2$)
-$$
-\begin{align} 
-\frac{\partial V_2}{\partial t}= D_{V_2}\nabla^{2}V_2 -\epsilon_{V_2}V_2+\delta_{hypoxic}x_{V_2}V_2
-\end{align}
-$$
-| Parameter | Definition |
-| :--- | :--- |
-|$D_{V_2}$| The diffusion constant for the VEGF2 field.|
-|$\epsilon_{V_2}$| Decay rate for VEGF2.|
-|$x_{V_2}$| Secretion rate.|
-|$\delta_{hypoxic}$| A function that equals 1 for hypoxic cells and equals 0 elsewhere.|
+so the effective acceptance energy becomes:
 
-###  3. VEGF1 Field ($V_1$)
-$$
-\begin{align} 
-\frac{\partial V_1}{\partial t}= D_{V_1}\nabla^{2}V_1 -\epsilon_{V_1}V_1+\delta_{vasc}x_{V_1}V_1
-\end{align}
-$$
-| Parameter | Definition |
-| :--- | :--- |
-|$D_{V_1}$| The diffusion constant for the VEGF1 field.|
-|$\epsilon_{V_1}$| Decay rate for VEGF1.|
-|$x_{V_1}$| Secretion rate.|
-|$\delta_{vasc}$| A function that equals 1 for endothelial cells and equals 0 elsewhere.|
-
-### The Gene Regulatory Network HIF - 1 $\alpha$ Dynamics
-Added to model if tumoral cell becomes hypoxic.  If oxygen drops (hypoxia), the the constant production ($\alpha_H$) allows to accumulate $H$ inside the cell.
+$$\begin{equation}
+\Delta H_{\text{eff}} = \Delta H_{\text{CPM}} + \Delta H_{\text{chem}}
+\end{equation}$$
 
 
-$$\begin{align}
-\frac{dH}{dt} = \alpha_H - \beta_H \cdot P \cdot H
-\end{align}$$
+## 3. Diffusion-Reaction Fields
+
+### 3.1 Oxygen field $O$
+
+The oxygen field follows a diffusion-decay equation with type-specific uptake *(Slide # 44, from Reaction Diffusion Systems lecture)*.
+
+
+$$\begin{equation}
+\frac{\partial O}{\partial t} = D_O\nabla^2 O - \lambda_O O - \sum_{\tau} U_{\tau}(O)\,\delta_{\tau}
+\end{equation}$$
 
 | Parameter | Definition |
 | :--- | :--- |
-|$\alpha_H$ | Constant production rate at which the cell continuously produces the HIF - 1 $\alpha$ protein.|
-|$\beta_H$| The degradation rate constant.|
-|$P$| The local oxygen concentration.|
-|$H$| The current concentration of HIF - 1 $\alpha$.|
+| $D_O$ | Diffusion coefficient for oxygen |
+| $\lambda_O$ | Global decay rate of oxygen |
+| $U_{\tau}(O)$ | Type-specific oxygen uptake by cells of type $\tau$ |
+| $\delta_{\tau}$ | Indicator function equal to 1 at voxels occupied by cell type $\tau$, 0 elsewhere |
+
+Vessel cells act as oxygen reservoirs via fixed-concentration Dirichlet conditions rather than a source term in the PDE:
+
+$$\begin{equation}
+O = O_{\text{vessel}} \quad \text{at Vascular voxels}
+\end{equation}$$
+
+$$\begin{equation}
+O = O_{\text{neo}} \quad \text{at ActiveNeovascular and InactiveNeovascular voxels}
+\end{equation}$$
+
+### 3.2 VEGF field $V$
+
+VEGF is the hypoxia-associated signal secreted by hypoxic tumor cells *(Slide # 44, from Reaction Diffusion Systems lecture)*.
+
+$$\begin{equation}
+\frac{\partial V}{\partial t}=D_{V}\nabla^2V-\lambda_{V}V+s_{V}\,\delta_{\text{Hypoxic}}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $D_{V}$ | Diffusion coefficient for VEGF |
+| $\lambda_{V}$ | Degradation (decay) rate of VEGF |
+| $s_{V}$ | Secretion rate of VEGF per unit area of Hypoxic cells |
+| $\delta_{\text{Hypoxic}}$ | Indicator function equal to 1 at voxels of Hypoxic cells, 0 elsewhere |
+
+## 4. Tumor Phenotype Switching
+
+Tumor phenotype changes are threshold rules driven by local oxygen at the cell center of mass (COM) *(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*.
+
+### 4.1 Normal to Hypoxic
+
+$$\begin{equation}
+O(\mathbf{x}_{\text{COM}}) < O_{\text{nutrient}} \Rightarrow \text{Normal} \to \text{Hypoxic}
+\end{equation}$$
+
+### 4.2 Normal or Hypoxic to Necrotic
+
+$$\begin{equation}
+O(\mathbf{x}_{\text{COM}}) < O_{\text{necrotic}} \Rightarrow \text{Normal/Hypoxic} \to \text{Necrotic}
+\end{equation}$$
+
+### 4.3 Hypoxic to Normal recovery
+
+$$\begin{equation}
+O(\mathbf{x}_{\text{COM}}) > O_{\text{nutrient}} \Rightarrow \text{Hypoxic} \to \text{Normal}
+\end{equation}$$
+
+## 5. Tumor Growth Laws
+
+Tumor growth is implemented as a change in target volume, using Michaelis-Menten-like dependence on oxygen *(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*
+
+### 5.1 Normal tumor growth
+
+$$\begin{equation}
+\frac{dV_t^{N}}{dt} = G_N\frac{O}{K_N + O}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $G_N$ | Maximum growth rate of a Normal tumor cell |
+| $K_N$ | Michaelis-Menten half-saturation constant |
+| $O$ | Oxygen concentration |
+
+### 5.2 Hypoxic tumor growth
+
+$$\begin{equation}
+\frac{dV_t^{H}}{dt} = G_H\frac{O}{K_H + O}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $G_H$ | Maximum growth rate of a Hypoxic tumor cell |
+| $K_H$ | Half-saturation constant for hypoxic growth |
+| $O$ | Oxygen concentration |
+
+### 5.3 Necrotic behavior
+
+Necrotic cells do not grow. Their target volume is forced to zero *(Slide # 25, from Cell-based modelling 2 lecture)*.
+
+$$\begin{equation}
+V_t^{\text{Necrotic}} = 0
+\end{equation}$$
 
 
-Mention:
-- solver we use
-- parameter settings => change them and explain what is the result we biologically observe based on what we saw in class
+## 6. Vascular Activation and Deactivation
+
+Neovascular sprouts switch phenotype according to the effective VEGF level *(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*.
+
+### 6.1 Activation
+
+$$\begin{equation}
+V_{\text{eff}} > \theta_{\text{on}} \Rightarrow \text{InactiveNeovascular} \to \text{ActiveNeovascular}
+\end{equation}$$
+
+### 6.2 Deactivation
+
+$$\begin{equation}
+V_{\text{eff}} < \theta_{\text{off}} \Rightarrow \text{ActiveNeovascular} \to \text{InactiveNeovascular}
+\end{equation}$$
+
+## 7. Vascular Growth Law with Contact Inhibition
+
+Vascular target-volume growth is Michaelis-Menten-like, dependant on VGEF concentration.*(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*.
+
+$$\begin{equation}
+\frac{dV_t^{\text{neo}}}{dt} = G_V\frac{V_{\text{eff}}}{K_V + V_{\text{eff}}}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $G_V$ | Maximum growth rate of a neovascular cell |
+| $K_V$ | Half-saturation constant |
+| $V_{\text{eff}}$ | Effective VEGF signal |
+
+But growth only occurs when this condition holds (contact-inhibited sprout growth):
+
+$$\begin{equation}
+A_{\text{neo-neighbor}} < A_{\text{limit}}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $A_{\text{neo-neighbor}}$ | Total shared boundary area between the cell and its neovascular (Active or Inactive) neighbors |
+| $A_{\text{limit}}$ | Contact-inhibition threshold |
 
 
+## 8. Mitosis Rules
+
+Cells divide once their actual volume exceeds a type-specific doubling threshold *(Slide # 28, from Cell-based modelling 2 lecture)*.
+
+### 8.1 Tumor-cell mitosis
+
+$$\begin{equation}
+V > V_{\text{double,tumor}}
+\end{equation}$$
+
+for Normal and Hypoxic cells.
+
+### 8.2 Neovascular mitosis
+
+$$\begin{equation}
+V > V_{\text{double,vascular}}
+\end{equation}$$
+
+for ActiveNeovascular and InactiveNeovascular cells.
+
+## 9. $\text{HIF-1}\alpha$ Intracellular Regulatory Network
+
+Local oxygen concentration controls $\text{HIF-1}\alpha$ accumulation, and $\text{HIF-1}\alpha$ in turn drives VEGF transcriptional activity *(Slide # 43, from Gene Regulatory Networks lecture)*.
+
+### 9.1 Hypoxia signal from oxygen
+
+Local oxygen is converted to a bounded hypoxia input signal via a Michaelis–Menten-type function. 
+
+$$\begin{equation}
+h(O) = \frac{K_O}{K_O + O}
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $h(O)$ | Hypoxia input signal |
+| $K_O$ | Half-saturation constant for oxygen sensing |
 
 
+### 9.2 $\text{HIF-1}\alpha$ regulatory node
+
+$\text{HIF-1}\alpha$ is is stabilised by the hypoxia signal and constitutively degraded, following a first-order regulatory ODE.
+
+$$\begin{equation}
+\frac{dH}{dt} = k_{\text{stab}}\,h(O) - k_{\text{deg}}\,H
+\end{equation}$$
+
+| Parameter | Definition |
+| :--- | :--- |
+| $H$ | Intracellular $\text{HIF-1}\alpha$ concentration $\in [0, H_{\max}]$ |
+| $k_{\text{stab}}$ | $\text{HIF-1}\alpha$ stabilisation rate (production per unit hypoxia signal) |
+| $k_{\text{deg}}$ | Constitutive degradation rate (fraction removed per step) |
+
+
+### 9.3 VEGF transcriptional output node
+
+$\text{HIF-1}\alpha$ drives VEGF transcription via a Hill activation function. Tumor-wide HIF state adds a boost to the signal perceived by endothelial cells.
+
+$$\begin{equation}
+f(H) = \frac{H^n}{K_H^n + H^n}
+\end{equation}$$
+
+VEGF transcriptional activity 
+$V_{\text{drive}}$ is linearly scaled between a basal floor and a maximum ceiling by this activation:
+
+$$\begin{equation}
+V_{\text{drive}} = V_{\text{basal}} 
+    + \left(V_{\max} - V_{\text{basal}}\right) f(H)
+\end{equation}$$
+
+
+| Parameter | Definition |
+| :--- | :--- |
+| $f(H)$ | Hill activation function |
+| $K_H$ | Hill half-saturation constant for $\text{HIF-1}\alpha$ activation |
+| $n$ | Hill coefficient |
+| $V_{\text{basal}}$ | Basal VEGF transcriptional activity in the absence of $\text{HIF-1}\alpha$ |
+| $V_{\max}$ | Maximum VEGF transcriptional activity at full $\text{HIF-1}\alpha$ saturation |
+| $V_{\text{drive}}$ | Intracellular VEGF transcriptional activity proxy |
 
 
 

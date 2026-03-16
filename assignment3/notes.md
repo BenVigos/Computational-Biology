@@ -102,16 +102,15 @@ We should look at:
 Expected behaviour (Figure 1): 
 
 1. Hypoxia induces HIF-1a which induces angiogenic factors (VEGF). 
-2. We did not model Proteolytic degradation. 
 3. Tip cell migration (endothelial cells) migrate along VEGF gradient.
-4. Endothelial cells form tube that connects vessel to tumor. No differentiation into stalk cells implemented.
-5. No regulation implemented.
+4. Endothelial cells form tube that connects vessel to tumor.
 6. Blood supply stimulates further tumor growth.
 
 If we look at Figure 2 we see that the addition of angiogenesis allows for growth after the first initial spike, while the model without angiogenesis reaches a steady state. Subplot b shows that the peak around 900 MCS is caused by a significant spike in necrotic cells. If we look at figure 3c we see that this point corresponds with an increase of oxygen from the reached equillibrium, due to the approaching endothelial cells. This supply of oxygen allows for further tumor growth, which eventually fills almost the entire domain. Subplot c shows that with angiogenesis the hypoxic fraction continuiously declines after the second peak, while the model without angiogenesis seems to oscillate at a higher value. 
 
 The supply of fresh oxygen through endothelial cells does not just allow for growth, it allows for healthier growth with less hypoxic cells. This indicates that our model is simulating the expected behaviour of angiogensis properly.
 
+Towards the end of the simulation Figure 2a also highlights a flattening of the mean radial distance. This is due to the tumor filling up the entire domain, which means that there can no longer be any cells added to the exterior due to the boundaries of our model. This is a limiting factor of analysis over longer times, as our simulation was focussed on the formation of angiogenesis and not its sustainability. 
 
 Figure 3a, shows the mean VEGF and HIF-1 alpha concentrations inside the tumor cells. The simulations only tracked this level within tumor cells and not across the entire domain, where we would expect to see a difference.
 

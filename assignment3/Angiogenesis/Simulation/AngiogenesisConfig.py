@@ -347,5 +347,5 @@ PRESETS = {
 }
 
 # Change this string to step through the model from simple to complex.
-SELECTED_PRESET = "late_stage"
+SELECTED_PRESET = "full_trajectory"
 CONFIG = PRESETS[SELECTED_PRESET]

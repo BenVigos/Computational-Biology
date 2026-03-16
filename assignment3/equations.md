@@ -96,7 +96,7 @@ $$
 
 ### 3.3 VEGF2 field $V_2$
 
-VEGF2 is the hypoxia-associated signal secreted by hypoxic tumor cells *(Slide # 44, from Raction Diffusion Systems lecture)*.
+VEGF2 is the hypoxia-associated signal secreted by hypoxic tumor cells *(Slide # 44, from Reaction Diffusion Systems lecture)*.
 
 $$
 \frac{\partial V_2}{\partial t}=D_{V2}\nabla^2V_2-\lambda_{V2}V_2+s_{V2}\,\delta_{\text{Hypoxic}}

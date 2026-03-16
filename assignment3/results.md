@@ -40,6 +40,7 @@ header-includes:
 
 # Supplementary Videos
 4 supplementary videos are included to visually illustrate the dynamic processes involved in each of the 3 performed simulations.
+
 - Video 1: Tumor growth without angiogenesis
 - Video 2: Angiogenesis without tumor growth
 - Video 3: Tumor growth with angiogenesis

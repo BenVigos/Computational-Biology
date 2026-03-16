@@ -227,18 +227,11 @@ $$
 \frac{dH}{dt} = k_{\text{stab}}\,h(O) - k_{\text{deg}}\,H
 $$
 
-In the simulation this is integrated with a forward-Euler step of size $\Delta t = 1$ MCS:
-
-$$
-H_{t+1} = H_t + k_{\text{stab}}\,h(O_t) - k_{\text{deg}}\,H_t
-$$
-
 | Parameter | Definition |
 | :--- | :--- |
 | $H$ | Intracellular HIF-1α concentration $\in [0, H_{\max}]$ |
 | $k_{\text{stab}}$ | HIF-1α stabilisation rate (production per unit hypoxia signal) |
 | $k_{\text{deg}}$ | Constitutive degradation rate (fraction removed per step) |
-| $H_{\max}$ | Maximum allowable concentration |
 
 
 ### 9.3 VEGF transcriptional output node

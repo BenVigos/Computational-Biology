@@ -29,7 +29,7 @@ $$\begin{equation}
 Directed endothelial migration is represented as an additional energy contribution in the Cellular Potts update rule (*Slide # 46, from Cell-based modelling 2 lecture)*.
 
 $$\begin{equation}
-\Delta H_{\text{chem}} = -\lambda_{\text{chem}}\,\big(S(V_2(\mathbf{x}_t))-S(V_2(\mathbf{x}_s))\big)
+\Delta H_{\text{chem}} = -\lambda_{\text{chem}}\,\big(S(V(\mathbf{x}_t))-S(V(\mathbf{x}_s))\big)
 \end{equation}$$
 
 with a saturating response function
@@ -41,9 +41,9 @@ S(V)=\frac{V}{K_{\text{sat}}+V}
 | Parameter | Definition |
 | :--- | :--- |
 | $\lambda_{\text{chem}}$ | Chemotactic sensitivity|
-| $V_2(\mathbf{x})$ | VEGF2 concentration at lattice position $\mathbf{x}$ |
+| $V(\mathbf{x})$ | VEGF concentration at lattice position $\mathbf{x}$ |
 | $S(V)$ | Saturating mapping from concentration to chemotactic drive |
-| $K_{\text{sat}}$ | Saturation coefficient controlling response compression at high VEGF2 |
+| $K_{\text{sat}}$ | Saturation coefficient controlling response compression at high VEGF |
 
 so the effective acceptance energy becomes:
 
@@ -80,35 +80,19 @@ $$\begin{equation}
 O = O_{\text{neo}} \quad \text{at ActiveNeovascular and InactiveNeovascular voxels}
 \end{equation}$$
 
-### 3.2 VEGF1 field $V_1$
+### 3.2 VEGF field $V$
 
-VEGF1 is the field secreted by vascular-like cells *(Slide # 44, from Reaction Diffusion Systems lecture)*.
-
-$$\begin{equation}
-\frac{\partial V_1}{\partial t}=D_{V1}\nabla^2V_1-\lambda_{V1}V_1+s_{V1}\,\delta_{\text{vascular-like}}
-\end{equation}$$
-
-
-| Parameter | Definition |
-| :--- | :--- |
-| $D_{V1}$ | Diffusion coefficient for VEGF1 |
-| $\lambda_{V1}$ | Degradation (decay) rate of VEGF1 |
-| $s_{V1}$ | Secretion rate of VEGF1 per unit area of source cells |
-| $\delta_{\text{vascular-like}}$ | Indicator function equal to 1 at voxels of Vascular, ActiveNeovascular, and InactiveNeovascular cells |
-
-### 3.3 VEGF2 field $V_2$
-
-VEGF2 is the hypoxia-associated signal secreted by hypoxic tumor cells *(Slide # 44, from Reaction Diffusion Systems lecture)*.
+VEGF is the hypoxia-associated signal secreted by hypoxic tumor cells *(Slide # 44, from Reaction Diffusion Systems lecture)*.
 
 $$\begin{equation}
-\frac{\partial V_2}{\partial t}=D_{V2}\nabla^2V_2-\lambda_{V2}V_2+s_{V2}\,\delta_{\text{Hypoxic}}
+\frac{\partial V}{\partial t}=D_{V}\nabla^2V-\lambda_{V}V+s_{V}\,\delta_{\text{Hypoxic}}
 \end{equation}$$
 
 | Parameter | Definition |
 | :--- | :--- |
-| $D_{V2}$ | Diffusion coefficient for VEGF2 |
-| $\lambda_{V2}$ | Degradation (decay) rate of VEGF2 |
-| $s_{V2}$ | Secretion rate of VEGF2 per unit area of Hypoxic cells |
+| $D_{V}$ | Diffusion coefficient for VEGF |
+| $\lambda_{V}$ | Degradation (decay) rate of VEGF |
+| $s_{V}$ | Secretion rate of VEGF per unit area of Hypoxic cells |
 | $\delta_{\text{Hypoxic}}$ | Indicator function equal to 1 at voxels of Hypoxic cells, 0 elsewhere |
 
 ## 4. Tumor Phenotype Switching
@@ -172,7 +156,7 @@ V_t^{\text{Necrotic}} = 0
 
 ## 6. Vascular Activation and Deactivation
 
-Neovascular sprouts switch phenotype according to the effective VEGF2 level *(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*.
+Neovascular sprouts switch phenotype according to the effective VEGF level *(inspired by Spatiotemporal Models lectures, e.g. Slide # 72)*.
 
 ### 6.1 Activation
 
@@ -188,7 +172,7 @@ V_{\text{eff}} < \theta_{\text{off}} \Rightarrow \text{ActiveNeovascular} \to \t
 
 ## 7. Vascular Growth Law with Contact Inhibition
 
-Vascular target-volume growth is Michaelis-Menten-like *(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*.
+Vascular target-volume growth is Michaelis-Menten-like, dependant on VGEF concentration.*(Slide # 9, Spatiotemporal Models 1 lecture; Slide # 59, Enzyme Kinetics lecture)*.
 
 $$\begin{equation}
 \frac{dV_t^{\text{neo}}}{dt} = G_V\frac{V_{\text{eff}}}{K_V + V_{\text{eff}}}
@@ -198,7 +182,7 @@ $$\begin{equation}
 | :--- | :--- |
 | $G_V$ | Maximum growth rate of a neovascular cell |
 | $K_V$ | Half-saturation constant |
-| $V_{\text{eff}}$ | Effective VEGF2 signal |
+| $V_{\text{eff}}$ | Effective VEGF signal |
 
 But growth only occurs when this condition holds (contact-inhibited sprout growth):
 

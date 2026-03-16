@@ -233,4 +233,14 @@ Measuring whether this ordering holds is the spatial validation of your O₂-phe
 Core offset shows whether the tumour is growing symmetrically or has a directional bias.
 
 
-Compared to model without angiogenesis... both tumor experience identical hypoxic crises driven by the same O₂ depletion and HIF1a accumulation. Angiogenesis is the only difference, and its presence produces nearly 2× more oxygen delivery (crisis is not prevented by angiogenesis but only vascularised condition can escape it), 3× more tumour cells, and allows the HIF1a network to downregulate as intended. Without angiogenesis, the GRN remains locked in a hypoxic steady state: HIF1alpha elevated, VEGF2 high, growth impaired — exactly the regulatory phenotype the model predicts for an unrescued tumour. This directly demonstrates that your GRN is not just running in parallel with the simulation but is coupled to the biological outcome in a meaningful way.
+Compared to model without angiogenesis... both tumor experience identical hypoxic crises driven by the same O₂ depletion and HIF1a accumulation. Angiogenesis is the only difference, and its presence produces nearly 2× more oxygen delivery (crisis is not prevented by angiogenesis but only vascularised condition can escape it), 3× more tumour cells, and allows the HIF1a network to downregulate as intended. Without angiogenesis, the GRN remains locked in a hypoxic steady state: HIF1alpha elevated, VEGF2 high, growth impaired — exactly the regulatory phenotype the model predicts for an unrescued tumour. This directly demonstrates that GRN is not just running in parallel with the simulation but is coupled to the biological outcome in a meaningful way.
+
+
+*Anna's ideas*
+- compare full config with tumor growth only (but hif1a)
+- keep all panels from plot 1, since relvant to explain the full mechanism
+- discard plot 2, or keep only the first panel: mitosis always produces active daughters, so nearly all neovascular cells become and remain active (shouldnt be the case)
+- merge VEGF and Oxygen field in plot 3, noting that VEGF1 is not relevant
+- discard plot 4
+- keep plot 5, interesting to compare to the one without angiogenesis. It shows HIF1a dynamics working
+- keep some spatial metrics from 6, especially those that show that are tumor has hollow structure and that necrotic_radius < hypoxic_radius < normal_radius for necrotic "core".
